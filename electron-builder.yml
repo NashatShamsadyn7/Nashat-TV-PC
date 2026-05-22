@@ -1,0 +1,54 @@
+appId: tv.nashat.pc
+productName: Nashat TV
+copyright: Copyright © 2026 Nashat Shamsadyne
+
+directories:
+  output: dist
+  buildResources: build
+
+files:
+  - out/**/*
+  - package.json
+  - "!**/node_modules/*/{CHANGELOG.md,README.md,readme.md,changelog.md}"
+  - "!**/{.DS_Store,.git,.gitignore,.eslintrc*,.prettierrc*}"
+
+asar: true
+asarUnpack:
+  - resources/**
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  artifactName: ${productName}-Setup-${version}.${ext}
+  icon: build/icon.ico
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Nashat TV
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+
+mac:
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+  category: public.app-category.entertainment
+  icon: build/icon.icns
+
+linux:
+  target:
+    - AppImage
+    - deb
+  category: AudioVideo
+  icon: build/icon.png
+
+publish:
+  provider: github
+  owner: NashatShamsadyn7
+  repo: Nashat-TV-PC
+  releaseType: release

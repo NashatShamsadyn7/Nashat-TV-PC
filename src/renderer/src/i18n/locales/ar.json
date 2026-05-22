@@ -1,0 +1,28 @@
+{
+  "app": {
+    "name": "Nashat TV",
+    "tagline": "نسخة سطح المكتب"
+  },
+  "nav": {
+    "home": "الرئيسية",
+    "livetv": "البث المباشر",
+    "movies": "أفلام",
+    "series": "مسلسلات",
+    "actors": "ممثلون",
+    "search": "بحث",
+    "library": "مكتبتي",
+    "settings": "الإعدادات"
+  },
+  "home": {
+    "trending": "الأكثر رواجاً",
+    "topRated": "الأعلى تقييماً",
+    "nowPlaying": "تُعرض الآن",
+    "continueWatching": "تابع المشاهدة"
+  },
+  "common": {
+    "loading": "جارٍ التحميل…",
+    "viewAll": "عرض الكل",
+    "play": "تشغيل",
+    "moreInfo": "مزيد من المعلومات"
+  }
+}

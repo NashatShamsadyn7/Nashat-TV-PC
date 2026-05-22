@@ -1,0 +1,28 @@
+{
+  "app": {
+    "name": "Nashat TV",
+    "tagline": "وەشانی کۆمپیوتەر"
+  },
+  "nav": {
+    "home": "سەرەکی",
+    "livetv": "بەشی ڕاستەوخۆ",
+    "movies": "فیلمەکان",
+    "series": "زنجیرە",
+    "actors": "ئەکتەرەکان",
+    "search": "گەڕان",
+    "library": "کتێبخانە",
+    "settings": "ڕێکخستنەکان"
+  },
+  "home": {
+    "trending": "زۆرترین بینراو",
+    "topRated": "باشترین هەڵسەنگاندن",
+    "nowPlaying": "ئێستا پیشاندەدرێ",
+    "continueWatching": "بەردەوامبە لە بینین"
+  },
+  "common": {
+    "loading": "بارکردن…",
+    "viewAll": "بینینی هەموو",
+    "play": "لێدان",
+    "moreInfo": "زانیاری زیاتر"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "app": {
+    "name": "Nashat TV",
+    "tagline": "Desktop edition"
+  },
+  "nav": {
+    "home": "Home",
+    "livetv": "Live TV",
+    "movies": "Movies",
+    "series": "Series",
+    "actors": "Actors",
+    "search": "Search",
+    "library": "Library",
+    "settings": "Settings"
+  },
+  "home": {
+    "trending": "Trending Now",
+    "topRated": "Top Rated",
+    "nowPlaying": "Now Playing",
+    "continueWatching": "Continue Watching"
+  },
+  "common": {
+    "loading": "Loading…",
+    "viewAll": "View all",
+    "play": "Play",
+    "moreInfo": "More info"
+  }
+}

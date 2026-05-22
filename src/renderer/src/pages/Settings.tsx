@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { LogIn, LogOut, UserCircle2 } from 'lucide-react'
+import { LogIn, LogOut, UserCircle2, Download, RefreshCw } from 'lucide-react'
 import PageHeader from '@/components/ui/PageHeader'
 import StatusBadge from '@/components/ui/StatusBadge'
 import AuthModal from '@/components/modals/AuthModal'
 import { useFirebaseConnection } from '@/hooks/useFirebaseConnection'
+import { useUpdater } from '@/hooks/useUpdater'
 import { useAuthStore } from '@/stores/authStore'
 import { authApi } from '@/features/auth/api'
 
@@ -22,6 +23,7 @@ export default function Settings() {
   const [authOpen, setAuthOpen] = useState(false)
 
   const s = STATUS_LABEL[status]
+  const update = useUpdater()
   const userLabel = user
     ? user.displayName || user.email || user.uid
     : 'غير مسجّل'
@@ -84,8 +86,39 @@ export default function Settings() {
         </section>
 
         <section className="bg-ink-700/30 rounded-2xl p-6">
-          <h3 className="font-semibold text-lg mb-2">إصدار التطبيق</h3>
-          <p className="text-ink-300 text-sm">v0.1.0 — مرحلة التطوير المبكّر</p>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-semibold text-lg">إصدار التطبيق</h3>
+            {update.status === 'checking' && <StatusBadge tone="info">جارٍ الفحص…</StatusBadge>}
+            {update.status === 'available' && (
+              <StatusBadge tone="warning">تحديث متاح {update.version && `v${update.version}`}</StatusBadge>
+            )}
+            {update.status === 'not-available' && <StatusBadge tone="success">محدّث</StatusBadge>}
+            {update.status === 'progress' && (
+              <StatusBadge tone="info">{Math.round(update.percent)}%</StatusBadge>
+            )}
+            {update.status === 'downloaded' && (
+              <StatusBadge tone="success">جاهز للتثبيت</StatusBadge>
+            )}
+            {update.status === 'error' && <StatusBadge tone="error">خطأ</StatusBadge>}
+          </div>
+          <p className="text-ink-300 text-sm mb-3">
+            v0.1.0 — التحديث يصل تلقائياً من GitHub Releases
+          </p>
+          {update.status === 'downloaded' && (
+            <button
+              onClick={() => window.nashat.installUpdate()}
+              className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-4 py-2 rounded-xl text-sm transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              إعادة التشغيل وتثبيت التحديث
+            </button>
+          )}
+          {update.status === 'progress' && (
+            <div className="flex items-center gap-2 text-sm text-ink-200">
+              <RefreshCw className="w-4 h-4 animate-spin" />
+              جارٍ تنزيل {Math.round(update.percent)}%
+            </div>
+          )}
         </section>
       </div>
 

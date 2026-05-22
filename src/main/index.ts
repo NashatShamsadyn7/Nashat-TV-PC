@@ -2,7 +2,9 @@ import 'dotenv/config'
 import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'node:path'
 import { registerTmdbIpc } from './ipc/tmdb'
+import { registerStreamIpc } from './ipc/stream'
 import { installFrameHeaderBypass } from './security/frameHeaders'
+import { initAutoUpdater } from './services/updater'
 
 const isDev = !app.isPackaged
 
@@ -64,7 +66,9 @@ app.whenReady().then(() => {
   app.setAppUserModelId('tv.nashat.pc')
   installFrameHeaderBypass()
   registerTmdbIpc()
-  createMainWindow()
+  registerStreamIpc()
+  const win = createMainWindow()
+  initAutoUpdater(win)
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createMainWindow()

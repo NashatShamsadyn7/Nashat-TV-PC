@@ -21,7 +21,6 @@ win:
     - target: nsis
       arch: [x64]
   artifactName: ${productName}-Setup-${version}.${ext}
-  icon: build/icon.ico
 
 nsis:
   oneClick: false
@@ -30,22 +29,18 @@ nsis:
   createDesktopShortcut: true
   createStartMenuShortcut: true
   shortcutName: Nashat TV
-  installerIcon: build/icon.ico
-  uninstallerIcon: build/icon.ico
 
 mac:
   target:
     - target: dmg
       arch: [x64, arm64]
   category: public.app-category.entertainment
-  icon: build/icon.icns
 
 linux:
   target:
     - AppImage
     - deb
   category: AudioVideo
-  icon: build/icon.png
 
 publish:
   provider: github

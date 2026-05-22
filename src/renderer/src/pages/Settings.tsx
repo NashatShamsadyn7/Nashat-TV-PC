@@ -23,10 +23,9 @@ export default function Settings() {
 
   const s = STATUS_LABEL[status]
   const userLabel = user
-    ? user.isAnonymous
-      ? 'زائر'
-      : user.email || user.displayName || user.uid
+    ? user.displayName || user.email || user.uid
     : 'غير مسجّل'
+  const photoUrl = user?.photoURL
 
   return (
     <div>
@@ -45,17 +44,23 @@ export default function Settings() {
 
         <section className="bg-ink-700/30 rounded-2xl p-6">
           <div className="flex items-center gap-4 mb-4">
-            <UserCircle2 className="w-12 h-12 text-brand-400" />
+            {photoUrl ? (
+              <img
+                src={photoUrl}
+                alt=""
+                className="w-12 h-12 rounded-full ring-2 ring-brand-500/40"
+              />
+            ) : (
+              <UserCircle2 className="w-12 h-12 text-brand-400" />
+            )}
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-lg truncate">{userLabel}</h3>
-              <p className="text-ink-300 text-sm">
+              <p className="text-ink-300 text-sm truncate">
                 {authLoading
                   ? 'جارٍ التحقّق…'
                   : user
-                    ? user.isAnonymous
-                      ? 'جلسة زائر — لن يتم المزامنة مع Android'
-                      : 'مُسجَّل دخول — سيتم المزامنة لاحقاً'
-                    : 'سجّل الدخول للمزامنة مع تطبيق Android'}
+                    ? `${user.email} — مُزامن مع Android`
+                    : 'سجّل الدخول بحساب Gmail للمزامنة'}
               </p>
             </div>
             {user ? (

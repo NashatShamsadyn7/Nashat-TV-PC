@@ -2,6 +2,7 @@ import 'dotenv/config'
 import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'node:path'
 import { registerTmdbIpc } from './ipc/tmdb'
+import { installFrameHeaderBypass } from './security/frameHeaders'
 
 const isDev = !app.isPackaged
 
@@ -29,6 +30,22 @@ function createMainWindow(): BrowserWindow {
   win.once('ready-to-show', () => win.show())
 
   win.webContents.setWindowOpenHandler(({ url }) => {
+    // Firebase Auth / Google OAuth need an in-app popup.
+    if (
+      url.startsWith('https://accounts.google.com/') ||
+      url.includes('firebaseapp.com/__/auth/') ||
+      url.includes('identitytoolkit.googleapis.com')
+    ) {
+      return {
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+          width: 500,
+          height: 700,
+          autoHideMenuBar: true,
+          webPreferences: { contextIsolation: true, nodeIntegration: false }
+        }
+      }
+    }
     shell.openExternal(url)
     return { action: 'deny' }
   })
@@ -45,6 +62,7 @@ function createMainWindow(): BrowserWindow {
 
 app.whenReady().then(() => {
   app.setAppUserModelId('tv.nashat.pc')
+  installFrameHeaderBypass()
   registerTmdbIpc()
   createMainWindow()
 

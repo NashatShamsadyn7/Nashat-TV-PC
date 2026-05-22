@@ -6,9 +6,10 @@ import { backdropUrl } from '@shared/tmdb'
 
 type Props = {
   movie?: TmdbMovie | null
+  onPlay?: () => void
 }
 
-export default function Hero({ movie }: Props) {
+export default function Hero({ movie, onPlay }: Props) {
   const { t } = useTranslation()
   const backdrop = movie ? backdropUrl(movie.backdrop_path, 'w1280') : ''
   const title = movie?.title ?? t('app.name')
@@ -55,7 +56,11 @@ export default function Hero({ movie }: Props) {
         )}
         <p className="text-ink-200 max-w-xl mb-6 leading-relaxed line-clamp-3">{overview}</p>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 bg-white text-black font-semibold px-6 py-3 rounded-xl hover:bg-ink-100 transition-colors">
+          <button
+            onClick={onPlay}
+            disabled={!onPlay}
+            className="flex items-center gap-2 bg-white text-black font-semibold px-6 py-3 rounded-xl hover:bg-ink-100 disabled:opacity-60 transition-colors"
+          >
             <Play className="w-5 h-5 fill-black" />
             {t('common.play')}
           </button>

@@ -4,18 +4,21 @@ import PageHeader from '@/components/ui/PageHeader'
 import PosterCard from '@/components/cards/PosterCard'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { usePopularTv, useTrendingTv } from '@/features/tmdb/hooks'
+import { usePlayerStore } from '@/stores/playerStore'
 import { posterUrl, type TmdbTv } from '@shared/tmdb'
 
 function TvSection({
   title,
   data,
   loading,
-  error
+  error,
+  onPlay
 }: {
   title: string
   data: TmdbTv[] | null
   loading: boolean
   error: string | null
+  onPlay: (t: TmdbTv) => void
 }) {
   return (
     <section className="mb-8">
@@ -43,6 +46,7 @@ function TvSection({
                 title={s.name}
                 imageUrl={posterUrl(s.poster_path)}
                 rating={s.vote_average}
+                onClick={() => onPlay(s)}
               />
             ))}
       </div>
@@ -56,6 +60,16 @@ export default function Series() {
 
   const trending = useTrendingTv(lang)
   const popular = usePopularTv(lang)
+  const openTmdb = usePlayerStore((s) => s.openTmdb)
+  const playTv = (tv: TmdbTv) =>
+    openTmdb({
+      kind: 'tv',
+      tmdbId: tv.id,
+      title: tv.name,
+      subtitle: tv.first_air_date ? tv.first_air_date.slice(0, 4) : undefined,
+      season: 1,
+      episode: 1
+    })
 
   return (
     <div className="pb-10">
@@ -65,12 +79,14 @@ export default function Series() {
         data={trending.data?.results ?? null}
         loading={trending.loading}
         error={trending.error}
+        onPlay={playTv}
       />
       <TvSection
         title="الأكثر شعبية"
         data={popular.data?.results ?? null}
         loading={popular.loading}
         error={popular.error}
+        onPlay={playTv}
       />
     </div>
   )

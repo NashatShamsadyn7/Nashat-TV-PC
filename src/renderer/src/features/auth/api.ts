@@ -1,9 +1,7 @@
 import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signInAnonymously,
+  GoogleAuthProvider,
+  signInWithPopup,
   signOut,
-  updateProfile,
   type AuthError
 } from 'firebase/auth'
 import { auth } from '@/services/firebase'
@@ -12,41 +10,57 @@ function mapError(err: unknown): Error {
   const e = err as AuthError
   const code = e?.code ?? 'unknown'
   const messages: Record<string, string> = {
-    'auth/invalid-credential': 'بريد إلكتروني أو كلمة مرور غير صحيحة',
-    'auth/user-not-found': 'المستخدم غير موجود',
-    'auth/wrong-password': 'كلمة المرور غير صحيحة',
-    'auth/email-already-in-use': 'البريد الإلكتروني مستخدم مسبقاً',
-    'auth/weak-password': 'كلمة المرور ضعيفة (6 أحرف على الأقل)',
-    'auth/invalid-email': 'صيغة البريد الإلكتروني غير صحيحة',
+    'auth/popup-closed-by-user': 'تم إغلاق نافذة تسجيل الدخول',
+    'auth/popup-blocked': 'تم حجب نافذة تسجيل الدخول',
+    'auth/cancelled-popup-request': 'تم إلغاء الطلب',
     'auth/network-request-failed': 'تعذّر الاتصال بالخادم',
-    'auth/too-many-requests': 'محاولات كثيرة، حاول لاحقاً'
+    'auth/operation-not-allowed':
+      'طريقة تسجيل الدخول غير مفعّلة. فعّل Google في Firebase Console',
+    'auth/internal-error': 'حدث خطأ داخلي، حاول مرة أخرى'
   }
   return new Error(messages[code] ?? `${code}: ${e?.message ?? 'حدث خطأ'}`)
 }
 
+export class GmailOnlyError extends Error {
+  constructor(email: string | null) {
+    super(
+      email
+        ? `يُسمح فقط بحسابات Gmail. حسابك "${email}" غير مدعوم.`
+        : 'يُسمح فقط بحسابات Gmail'
+    )
+    this.name = 'GmailOnlyError'
+  }
+}
+
+const isGmail = (email: string | null | undefined): boolean =>
+  !!email && /@gmail\.com$/i.test(email.trim())
+
 export const authApi = {
-  signIn: async (email: string, password: string) => {
+  /**
+   * Opens a Google sign-in popup. After auth succeeds we verify the address
+   * ends with @gmail.com — if it doesn't (e.g. Workspace / non-Google relay
+   * service), we sign the user out immediately and surface a clear error so
+   * temp-mail / disposable accounts can't slip through Google login.
+   */
+  signInWithGoogle: async () => {
+    const provider = new GoogleAuthProvider()
+    provider.setCustomParameters({ prompt: 'select_account' })
+
     try {
-      return await signInWithEmailAndPassword(auth, email, password)
+      const result = await signInWithPopup(auth, provider)
+      const email = result.user.email
+      if (!isGmail(email)) {
+        await signOut(auth)
+        throw new GmailOnlyError(email)
+      }
+      return result
     } catch (err) {
+      if (err instanceof GmailOnlyError) throw err
       throw mapError(err)
     }
   },
-  register: async (email: string, password: string, displayName?: string) => {
-    try {
-      const cred = await createUserWithEmailAndPassword(auth, email, password)
-      if (displayName) await updateProfile(cred.user, { displayName })
-      return cred
-    } catch (err) {
-      throw mapError(err)
-    }
-  },
-  signInAnon: async () => {
-    try {
-      return await signInAnonymously(auth)
-    } catch (err) {
-      throw mapError(err)
-    }
-  },
+
   signOut: () => signOut(auth)
 }
+
+export { isGmail }

@@ -3,11 +3,13 @@ import { AnimatePresence, motion } from 'framer-motion'
 import Sidebar from './Sidebar'
 import TopBar from './TopBar'
 import PlayerModal from '@/components/player/PlayerModal'
+import MoviePlayerModal from '@/components/player/MoviePlayerModal'
 import { usePlayerStore } from '@/stores/playerStore'
 
 export default function AppLayout() {
   const location = useLocation()
   const playerSource = usePlayerStore((s) => s.source)
+  const tmdbSource = usePlayerStore((s) => s.tmdbSource)
   const closePlayer = usePlayerStore((s) => s.close)
 
   return (
@@ -31,6 +33,7 @@ export default function AppLayout() {
         </main>
       </div>
       <PlayerModal source={playerSource} onClose={closePlayer} />
+      <MoviePlayerModal source={tmdbSource} onClose={closePlayer} />
     </div>
   )
 }

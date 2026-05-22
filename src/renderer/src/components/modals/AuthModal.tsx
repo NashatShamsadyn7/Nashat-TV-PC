@@ -1,61 +1,53 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { X, Loader2, UserCircle2 } from 'lucide-react'
+import { X, Loader2 } from 'lucide-react'
 import { authApi } from '@/features/auth/api'
-import { cn } from '@/lib/cn'
-
-type Mode = 'signin' | 'register'
 
 type Props = {
   open: boolean
   onClose: () => void
 }
 
+// Official Google "G" mark used on Sign-In buttons.
+function GoogleLogo({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 48 48" className={className} aria-hidden>
+      <path
+        fill="#FFC107"
+        d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"
+      />
+      <path
+        fill="#FF3D00"
+        d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"
+      />
+      <path
+        fill="#4CAF50"
+        d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"
+      />
+      <path
+        fill="#1976D2"
+        d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571.001-.001.002-.001.003-.002l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"
+      />
+    </svg>
+  )
+}
+
 export default function AuthModal({ open, onClose }: Props) {
-  const [mode, setMode] = useState<Mode>('signin')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [displayName, setDisplayName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
-  const reset = () => {
-    setEmail('')
-    setPassword('')
-    setDisplayName('')
+  const handleClose = () => {
     setError(null)
     setBusy(false)
-  }
-
-  const handleClose = () => {
-    reset()
     onClose()
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleGoogle = async () => {
     setError(null)
     setBusy(true)
     try {
-      if (mode === 'signin') {
-        await authApi.signIn(email, password)
-      } else {
-        await authApi.register(email, password, displayName || undefined)
-      }
-      handleClose()
-    } catch (err) {
-      setError((err as Error).message)
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const handleAnon = async () => {
-    setError(null)
-    setBusy(true)
-    try {
-      await authApi.signInAnon()
+      await authApi.signInWithGoogle()
       handleClose()
     } catch (err) {
       setError((err as Error).message)
@@ -83,12 +75,7 @@ export default function AuthModal({ open, onClose }: Props) {
             className="w-full max-w-md bg-ink-800 rounded-2xl ring-1 ring-ink-600/50 shadow-2xl overflow-hidden"
           >
             <header className="flex items-center justify-between p-5 border-b border-ink-700/40">
-              <div className="flex items-center gap-3">
-                <UserCircle2 className="w-7 h-7 text-brand-400" />
-                <h2 className="text-lg font-bold">
-                  {mode === 'signin' ? 'تسجيل الدخول' : 'إنشاء حساب'}
-                </h2>
-              </div>
+              <h2 className="text-lg font-bold">تسجيل الدخول</h2>
               <button
                 onClick={handleClose}
                 className="w-9 h-9 grid place-items-center rounded-lg text-ink-200 hover:text-white hover:bg-ink-700/40"
@@ -97,59 +84,24 @@ export default function AuthModal({ open, onClose }: Props) {
               </button>
             </header>
 
-            <div className="flex border-b border-ink-700/40">
-              {(['signin', 'register'] as Mode[]).map((m) => (
-                <button
-                  key={m}
-                  onClick={() => {
-                    setMode(m)
-                    setError(null)
-                  }}
-                  className={cn(
-                    'flex-1 py-3 text-sm font-semibold transition-colors',
-                    mode === m
-                      ? 'text-brand-400 border-b-2 border-brand-500'
-                      : 'text-ink-300 hover:text-white'
-                  )}
-                >
-                  {m === 'signin' ? 'تسجيل الدخول' : 'حساب جديد'}
-                </button>
-              ))}
-            </div>
+            <div className="p-6 space-y-5">
+              <p className="text-ink-200 text-sm leading-relaxed text-center">
+                للوصول لكامل المميزات ومزامنة المفضّلة مع تطبيق الموبايل،
+                سجّل دخولك بحساب <span className="font-bold text-brand-300">Gmail</span> فقط.
+              </p>
 
-            <form onSubmit={handleSubmit} className="p-5 space-y-4">
-              {mode === 'register' && (
-                <div>
-                  <label className="text-xs text-ink-300 mb-1 block">الاسم (اختياري)</label>
-                  <input
-                    type="text"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    className="w-full bg-ink-700/40 border border-ink-600/50 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brand-500"
-                  />
-                </div>
-              )}
-              <div>
-                <label className="text-xs text-ink-300 mb-1 block">البريد الإلكتروني</label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-ink-700/40 border border-ink-600/50 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brand-500"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-ink-300 mb-1 block">كلمة المرور</label>
-                <input
-                  type="password"
-                  required
-                  minLength={6}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-ink-700/40 border border-ink-600/50 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-brand-500"
-                />
-              </div>
+              <button
+                onClick={handleGoogle}
+                disabled={busy}
+                className="w-full bg-white hover:bg-ink-100 disabled:opacity-60 text-ink-900 font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-3"
+              >
+                {busy ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <GoogleLogo className="w-5 h-5" />
+                )}
+                <span>{busy ? 'جارٍ التحقّق…' : 'المتابعة بحساب Gmail'}</span>
+              </button>
 
               {error && (
                 <div className="text-sm text-rose-300 bg-rose-500/10 ring-1 ring-rose-500/30 rounded-lg p-3">
@@ -157,33 +109,14 @@ export default function AuthModal({ open, onClose }: Props) {
                 </div>
               )}
 
-              <button
-                type="submit"
-                disabled={busy}
-                className="w-full bg-brand-500 hover:bg-brand-600 disabled:opacity-60 text-white font-semibold py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2"
-              >
-                {busy && <Loader2 className="w-4 h-4 animate-spin" />}
-                {mode === 'signin' ? 'دخول' : 'تسجيل'}
-              </button>
-
-              <div className="relative my-2">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-ink-700/60" />
-                </div>
-                <div className="relative flex justify-center">
-                  <span className="bg-ink-800 px-3 text-xs text-ink-300">أو</span>
-                </div>
+              <div className="text-xs text-ink-400 leading-relaxed border-t border-ink-700/40 pt-4">
+                <p className="mb-1">🔒 <strong>الحسابات المؤقّتة محظورة</strong></p>
+                <p>
+                  لن نقبل tempmail، 10minutemail، Yahoo، Outlook، أو أي مزوّد آخر. فقط
+                  حسابات Gmail الرسمية من Google.
+                </p>
               </div>
-
-              <button
-                type="button"
-                onClick={handleAnon}
-                disabled={busy}
-                className="w-full bg-ink-700/40 hover:bg-ink-700/70 text-white font-medium py-2.5 rounded-xl transition-colors"
-              >
-                المتابعة كزائر
-              </button>
-            </form>
+            </div>
           </motion.div>
         </motion.div>
       )}

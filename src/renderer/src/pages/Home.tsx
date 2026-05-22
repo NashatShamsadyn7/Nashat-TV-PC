@@ -9,7 +9,8 @@ import {
   useTrendingMovies,
   useTrendingTv
 } from '@/features/tmdb/hooks'
-import { posterUrl } from '@shared/tmdb'
+import { usePlayerStore } from '@/stores/playerStore'
+import { posterUrl, type TmdbMovie, type TmdbTv } from '@shared/tmdb'
 
 function CarouselSkeleton() {
   return (
@@ -34,10 +35,28 @@ export default function Home() {
   const trendingTv = useTrendingTv(lang)
 
   const heroMovie = trending.data?.results?.[0] ?? null
+  const openTmdb = usePlayerStore((s) => s.openTmdb)
+
+  const playMovie = (m: TmdbMovie) =>
+    openTmdb({
+      kind: 'movie',
+      tmdbId: m.id,
+      title: m.title,
+      subtitle: m.release_date ? m.release_date.slice(0, 4) : undefined
+    })
+  const playTv = (tv: TmdbTv) =>
+    openTmdb({
+      kind: 'tv',
+      tmdbId: tv.id,
+      title: tv.name,
+      subtitle: tv.first_air_date ? tv.first_air_date.slice(0, 4) : undefined,
+      season: 1,
+      episode: 1
+    })
 
   return (
     <div className="pb-10">
-      <Hero movie={heroMovie} />
+      <Hero movie={heroMovie} onPlay={heroMovie ? () => playMovie(heroMovie) : undefined} />
 
       <Carousel title={t('home.trending')}>
         {trending.loading ? (
@@ -49,6 +68,7 @@ export default function Home() {
               title={m.title}
               imageUrl={posterUrl(m.poster_path)}
               rating={m.vote_average}
+              onClick={() => playMovie(m)}
             />
           ))
         )}
@@ -64,6 +84,7 @@ export default function Home() {
               title={m.title}
               imageUrl={posterUrl(m.poster_path)}
               rating={m.vote_average}
+              onClick={() => playMovie(m)}
             />
           ))
         )}
@@ -79,6 +100,7 @@ export default function Home() {
               title={m.title}
               imageUrl={posterUrl(m.poster_path)}
               rating={m.vote_average}
+              onClick={() => playMovie(m)}
             />
           ))
         )}
@@ -94,6 +116,7 @@ export default function Home() {
               title={s.name}
               imageUrl={posterUrl(s.poster_path)}
               rating={s.vote_average}
+              onClick={() => playTv(s)}
             />
           ))
         )}

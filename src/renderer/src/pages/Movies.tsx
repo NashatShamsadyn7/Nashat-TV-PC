@@ -4,18 +4,21 @@ import PageHeader from '@/components/ui/PageHeader'
 import PosterCard from '@/components/cards/PosterCard'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { usePopularMovies, useTopRatedMovies, useTrendingMovies } from '@/features/tmdb/hooks'
+import { usePlayerStore } from '@/stores/playerStore'
 import { posterUrl, type TmdbMovie } from '@shared/tmdb'
 
 function MovieSection({
   title,
   data,
   loading,
-  error
+  error,
+  onPlay
 }: {
   title: string
   data: TmdbMovie[] | null
   loading: boolean
   error: string | null
+  onPlay: (m: TmdbMovie) => void
 }) {
   return (
     <section className="mb-8">
@@ -42,6 +45,7 @@ function MovieSection({
                 title={m.title}
                 imageUrl={posterUrl(m.poster_path)}
                 rating={m.vote_average}
+                onClick={() => onPlay(m)}
               />
             ))}
       </div>
@@ -56,6 +60,14 @@ export default function Movies() {
   const trending = useTrendingMovies(lang)
   const popular = usePopularMovies(lang)
   const topRated = useTopRatedMovies(lang)
+  const openTmdb = usePlayerStore((s) => s.openTmdb)
+  const playMovie = (m: TmdbMovie) =>
+    openTmdb({
+      kind: 'movie',
+      tmdbId: m.id,
+      title: m.title,
+      subtitle: m.release_date ? m.release_date.slice(0, 4) : undefined
+    })
 
   return (
     <div className="pb-10">
@@ -65,18 +77,21 @@ export default function Movies() {
         data={trending.data?.results ?? null}
         loading={trending.loading}
         error={trending.error}
+        onPlay={playMovie}
       />
       <MovieSection
         title="الأكثر شعبية"
         data={popular.data?.results ?? null}
         loading={popular.loading}
         error={popular.error}
+        onPlay={playMovie}
       />
       <MovieSection
         title={t('home.topRated')}
         data={topRated.data?.results ?? null}
         loading={topRated.loading}
         error={topRated.error}
+        onPlay={playMovie}
       />
     </div>
   )

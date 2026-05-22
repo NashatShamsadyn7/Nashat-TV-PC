@@ -10,17 +10,17 @@
   "main": "./out/main/index.js",
   "homepage": "./",
   "scripts": {
-    "dev": "electron-vite dev",
-    "build": "electron-vite build",
-    "start": "electron-vite preview",
+    "dev": "node scripts/run.mjs dev",
+    "build": "node scripts/run.mjs build",
+    "start": "node scripts/run.mjs preview",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "lint": "eslint . --ext .ts,.tsx",
     "format": "prettier --write \"**/*.{ts,tsx,json,css,md}\"",
-    "package:win": "electron-vite build && electron-builder --win",
-    "package:mac": "electron-vite build && electron-builder --mac",
-    "package:linux": "electron-vite build && electron-builder --linux"
+    "package:win": "node scripts/run.mjs build && electron-builder --win",
+    "package:mac": "node scripts/run.mjs build && electron-builder --mac",
+    "package:linux": "node scripts/run.mjs build && electron-builder --linux"
   },
   "dependencies": {
     "clsx": "^2.1.1",

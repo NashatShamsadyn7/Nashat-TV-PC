@@ -12,8 +12,9 @@
         font-src 'self' https://fonts.gstatic.com data:;
         img-src 'self' data: blob: https:;
         media-src 'self' blob: https:;
-        connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebaseio.com wss://*.firebasedatabase.app https://api.themoviedb.org https://image.tmdb.org;
+        connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebaseio.com wss://*.firebasedatabase.app https://api.themoviedb.org https://image.tmdb.org https://identitytoolkit.googleapis.com https://securetoken.googleapis.com;
         frame-src 'self' https:;
+        child-src 'self' https:;
       "
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />

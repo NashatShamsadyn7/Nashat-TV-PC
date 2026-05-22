@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'node:path'
+import { registerTmdbIpc } from './ipc/tmdb'
 
 const isDev = !app.isPackaged
 
@@ -44,6 +45,7 @@ function createMainWindow(): BrowserWindow {
 
 app.whenReady().then(() => {
   app.setAppUserModelId('tv.nashat.pc')
+  registerTmdbIpc()
   createMainWindow()
 
   app.on('activate', () => {

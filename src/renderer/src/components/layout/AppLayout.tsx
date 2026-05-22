@@ -2,9 +2,13 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import Sidebar from './Sidebar'
 import TopBar from './TopBar'
+import PlayerModal from '@/components/player/PlayerModal'
+import { usePlayerStore } from '@/stores/playerStore'
 
 export default function AppLayout() {
   const location = useLocation()
+  const playerSource = usePlayerStore((s) => s.source)
+  const closePlayer = usePlayerStore((s) => s.close)
 
   return (
     <div className="flex h-screen overflow-hidden bg-ink-900 text-white">
@@ -26,6 +30,7 @@ export default function AppLayout() {
           </AnimatePresence>
         </main>
       </div>
+      <PlayerModal source={playerSource} onClose={closePlayer} />
     </div>
   )
 }

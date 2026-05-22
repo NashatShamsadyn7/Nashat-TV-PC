@@ -5,6 +5,7 @@ import PageHeader from '@/components/ui/PageHeader'
 import { Skeleton } from '@/components/ui/Skeleton'
 import ChannelCard from '@/components/cards/ChannelCard'
 import { useChannels } from '@/features/livetv/useChannels'
+import { usePlayerStore } from '@/stores/playerStore'
 import { cn } from '@/lib/cn'
 import type { Channel } from '@shared/types'
 
@@ -47,9 +48,14 @@ export default function LiveTV() {
     })
   }, [channels, query, activeCategory])
 
+  const openPlayer = usePlayerStore((s) => s.open)
   const handlePlay = (channel: Channel) => {
-    // Player integration arrives in the next step.
-    console.log('[livetv] play:', channel.name, channel.streamUrl)
+    openPlayer({
+      title: channel.name,
+      subtitle: channel.category,
+      logo: channel.logo,
+      url: channel.streamUrl || channel.url
+    })
   }
 
   return (

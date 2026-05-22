@@ -3,13 +3,18 @@ import Hero from '@/components/layout/Hero'
 import Carousel from '@/components/layout/Carousel'
 import PosterCard from '@/components/cards/PosterCard'
 import { Skeleton } from '@/components/ui/Skeleton'
-
-const PLACEHOLDER_ITEMS = Array.from({ length: 12 }, (_, i) => i)
+import {
+  useNowPlayingMovies,
+  useTopRatedMovies,
+  useTrendingMovies,
+  useTrendingTv
+} from '@/features/tmdb/hooks'
+import { posterUrl } from '@shared/tmdb'
 
 function CarouselSkeleton() {
   return (
     <>
-      {PLACEHOLDER_ITEMS.map((i) => (
+      {Array.from({ length: 10 }).map((_, i) => (
         <div key={i} className="w-40 shrink-0">
           <Skeleton className="aspect-[2/3]" />
           <Skeleton className="h-4 mt-2 w-3/4" />
@@ -20,21 +25,78 @@ function CarouselSkeleton() {
 }
 
 export default function Home() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const lang = i18n.language === 'ku' ? 'ar' : i18n.language
+
+  const trending = useTrendingMovies(lang)
+  const topRated = useTopRatedMovies(lang)
+  const nowPlaying = useNowPlayingMovies(lang)
+  const trendingTv = useTrendingTv(lang)
+
+  const heroMovie = trending.data?.results?.[0] ?? null
 
   return (
     <div className="pb-10">
-      <Hero />
+      <Hero movie={heroMovie} />
+
       <Carousel title={t('home.trending')}>
-        <CarouselSkeleton />
+        {trending.loading ? (
+          <CarouselSkeleton />
+        ) : (
+          (trending.data?.results ?? []).map((m) => (
+            <PosterCard
+              key={m.id}
+              title={m.title}
+              imageUrl={posterUrl(m.poster_path)}
+              rating={m.vote_average}
+            />
+          ))
+        )}
       </Carousel>
+
       <Carousel title={t('home.topRated')}>
-        {PLACEHOLDER_ITEMS.map((i) => (
-          <PosterCard key={i} title={`Placeholder ${i + 1}`} rating={8.0 + i * 0.1} />
-        ))}
+        {topRated.loading ? (
+          <CarouselSkeleton />
+        ) : (
+          (topRated.data?.results ?? []).map((m) => (
+            <PosterCard
+              key={m.id}
+              title={m.title}
+              imageUrl={posterUrl(m.poster_path)}
+              rating={m.vote_average}
+            />
+          ))
+        )}
       </Carousel>
+
       <Carousel title={t('home.nowPlaying')}>
-        <CarouselSkeleton />
+        {nowPlaying.loading ? (
+          <CarouselSkeleton />
+        ) : (
+          (nowPlaying.data?.results ?? []).map((m) => (
+            <PosterCard
+              key={m.id}
+              title={m.title}
+              imageUrl={posterUrl(m.poster_path)}
+              rating={m.vote_average}
+            />
+          ))
+        )}
+      </Carousel>
+
+      <Carousel title="مسلسلات رائجة">
+        {trendingTv.loading ? (
+          <CarouselSkeleton />
+        ) : (
+          (trendingTv.data?.results ?? []).map((s) => (
+            <PosterCard
+              key={s.id}
+              title={s.name}
+              imageUrl={posterUrl(s.poster_path)}
+              rating={s.vote_average}
+            />
+          ))
+        )}
       </Carousel>
     </div>
   )

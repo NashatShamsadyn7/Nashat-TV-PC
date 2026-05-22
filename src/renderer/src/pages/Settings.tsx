@@ -1,8 +1,12 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { LogIn, LogOut, UserCircle2 } from 'lucide-react'
 import PageHeader from '@/components/ui/PageHeader'
 import StatusBadge from '@/components/ui/StatusBadge'
+import AuthModal from '@/components/modals/AuthModal'
 import { useFirebaseConnection } from '@/hooks/useFirebaseConnection'
 import { useAuthStore } from '@/stores/authStore'
+import { authApi } from '@/features/auth/api'
 
 const STATUS_LABEL = {
   connecting: { tone: 'info' as const, label: 'جارٍ الاتصال…' },
@@ -15,8 +19,14 @@ export default function Settings() {
   const status = useFirebaseConnection()
   const user = useAuthStore((s) => s.user)
   const authLoading = useAuthStore((s) => s.loading)
+  const [authOpen, setAuthOpen] = useState(false)
 
   const s = STATUS_LABEL[status]
+  const userLabel = user
+    ? user.isAnonymous
+      ? 'زائر'
+      : user.email || user.displayName || user.uid
+    : 'غير مسجّل'
 
   return (
     <div>
@@ -34,17 +44,38 @@ export default function Settings() {
         </section>
 
         <section className="bg-ink-700/30 rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-semibold text-lg">المستخدم</h3>
-            <StatusBadge tone={user ? 'success' : 'warning'}>
-              {authLoading ? 'جارٍ التحقّق…' : user ? 'مُسجَّل دخول' : 'زائر'}
-            </StatusBadge>
+          <div className="flex items-center gap-4 mb-4">
+            <UserCircle2 className="w-12 h-12 text-brand-400" />
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-lg truncate">{userLabel}</h3>
+              <p className="text-ink-300 text-sm">
+                {authLoading
+                  ? 'جارٍ التحقّق…'
+                  : user
+                    ? user.isAnonymous
+                      ? 'جلسة زائر — لن يتم المزامنة مع Android'
+                      : 'مُسجَّل دخول — سيتم المزامنة لاحقاً'
+                    : 'سجّل الدخول للمزامنة مع تطبيق Android'}
+              </p>
+            </div>
+            {user ? (
+              <button
+                onClick={() => authApi.signOut()}
+                className="flex items-center gap-2 bg-ink-700/40 hover:bg-rose-500/20 hover:text-rose-300 px-4 py-2 rounded-xl text-sm font-medium transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                خروج
+              </button>
+            ) : (
+              <button
+                onClick={() => setAuthOpen(true)}
+                className="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
+              >
+                <LogIn className="w-4 h-4" />
+                دخول
+              </button>
+            )}
           </div>
-          <p className="text-ink-300 text-sm">
-            {user
-              ? user.email || user.uid
-              : 'لم يتم تسجيل الدخول بعد. سيُضاف لاحقاً للمزامنة مع تطبيق Android.'}
-          </p>
         </section>
 
         <section className="bg-ink-700/30 rounded-2xl p-6">
@@ -52,6 +83,8 @@ export default function Settings() {
           <p className="text-ink-300 text-sm">v0.1.0 — مرحلة التطوير المبكّر</p>
         </section>
       </div>
+
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
     </div>
   )
 }

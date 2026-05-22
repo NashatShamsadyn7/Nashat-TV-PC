@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
+import type { TmdbInvokePayload } from '@shared/tmdb'
 
 const api = {
   platform: process.platform,
@@ -7,8 +8,8 @@ const api = {
     chrome: process.versions.chrome,
     electron: process.versions.electron
   },
-  invoke: <T = unknown>(channel: string, ...args: unknown[]): Promise<T> =>
-    ipcRenderer.invoke(channel, ...args)
+  tmdbGet: <T = unknown>(payload: TmdbInvokePayload): Promise<T> =>
+    ipcRenderer.invoke('tmdb:get', payload)
 }
 
 contextBridge.exposeInMainWorld('nashat', api)

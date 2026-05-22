@@ -5,19 +5,26 @@ type Props = {
   title?: string
   imageUrl?: string
   rating?: number
+  onClick?: () => void
 }
 
-export default function PosterCard({ title, imageUrl, rating }: Props) {
+export default function PosterCard({ title, imageUrl, rating, onClick }: Props) {
   return (
     <motion.button
       whileHover={{ scale: 1.05, y: -4 }}
       whileTap={{ scale: 0.98 }}
       transition={{ type: 'spring', stiffness: 300, damping: 22 }}
-      className="group relative w-40 shrink-0 text-start"
+      onClick={onClick}
+      className="group relative w-40 shrink-0 text-start snap-start"
     >
       <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-ink-700/40 ring-1 ring-ink-600/40 group-hover:ring-brand-500/60 transition">
         {imageUrl ? (
-          <img src={imageUrl} alt={title} className="w-full h-full object-cover" />
+          <img
+            src={imageUrl}
+            alt={title}
+            loading="lazy"
+            className="w-full h-full object-cover"
+          />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-ink-700 to-ink-800" />
         )}
@@ -28,7 +35,7 @@ export default function PosterCard({ title, imageUrl, rating }: Props) {
             <span className="font-semibold">تشغيل</span>
           </div>
         </div>
-        {rating !== undefined && (
+        {rating !== undefined && rating > 0 && (
           <span className="absolute top-2 end-2 bg-black/70 backdrop-blur-sm rounded-md px-2 py-0.5 text-xs font-bold">
             ★ {rating.toFixed(1)}
           </span>

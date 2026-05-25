@@ -25,7 +25,16 @@ const api = {
   // Picture-in-Picture detached window
   openPip: (payload: { streamUrl: string; title?: string; logo?: string }): Promise<void> =>
     ipcRenderer.invoke('pip:open', payload),
-  closePip: (): Promise<void> => ipcRenderer.invoke('pip:close')
+  closePip: (): Promise<void> => ipcRenderer.invoke('pip:close'),
+  // System integration
+  showTray: (): Promise<void> => ipcRenderer.invoke('system:show-tray'),
+  setPresence: (payload: { title?: string; status?: 'playing' | 'paused' | 'idle' }): Promise<void> =>
+    ipcRenderer.invoke('system:set-presence', payload),
+  onMediaKey: (handler: (action: 'play-pause' | 'next' | 'previous' | 'stop') => void): (() => void) => {
+    const listener = (_: unknown, action: 'play-pause' | 'next' | 'previous' | 'stop') => handler(action)
+    ipcRenderer.on('media-key', listener)
+    return () => ipcRenderer.off('media-key', listener)
+  }
 }
 
 contextBridge.exposeInMainWorld('nashat', api)

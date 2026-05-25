@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Search as SearchIcon, X, Clock, Tv, Film, Loader2 } from 'lucide-react'
+import { Search as SearchIcon, X, Clock, Tv, Film, Loader2, Mic, MicOff } from 'lucide-react'
 import PageHeader from '@/components/ui/PageHeader'
 import { useChannels } from '@/features/livetv/useChannels'
 import { useFuzzy, useDebounced, getSearchHistory, pushSearchHistory, clearSearchHistory } from '@/features/search/useSearch'
+import { useVoiceSearch } from '@/hooks/useVoiceSearch'
 import { tmdbApi } from '@/services/tmdb'
 import { posterUrl, backdropUrl, type TmdbMovie, type TmdbTv } from '@shared/tmdb'
 import type { Channel } from '@shared/types'
@@ -31,6 +32,8 @@ export default function SearchPage() {
 
   const open = usePlayerStore((s) => s.open)
   const openTmdb = usePlayerStore((s) => s.openTmdb)
+  const voiceLang = lang === 'ar' ? 'ar-SA' : lang === 'ku' ? 'ar-SA' : 'en-US'
+  const voice = useVoiceSearch((text) => setQuery(text), voiceLang)
 
   useEffect(() => {
     if (!debounced.trim()) {
@@ -80,13 +83,27 @@ export default function SearchPage() {
               placeholder="ابحث في القنوات، الأفلام، المسلسلات…"
               className="w-full bg-ink-700/40 ring-1 ring-ink-600/50 rounded-2xl ps-12 pe-12 py-4 text-lg placeholder:text-ink-300 focus:outline-none focus:ring-brand-500 transition-colors"
             />
-            {query && (
+            {query ? (
               <button
                 onClick={() => setQuery('')}
                 className="absolute top-1/2 -translate-y-1/2 end-4 w-8 h-8 grid place-items-center rounded-full hover:bg-ink-700/60"
               >
                 <X className="w-4 h-4" />
               </button>
+            ) : (
+              voice.supported && (
+                <button
+                  onClick={() => (voice.listening ? voice.stop() : voice.start())}
+                  title={voice.listening ? 'إيقاف' : 'بحث صوتي'}
+                  className={`absolute top-1/2 -translate-y-1/2 end-4 w-9 h-9 grid place-items-center rounded-full transition-colors ${
+                    voice.listening
+                      ? 'bg-rose-500 text-white animate-pulse'
+                      : 'bg-ink-700/40 hover:bg-ink-700/70'
+                  }`}
+                >
+                  {voice.listening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                </button>
+              )
             )}
           </div>
 

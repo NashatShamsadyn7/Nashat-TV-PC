@@ -12,6 +12,8 @@
     "actors": "ممثلون",
     "search": "بحث",
     "library": "مكتبتي",
+    "stats": "إحصائيّاتي",
+    "together": "مع الأصدقاء",
     "settings": "الإعدادات"
   },
   "home": {
@@ -20,7 +22,8 @@
     "nowPlaying": "تُعرض الآن",
     "continueWatching": "تابع المشاهدة",
     "myList": "قائمتي",
-    "favorites": "المفضّلة"
+    "favorites": "المفضّلة",
+    "becauseYouLiked": "لأنّك أحببت"
   },
   "common": {
     "loading": "جارٍ التحميل…",

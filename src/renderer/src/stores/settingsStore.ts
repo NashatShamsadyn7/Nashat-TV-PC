@@ -14,7 +14,7 @@ export type SettingsState = {
   preferredQuality: 'auto' | '1080p' | '720p' | '480p'
   seekStep: number
   subtitleStyle: SubtitleStyle
-  theme: 'dark' | 'midnight' | 'oled'
+  theme: 'dark' | 'midnight' | 'oled' | 'crimson' | 'forest' | 'sunset'
   reduceMotion: boolean
   hoverPeek: boolean
   discordRpc: boolean

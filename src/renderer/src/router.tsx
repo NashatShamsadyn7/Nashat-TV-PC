@@ -1,31 +1,54 @@
+import { lazy, Suspense } from 'react'
 import { createHashRouter } from 'react-router-dom'
 import AppLayout from '@/components/layout/AppLayout'
-import Home from '@/pages/Home'
-import LiveTV from '@/pages/LiveTV'
-import MultiLive from '@/pages/MultiLive'
-import Movies from '@/pages/Movies'
-import Series from '@/pages/Series'
-import Actors from '@/pages/Actors'
-import SearchPage from '@/pages/SearchPage'
-import Library from '@/pages/Library'
-import Settings from '@/pages/Settings'
-import Profiles from '@/pages/Profiles'
+import { Skeleton } from '@/components/ui/Skeleton'
+
+const Home = lazy(() => import('@/pages/Home'))
+const LiveTV = lazy(() => import('@/pages/LiveTV'))
+const MultiLive = lazy(() => import('@/pages/MultiLive'))
+const Movies = lazy(() => import('@/pages/Movies'))
+const Series = lazy(() => import('@/pages/Series'))
+const Actors = lazy(() => import('@/pages/Actors'))
+const SearchPage = lazy(() => import('@/pages/SearchPage'))
+const Library = lazy(() => import('@/pages/Library'))
+const Settings = lazy(() => import('@/pages/Settings'))
+const Profiles = lazy(() => import('@/pages/Profiles'))
+const Stats = lazy(() => import('@/pages/Stats'))
+const WatchTogether = lazy(() => import('@/pages/WatchTogether'))
+
+function PageFallback() {
+  return (
+    <div className="p-8 space-y-4">
+      <Skeleton className="h-10 w-60" />
+      <Skeleton className="h-4 w-80" />
+      <div className="grid grid-cols-5 gap-4 mt-8">
+        {Array.from({ length: 10 }).map((_, i) => (
+          <Skeleton key={i} className="aspect-[2/3]" />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+const wrap = (el: React.ReactElement) => <Suspense fallback={<PageFallback />}>{el}</Suspense>
 
 export const router = createHashRouter([
   {
     path: '/',
     element: <AppLayout />,
     children: [
-      { index: true, element: <Home /> },
-      { path: 'live', element: <LiveTV /> },
-      { path: 'live/multi', element: <MultiLive /> },
-      { path: 'movies', element: <Movies /> },
-      { path: 'series', element: <Series /> },
-      { path: 'actors', element: <Actors /> },
-      { path: 'search', element: <SearchPage /> },
-      { path: 'library', element: <Library /> },
-      { path: 'settings', element: <Settings /> },
-      { path: 'profiles', element: <Profiles /> }
+      { index: true, element: wrap(<Home />) },
+      { path: 'live', element: wrap(<LiveTV />) },
+      { path: 'live/multi', element: wrap(<MultiLive />) },
+      { path: 'movies', element: wrap(<Movies />) },
+      { path: 'series', element: wrap(<Series />) },
+      { path: 'actors', element: wrap(<Actors />) },
+      { path: 'search', element: wrap(<SearchPage />) },
+      { path: 'library', element: wrap(<Library />) },
+      { path: 'stats', element: wrap(<Stats />) },
+      { path: 'settings', element: wrap(<Settings />) },
+      { path: 'profiles', element: wrap(<Profiles />) },
+      { path: 'together', element: wrap(<WatchTogether />) }
     ]
   }
 ])

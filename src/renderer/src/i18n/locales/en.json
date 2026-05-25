@@ -12,6 +12,8 @@
     "actors": "Actors",
     "search": "Search",
     "library": "Library",
+    "stats": "Stats",
+    "together": "Watch Together",
     "settings": "Settings"
   },
   "home": {
@@ -20,7 +22,8 @@
     "nowPlaying": "Now Playing",
     "continueWatching": "Continue Watching",
     "myList": "My List",
-    "favorites": "Favorites"
+    "favorites": "Favorites",
+    "becauseYouLiked": "Because you liked"
   },
   "common": {
     "loading": "Loading…",

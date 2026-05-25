@@ -12,6 +12,8 @@
     "actors": "ئەکتەرەکان",
     "search": "گەڕان",
     "library": "کتێبخانە",
+    "stats": "ئامارەکانم",
+    "together": "لەگەڵ هاوڕێکان",
     "settings": "ڕێکخستنەکان"
   },
   "home": {
@@ -20,7 +22,8 @@
     "nowPlaying": "ئێستا پیشاندەدرێ",
     "continueWatching": "بەردەوامبە لە بینین",
     "myList": "لیستی من",
-    "favorites": "دڵخوازەکان"
+    "favorites": "دڵخوازەکان",
+    "becauseYouLiked": "چونکە حەزت لێ بوو"
   },
   "common": {
     "loading": "بارکردن…",

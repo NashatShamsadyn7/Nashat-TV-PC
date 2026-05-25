@@ -5,6 +5,7 @@ import { registerTmdbIpc } from './ipc/tmdb'
 import { registerStreamIpc } from './ipc/stream'
 import { registerAuthIpc } from './ipc/auth'
 import { registerPipIpc } from './ipc/pip'
+import { registerSystemIpc, registerMediaKeys } from './ipc/system'
 import { installFrameHeaderBypass } from './security/frameHeaders'
 import { installStreamHeaders } from './security/streamHeaders'
 import { installAdblock, shouldBlockUrl } from './security/adblock'
@@ -33,6 +34,7 @@ function isAllowedExternal(url: string): boolean {
 
 const isDev = !app.isPackaged
 let prodRendererOrigin: string | null = null
+let mainWin: BrowserWindow | null = null
 
 function createMainWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -116,6 +118,8 @@ app.whenReady().then(async () => {
   registerStreamIpc()
   registerAuthIpc()
   registerPipIpc()
+  registerSystemIpc(() => mainWin)
+  registerMediaKeys(() => mainWin)
 
   if (!isDev) {
     try {
@@ -128,6 +132,10 @@ app.whenReady().then(async () => {
   }
 
   const win = createMainWindow()
+  mainWin = win
+  win.on('closed', () => {
+    mainWin = null
+  })
   initAutoUpdater(win)
 
   app.on('activate', () => {

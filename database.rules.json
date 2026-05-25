@@ -1,0 +1,89 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "live_tv_channels": {
+      ".read": true,
+      ".write": false,
+      ".indexOn": ["category", "isAlive"]
+    },
+
+    "channels": {
+      ".read": true,
+      ".write": false,
+      ".indexOn": ["category", "isAlive"]
+    },
+
+    "categories": {
+      ".read": true,
+      ".write": false
+    },
+
+    "epg": {
+      ".read": true,
+      ".write": false,
+      "$channelKey": {
+        ".indexOn": ["start", "end"]
+      }
+    },
+
+    "trending_counters": {
+      ".read": true,
+      "$mediaId": {
+        ".write": "auth != null && newData.isNumber() && newData.val() == (data.val() || 0) + 1"
+      }
+    },
+
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        "watchlist": {
+          "$id": {
+            ".validate": "newData.hasChildren(['id','kind','title','addedAt']) && newData.child('id').val() === $id && newData.child('kind').val().matches(/^(movie|tv|channel)$/) && newData.child('title').isString() && newData.child('addedAt').isNumber()"
+          }
+        },
+        "favorites": {
+          "$id": {
+            ".validate": "newData.hasChildren(['id','kind','title','addedAt']) && newData.child('id').val() === $id && newData.child('kind').val().matches(/^(movie|tv|channel)$/) && newData.child('title').isString() && newData.child('addedAt').isNumber()"
+          }
+        },
+        "progress": {
+          "$id": {
+            ".validate": "newData.hasChildren(['id','kind','tmdbId','title','position','duration','updatedAt']) && newData.child('kind').val().matches(/^(movie|tv)$/) && newData.child('tmdbId').isNumber() && newData.child('position').isNumber() && newData.child('duration').isNumber() && newData.child('updatedAt').isNumber()"
+          }
+        },
+        "stats": {
+          ".validate": "newData.hasChildren()"
+        },
+        "notes": {
+          "$id": {
+            ".validate": "newData.hasChildren(['mediaId','timestamp','text','createdAt']) && newData.child('timestamp').isNumber() && newData.child('text').isString() && newData.child('text').val().length < 2000"
+          }
+        }
+      }
+    },
+
+    "rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        ".validate": "newData.hasChildren(['ownerId','createdAt'])",
+        "members": {
+          "$uid": {
+            ".validate": "auth.uid === $uid"
+          }
+        },
+        "state": {
+          ".validate": "newData.hasChildren(['playing','position','updatedAt'])"
+        },
+        "chat": {
+          "$msgId": {
+            ".validate": "newData.hasChildren(['uid','text','createdAt']) && newData.child('uid').val() === auth.uid && newData.child('text').val().length > 0 && newData.child('text').val().length < 500"
+          }
+        }
+      }
+    }
+  }
+}

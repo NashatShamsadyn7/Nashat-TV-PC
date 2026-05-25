@@ -11,6 +11,7 @@ import {
 } from '@/features/tmdb/hooks'
 import { usePlayerStore } from '@/stores/playerStore'
 import { useLibraryStore, libraryActions } from '@/stores/libraryStore'
+import { useRecommendations } from '@/features/recommendations/useRecommendations'
 import { posterUrl, backdropUrl, type TmdbMovie, type TmdbTv } from '@shared/tmdb'
 import { X, Play } from 'lucide-react'
 
@@ -92,6 +93,7 @@ export default function Home() {
   const progress = useLibraryStore((s) => s.progress)
   const watchlist = useLibraryStore((s) => s.watchlist)
   const favorites = useLibraryStore((s) => s.favorites)
+  const recs = useRecommendations(lang)
 
   const playMovie = (m: TmdbMovie) =>
     openTmdb({
@@ -234,6 +236,48 @@ export default function Home() {
               }}
             />
           ))}
+        </Carousel>
+      )}
+
+      {recs.items.length > 0 && (
+        <Carousel title={t('home.becauseYouLiked')}>
+          {recs.items.map((r: any) => {
+            const isTv = r._kind === 'tv'
+            const title = isTv ? r.name : r.title
+            return (
+              <PosterCard
+                key={`rec-${r.id}`}
+                title={title}
+                imageUrl={posterUrl(r.poster_path)}
+                rating={r.vote_average}
+                onClick={() =>
+                  isTv
+                    ? openTmdb({
+                        kind: 'tv',
+                        tmdbId: r.id,
+                        title,
+                        backdrop: backdropUrl(r.backdrop_path),
+                        season: 1,
+                        episode: 1
+                      })
+                    : openTmdb({
+                        kind: 'movie',
+                        tmdbId: r.id,
+                        title,
+                        backdrop: backdropUrl(r.backdrop_path)
+                      })
+                }
+                libItem={{
+                  kind: isTv ? 'tv' : 'movie',
+                  tmdbId: r.id,
+                  title,
+                  poster: posterUrl(r.poster_path),
+                  backdrop: backdropUrl(r.backdrop_path, 'w780'),
+                  year: (isTv ? r.first_air_date : r.release_date)?.slice(0, 4)
+                }}
+              />
+            )
+          })}
         </Carousel>
       )}
 

@@ -10,6 +10,8 @@ import {
   Library,
   Settings,
   LayoutGrid,
+  BarChart3,
+  PartyPopper,
   type LucideIcon
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -30,7 +32,9 @@ const NAV: NavEntry[] = [
   { to: '/series', icon: MonitorPlay, labelKey: 'nav.series' },
   { to: '/actors', icon: Users, labelKey: 'nav.actors' },
   { to: '/search', icon: Search, labelKey: 'nav.search' },
-  { to: '/library', icon: Library, labelKey: 'nav.library' }
+  { to: '/library', icon: Library, labelKey: 'nav.library' },
+  { to: '/stats', icon: BarChart3, labelKey: 'nav.stats' },
+  { to: '/together', icon: PartyPopper, labelKey: 'nav.together' }
 ]
 
 export default function Sidebar() {

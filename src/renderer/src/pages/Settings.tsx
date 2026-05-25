@@ -23,6 +23,7 @@ import { useSettingsStore } from '@/stores/settingsStore'
 import { useProfilesStore } from '@/stores/profilesStore'
 import { authApi } from '@/features/auth/api'
 import { changeLanguage, SUPPORTED_LANGUAGES, type Language } from '@/i18n'
+import { THEMES, type ThemeId } from '@/features/themes'
 import { cn } from '@/lib/cn'
 
 const STATUS_LABEL = {
@@ -273,17 +274,33 @@ export default function Settings() {
           <Row label="تقليل الحركة">
             <Toggle value={settings.reduceMotion} onChange={(v) => settings.set('reduceMotion', v)} />
           </Row>
-          <Row label="السمة">
-            <select
-              value={settings.theme}
-              onChange={(e) => settings.set('theme', e.target.value as any)}
-              className="bg-ink-700 ring-1 ring-ink-600 rounded-lg px-3 py-1.5 text-sm"
-            >
-              <option value="dark">داكن</option>
-              <option value="midnight">منتصف الليل</option>
-              <option value="oled">OLED أسود</option>
-            </select>
-          </Row>
+          <div>
+            <p className="text-sm font-medium mb-2">السمة</p>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+              {(Object.entries(THEMES) as [ThemeId, typeof THEMES[ThemeId]][]).map(([id, t]) => {
+                const active = settings.theme === id
+                return (
+                  <button
+                    key={id}
+                    onClick={() => settings.set('theme', id as any)}
+                    className={cn(
+                      'p-2 rounded-xl text-xs font-medium transition-all ring-2',
+                      active ? 'ring-brand-500' : 'ring-transparent hover:ring-ink-600'
+                    )}
+                    title={t.label}
+                  >
+                    <div
+                      className="w-full h-12 rounded-lg mb-1"
+                      style={{
+                        background: `linear-gradient(135deg, rgb(${t.vars['--ink-900']}) 0%, rgb(${t.vars['--ink-700']}) 50%, rgb(${t.vars['--brand-500']}) 100%)`
+                      }}
+                    />
+                    {t.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
           <Row label="اللغة">
             <select
               value={i18n.language}

@@ -1,14 +1,22 @@
 import { resolve } from 'node:path'
-import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
+import { defineConfig, externalizeDepsPlugin, loadEnv } from 'electron-vite'
 import react from '@vitejs/plugin-react'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  return {
   main: {
     plugins: [externalizeDepsPlugin()],
     resolve: {
       alias: {
         '@shared': resolve('src/shared')
       }
+    },
+    define: {
+      'process.env.TMDB_V3_KEY': JSON.stringify(env.TMDB_V3_KEY ?? ''),
+      'process.env.TMDB_V4_TOKEN': JSON.stringify(env.TMDB_V4_TOKEN ?? ''),
+      'process.env.GOOGLE_OAUTH_CLIENT_ID': JSON.stringify(env.GOOGLE_OAUTH_CLIENT_ID ?? ''),
+      'process.env.GOOGLE_OAUTH_CLIENT_SECRET': JSON.stringify(env.GOOGLE_OAUTH_CLIENT_SECRET ?? '')
     },
     build: {
       outDir: 'out/main',
@@ -33,6 +41,7 @@ export default defineConfig({
   },
   renderer: {
     root: 'src/renderer',
+    base: '/',
     plugins: [react()],
     resolve: {
       alias: {
@@ -50,5 +59,6 @@ export default defineConfig({
       port: 5173,
       strictPort: true
     }
+  }
   }
 })

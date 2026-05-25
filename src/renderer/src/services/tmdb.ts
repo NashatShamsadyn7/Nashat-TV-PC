@@ -45,5 +45,23 @@ export const tmdbApi = {
     tmdb<TmdbPaged<TmdbTv>>({
       endpoint: '/tv/top_rated',
       params: { page, language }
+    }),
+
+  searchMulti: (query: string, language = 'ar') =>
+    tmdb<TmdbPaged<TmdbMovie | TmdbTv>>({
+      endpoint: '/search/multi',
+      params: { query, language, include_adult: 'false' }
+    }),
+
+  searchMovies: (query: string, language = 'ar') =>
+    tmdb<TmdbPaged<TmdbMovie>>({
+      endpoint: '/search/movie',
+      params: { query, language, include_adult: 'false' }
+    }),
+
+  searchTv: (query: string, language = 'ar') =>
+    tmdb<TmdbPaged<TmdbTv>>({
+      endpoint: '/search/tv',
+      params: { query, language, include_adult: 'false' }
     })
 }

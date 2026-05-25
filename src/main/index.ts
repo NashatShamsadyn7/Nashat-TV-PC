@@ -3,10 +3,36 @@ import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'node:path'
 import { registerTmdbIpc } from './ipc/tmdb'
 import { registerStreamIpc } from './ipc/stream'
+import { registerAuthIpc } from './ipc/auth'
+import { registerPipIpc } from './ipc/pip'
 import { installFrameHeaderBypass } from './security/frameHeaders'
+import { installStreamHeaders } from './security/streamHeaders'
+import { installAdblock, shouldBlockUrl } from './security/adblock'
 import { initAutoUpdater } from './services/updater'
+import { startLocalRendererServer } from './services/localServer'
+
+// User-initiated links we want to honor by opening in the OS browser. Everything
+// else (popups, ad redirects from embedded iframes) is denied silently.
+const EXTERNAL_LINK_ALLOWLIST = [
+  'https://github.com/',
+  'https://nashat.tv/',
+  'mailto:'
+]
+
+function isAuthPopup(url: string): boolean {
+  return (
+    url.startsWith('https://accounts.google.com/') ||
+    url.includes('firebaseapp.com/__/auth/') ||
+    url.includes('identitytoolkit.googleapis.com')
+  )
+}
+
+function isAllowedExternal(url: string): boolean {
+  return EXTERNAL_LINK_ALLOWLIST.some((prefix) => url.startsWith(prefix))
+}
 
 const isDev = !app.isPackaged
+let prodRendererOrigin: string | null = null
 
 function createMainWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -31,13 +57,12 @@ function createMainWindow(): BrowserWindow {
 
   win.once('ready-to-show', () => win.show())
 
+  // Popups: allow only Google/Firebase Auth. Everything else (ad popups from
+  // embed iframes, popunders, window.open shenanigans) is silently denied.
+  // Explicit user-clicked external links (allowlist) are forwarded to the OS
+  // browser; ad redirects to unknown hosts are blocked outright.
   win.webContents.setWindowOpenHandler(({ url }) => {
-    // Firebase Auth / Google OAuth need an in-app popup.
-    if (
-      url.startsWith('https://accounts.google.com/') ||
-      url.includes('firebaseapp.com/__/auth/') ||
-      url.includes('identitytoolkit.googleapis.com')
-    ) {
+    if (isAuthPopup(url)) {
       return {
         action: 'allow',
         overrideBrowserWindowOptions: {
@@ -48,13 +73,28 @@ function createMainWindow(): BrowserWindow {
         }
       }
     }
-    shell.openExternal(url)
+    if (isAllowedExternal(url) && !shouldBlockUrl(url)) {
+      shell.openExternal(url).catch(() => {})
+    }
     return { action: 'deny' }
+  })
+
+  // Some ad scripts hijack the parent frame via `window.location = ...`.
+  // Block navigation away from our app origin (except the auth handler).
+  win.webContents.on('will-navigate', (event, url) => {
+    if (isAuthPopup(url)) return
+    if (prodRendererOrigin && url.startsWith(prodRendererOrigin)) return
+    if (isDev && process.env.ELECTRON_RENDERER_URL && url.startsWith(process.env.ELECTRON_RENDERER_URL)) return
+    event.preventDefault()
   })
 
   if (isDev && process.env.ELECTRON_RENDERER_URL) {
     win.loadURL(process.env.ELECTRON_RENDERER_URL)
     win.webContents.openDevTools({ mode: 'detach' })
+  } else if (prodRendererOrigin) {
+    // Serve from http://localhost:PORT so Firebase Auth popup postMessage works
+    // (file:// origin breaks Firebase's __/auth/handler postMessage handshake).
+    win.loadURL(`${prodRendererOrigin}/index.html`)
   } else {
     win.loadFile(join(__dirname, '../renderer/index.html'))
   }
@@ -62,11 +102,31 @@ function createMainWindow(): BrowserWindow {
   return win
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   app.setAppUserModelId('tv.nashat.pc')
+  installAdblock()
   installFrameHeaderBypass()
+  installStreamHeaders()
+  // Deny notifications/geolocation/media/etc. requested by embed iframes.
+  const { session } = await import('electron')
+  session.defaultSession.setPermissionRequestHandler((_wc, _perm, callback) => {
+    callback(false)
+  })
   registerTmdbIpc()
   registerStreamIpc()
+  registerAuthIpc()
+  registerPipIpc()
+
+  if (!isDev) {
+    try {
+      const rendererDir = join(__dirname, '../renderer')
+      const { origin } = await startLocalRendererServer(rendererDir)
+      prodRendererOrigin = origin
+    } catch (err) {
+      console.error('[main] failed to start local renderer server, falling back to file://', err)
+    }
+  }
+
   const win = createMainWindow()
   initAutoUpdater(win)
 

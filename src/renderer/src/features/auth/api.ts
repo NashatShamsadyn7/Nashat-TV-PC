@@ -1,24 +1,21 @@
-import {
-  GoogleAuthProvider,
-  signInWithPopup,
-  signOut,
-  type AuthError
-} from 'firebase/auth'
+import { GoogleAuthProvider, signInWithCredential, signOut } from 'firebase/auth'
 import { auth } from '@/services/firebase'
 
 function mapError(err: unknown): Error {
-  const e = err as AuthError
-  const code = e?.code ?? 'unknown'
-  const messages: Record<string, string> = {
-    'auth/popup-closed-by-user': 'تم إغلاق نافذة تسجيل الدخول',
-    'auth/popup-blocked': 'تم حجب نافذة تسجيل الدخول',
-    'auth/cancelled-popup-request': 'تم إلغاء الطلب',
-    'auth/network-request-failed': 'تعذّر الاتصال بالخادم',
-    'auth/operation-not-allowed':
-      'طريقة تسجيل الدخول غير مفعّلة. فعّل Google في Firebase Console',
-    'auth/internal-error': 'حدث خطأ داخلي، حاول مرة أخرى'
+  const msg = (err as Error)?.message ?? String(err)
+  if (msg.includes('auth_cancelled') || msg.includes('access_denied')) {
+    return new Error('تم إلغاء تسجيل الدخول')
   }
-  return new Error(messages[code] ?? `${code}: ${e?.message ?? 'حدث خطأ'}`)
+  if (msg.includes('auth_timeout')) {
+    return new Error('انتهت مهلة تسجيل الدخول، حاول مرة أخرى')
+  }
+  if (msg.includes('token_exchange_failed')) {
+    return new Error('فشل التحقق من Google، حاول مرة أخرى')
+  }
+  if (msg.includes('VITE_GOOGLE_CLIENT_ID')) {
+    return new Error('يجب ضبط VITE_GOOGLE_CLIENT_ID في ملف .env')
+  }
+  return new Error(`حدث خطأ: ${msg}`)
 }
 
 export class GmailOnlyError extends Error {
@@ -36,23 +33,32 @@ const isGmail = (email: string | null | undefined): boolean =>
   !!email && /@gmail\.com$/i.test(email.trim())
 
 export const authApi = {
-  /**
-   * Opens a Google sign-in popup. After auth succeeds we verify the address
-   * ends with @gmail.com — if it doesn't (e.g. Workspace / non-Google relay
-   * service), we sign the user out immediately and surface a clear error so
-   * temp-mail / disposable accounts can't slip through Google login.
-   */
   signInWithGoogle: async () => {
-    const provider = new GoogleAuthProvider()
-    provider.setCustomParameters({ prompt: 'select_account' })
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined
+    const clientSecret = import.meta.env.VITE_GOOGLE_CLIENT_SECRET as string | undefined
+    if (!clientId || !clientSecret) throw new Error('VITE_GOOGLE_CLIENT_ID أو VITE_GOOGLE_CLIENT_SECRET غير مضبوط في .env')
+
+    let idToken: string
+    let accessToken: string
 
     try {
-      const result = await signInWithPopup(auth, provider)
+      const result = await window.nashat.googleSignIn(clientId, clientSecret)
+      idToken = result.idToken
+      accessToken = result.accessToken
+    } catch (err) {
+      throw mapError(err)
+    }
+
+    try {
+      const credential = GoogleAuthProvider.credential(idToken, accessToken)
+      const result = await signInWithCredential(auth, credential)
+
       const email = result.user.email
       if (!isGmail(email)) {
         await signOut(auth)
         throw new GmailOnlyError(email)
       }
+
       return result
     } catch (err) {
       if (err instanceof GmailOnlyError) throw err

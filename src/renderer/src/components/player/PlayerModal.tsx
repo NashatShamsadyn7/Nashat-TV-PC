@@ -24,14 +24,36 @@ type ExtractState =
   | { status: 'ready'; stream: ExtractedStream }
   | { status: 'failed'; error: string }
 
+function isDirectStream(url: string): boolean {
+  return /\.(m3u8|mpd|mp4)(\?|$)/i.test(url)
+}
+
+function directKind(url: string): ExtractedStream['kind'] {
+  if (/\.m3u8/i.test(url)) return 'hls'
+  if (/\.mpd/i.test(url)) return 'dash'
+  return 'mp4'
+}
+
 export default function PlayerModal({ source, onClose }: Props) {
   const playerRef = useRef<PlayerHandle>(null)
   const [state, setState] = useState<ExtractState>({ status: 'idle' })
 
-  // Kick off extraction whenever the source changes
   useEffect(() => {
     if (!source) {
       setState({ status: 'idle' })
+      return
+    }
+
+    // If the channel URL is already a direct stream, skip extraction.
+    if (isDirectStream(source.url)) {
+      setState({
+        status: 'ready',
+        stream: {
+          pageUrl: source.url,
+          streamUrl: source.url,
+          kind: directKind(source.url)
+        }
+      })
       return
     }
 
@@ -53,6 +75,17 @@ export default function PlayerModal({ source, onClose }: Props) {
 
   const retry = () => {
     if (!source) return
+    if (isDirectStream(source.url)) {
+      setState({
+        status: 'ready',
+        stream: {
+          pageUrl: source.url,
+          streamUrl: source.url,
+          kind: directKind(source.url)
+        }
+      })
+      return
+    }
     setState({ status: 'extracting' })
     window.nashat
       .extractStream(source.url)
@@ -82,14 +115,32 @@ export default function PlayerModal({ source, onClose }: Props) {
           p?.toggleMute()
           break
         case 'ArrowLeft':
+        case 'j':
+        case 'J':
           p?.seekBy(-10)
           break
         case 'ArrowRight':
+        case 'l':
+        case 'L':
           p?.seekBy(10)
           break
         case 'r':
         case 'R':
           retry()
+          break
+        case 'p':
+        case 'P':
+          p?.togglePip()
+          break
+        case 'c':
+        case 'C':
+          p?.toggleSubtitles()
+          break
+        case ',':
+          p?.seekBy(-1 / 30)
+          break
+        case '.':
+          p?.seekBy(1 / 30)
           break
         default:
           if (/^[0-9]$/.test(e.key)) p?.seekTo(Number(e.key) / 10)
@@ -99,6 +150,27 @@ export default function PlayerModal({ source, onClose }: Props) {
     return () => window.removeEventListener('keydown', handleKey)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [source, onClose])
+
+  // Open detached PiP from main menu (Ctrl+Shift+P) — main-window-floating mini player
+  useEffect(() => {
+    if (!source || state.status !== 'ready') return
+    const handleKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'P' || e.key === 'p')) {
+        e.preventDefault()
+        if (state.status === 'ready') {
+          window.nashat
+            .openPip({
+              streamUrl: state.stream.streamUrl,
+              title: source.title,
+              logo: source.logo
+            })
+            .catch(() => {})
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [source, state])
 
   return createPortal(
     <AnimatePresence>
@@ -190,10 +262,29 @@ export default function PlayerModal({ source, onClose }: Props) {
             {state.status === 'ready' && (
               <VideoPlayer ref={playerRef} src={state.stream.streamUrl} />
             )}
+            {state.status === 'ready' && (
+              <button
+                onClick={() => {
+                  if (state.status !== 'ready') return
+                  window.nashat
+                    .openPip({
+                      streamUrl: state.stream.streamUrl,
+                      title: source?.title,
+                      logo: source?.logo
+                    })
+                    .then(() => onClose())
+                    .catch(() => {})
+                }}
+                title="نافذة عائمة (Ctrl+Shift+P)"
+                className="absolute top-20 end-4 bg-ink-700/70 hover:bg-brand-500 text-white text-xs font-semibold px-3 py-1.5 rounded-full backdrop-blur-sm transition-colors"
+              >
+                نافذة عائمة
+              </button>
+            )}
           </div>
 
           <footer className="px-4 py-2 text-center text-xs text-ink-400">
-            Space: تشغيل/إيقاف · F: ملء الشاشة · M: كتم · ← →: ±10 ثوانٍ · R: إعادة · Esc: إغلاق
+            Space · F · M · J/L · C ترجمة · P نافذة · ←→ ±10s · R إعادة · Esc
           </footer>
         </motion.div>
       )}

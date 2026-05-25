@@ -1,10 +1,10 @@
-import { BrowserWindow, session } from 'electron'
+import { net } from 'electron'
 
-const STREAM_PATTERN = /\.(m3u8|mpd|mp4)(\?|$)/i
-const EXTRACT_TIMEOUT_MS = 25_000
-const STREAM_PARTITION = 'persist:stream-extractor'
 const UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
+const MAX_HOPS = 5
+const REQUEST_TIMEOUT_MS = 8_000
+const CACHE_TTL_MS = 10 * 60 * 1000
 
 export type ExtractedStream = {
   pageUrl: string
@@ -13,9 +13,7 @@ export type ExtractedStream = {
   headers?: { referer?: string; userAgent?: string }
 }
 
-// Single-flight cache so we don't re-extract the same channel within 10 min.
 const cache = new Map<string, { value: ExtractedStream; expiresAt: number }>()
-const CACHE_TTL_MS = 10 * 60 * 1000
 
 function kindFromUrl(url: string): ExtractedStream['kind'] {
   if (/\.m3u8/i.test(url)) return 'hls'
@@ -23,91 +21,104 @@ function kindFromUrl(url: string): ExtractedStream['kind'] {
   return 'mp4'
 }
 
+function resolveUrl(base: string, src: string): string {
+  if (src.startsWith('//')) return 'https:' + src
+  if (/^https?:/i.test(src)) return src
+  try {
+    return new URL(src, base).toString()
+  } catch {
+    return src
+  }
+}
+
+async function fetchHtml(url: string, referer: string): Promise<{ body: string; finalUrl: string }> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  try {
+    const res = await net.fetch(url, {
+      method: 'GET',
+      redirect: 'follow',
+      headers: {
+        'User-Agent': UA,
+        Referer: referer,
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+      },
+      signal: controller.signal
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`)
+    const body = await res.text()
+    return { body, finalUrl: res.url || url }
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+// Ported from Android KarwanScraper.java — recursively follows iframes and
+// looks for hls/dash player config strings, with /embed.html → /index.m3u8 fallback.
+async function scrape(targetUrl: string, hop: number): Promise<string | null> {
+  if (hop >= MAX_HOPS) throw new Error('Too many iframe hops')
+
+  if (targetUrl.includes('/embed.html')) {
+    return targetUrl.replace('/embed.html', '/index.m3u8')
+  }
+
+  const { body: html, finalUrl } = await fetchHtml(targetUrl, 'https://karwan.tv/')
+
+  // 1. Follow valid iframes
+  const iframeRe = /<iframe[^>]*src=["']([^"']+)["']/gi
+  const iframes: string[] = []
+  let m: RegExpExecArray | null
+  while ((m = iframeRe.exec(html)) !== null) {
+    const src = m[1]
+    if (!src) continue
+    if (/google|facebook|ads/i.test(src)) continue
+    if (
+      /karwan|embed|live/i.test(src) ||
+      src.startsWith('/') ||
+      src.startsWith('.') ||
+      src.startsWith('//')
+    ) {
+      iframes.push(src)
+    }
+  }
+
+  if (iframes.length > 0) {
+    const next = resolveUrl(finalUrl, iframes[0])
+    return scrape(next, hop + 1)
+  }
+
+  // 2. dash: "..." / hls: "..." config in page JS
+  const dashMatch = html.match(/dash\s*:\s*['"]([^'"]+)['"]/i)
+  if (dashMatch) return dashMatch[1]
+  const hlsMatch = html.match(/hls\s*:\s*['"]([^'"]+)['"]/i)
+  if (hlsMatch) return hlsMatch[1]
+
+  // 3. Fallback: redirect landed on /embed.html
+  if (finalUrl.includes('/embed.html')) {
+    return finalUrl.replace('/embed.html', '/index.m3u8')
+  }
+
+  // 4. Generic fallback — scan raw HTML for any m3u8/mpd URL
+  const directMatch = html.match(/https?:\/\/[^"'\s<>]+\.(?:m3u8|mpd)[^"'\s<>]*/i)
+  if (directMatch) return directMatch[0]
+
+  return null
+}
+
 export async function extractStream(pageUrl: string): Promise<ExtractedStream> {
   const now = Date.now()
   const cached = cache.get(pageUrl)
   if (cached && cached.expiresAt > now) return cached.value
 
-  return new Promise<ExtractedStream>((resolve, reject) => {
-    const win = new BrowserWindow({
-      show: false,
-      width: 1280,
-      height: 720,
-      webPreferences: {
-        partition: STREAM_PARTITION,
-        contextIsolation: true,
-        nodeIntegration: false,
-        sandbox: true,
-        offscreen: false,
-        javascript: true,
-        webSecurity: false
-      }
-    })
+  const streamUrl = await scrape(pageUrl, 0)
+  if (!streamUrl) throw new Error('Stream URL not found in page')
 
-    let settled = false
-    const ses = win.webContents.session
-
-    const finish = (err: Error | null, result?: ExtractedStream) => {
-      if (settled) return
-      settled = true
-      try {
-        ses.webRequest.onBeforeRequest(null)
-      } catch {
-        /* ignore */
-      }
-      if (!win.isDestroyed()) win.destroy()
-      if (err) reject(err)
-      else if (result) {
-        cache.set(pageUrl, { value: result, expiresAt: Date.now() + CACHE_TTL_MS })
-        resolve(result)
-      }
-    }
-
-    const timer = setTimeout(
-      () => finish(new Error('Timed out extracting stream URL')),
-      EXTRACT_TIMEOUT_MS
-    )
-
-    ses.webRequest.onBeforeRequest({ urls: ['<all_urls>'] }, (details, callback) => {
-      if (settled) {
-        callback({})
-        return
-      }
-      if (STREAM_PATTERN.test(details.url)) {
-        clearTimeout(timer)
-        callback({ cancel: true })
-        finish(null, {
-          pageUrl,
-          streamUrl: details.url,
-          kind: kindFromUrl(details.url),
-          headers: { referer: pageUrl, userAgent: UA }
-        })
-        return
-      }
-      callback({})
-    })
-
-    win.webContents.setUserAgent(UA)
-    win.loadURL(pageUrl, { userAgent: UA }).catch((err) => finish(err))
-
-    // Some players need a user-gesture click to start network requests.
-    win.webContents.once('did-finish-load', () => {
-      win.webContents
-        .executeJavaScript(
-          `
-            (function autoplay() {
-              const videos = document.querySelectorAll('video');
-              videos.forEach(v => { try { v.muted = true; v.play(); } catch(e){} });
-              const buttons = document.querySelectorAll(
-                '.jw-icon-display, .vjs-big-play-button, button[aria-label*="play" i], .play-button, .plyr__control--overlaid'
-              );
-              buttons.forEach(b => { try { b.click(); } catch(e){} });
-            })();
-          `
-        )
-        .catch(() => {
-          /* ignore — page may have CSP that blocks this */
-        })
-    })
-  })
+  const result: ExtractedStream = {
+    pageUrl,
+    streamUrl,
+    kind: kindFromUrl(streamUrl),
+    headers: { referer: pageUrl, userAgent: UA }
+  }
+  cache.set(pageUrl, { value: result, expiresAt: now + CACHE_TTL_MS })
+  return result
 }

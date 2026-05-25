@@ -13,13 +13,19 @@ const api = {
     ipcRenderer.invoke('tmdb:get', payload),
   extractStream: (pageUrl: string): Promise<ExtractedStream> =>
     ipcRenderer.invoke('stream:extract', pageUrl),
+  googleSignIn: (clientId: string, clientSecret: string): Promise<{ idToken: string; accessToken: string }> =>
+    ipcRenderer.invoke('auth:google', clientId, clientSecret),
   // Auto-updater channel
   onUpdateEvent: (handler: (event: string, data?: unknown) => void): (() => void) => {
     const listener = (_: unknown, event: string, data?: unknown) => handler(event, data)
     ipcRenderer.on('updater:event', listener)
     return () => ipcRenderer.off('updater:event', listener)
   },
-  installUpdate: (): Promise<void> => ipcRenderer.invoke('updater:install')
+  installUpdate: (): Promise<void> => ipcRenderer.invoke('updater:install'),
+  // Picture-in-Picture detached window
+  openPip: (payload: { streamUrl: string; title?: string; logo?: string }): Promise<void> =>
+    ipcRenderer.invoke('pip:open', payload),
+  closePip: (): Promise<void> => ipcRenderer.invoke('pip:close')
 }
 
 contextBridge.exposeInMainWorld('nashat', api)

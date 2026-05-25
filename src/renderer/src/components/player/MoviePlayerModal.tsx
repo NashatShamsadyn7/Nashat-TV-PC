@@ -12,6 +12,8 @@ import {
   ChevronRight
 } from 'lucide-react'
 import type { TmdbMediaSource } from '@/stores/playerStore'
+import { libraryActions } from '@/stores/libraryStore'
+import { makeProgressId } from '@/features/library/types'
 import {
   sortByHealth,
   useServerHealth,
@@ -61,6 +63,24 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
     setAutoPicked(false)
     setReloadKey(0)
   }, [source?.tmdbId, source?.kind, source?.season, source?.episode])
+
+  // Record into "Continue Watching" the moment a media item opens.
+  useEffect(() => {
+    if (!source) return
+    const id = makeProgressId(source.kind, source.tmdbId, source.season, source.episode)
+    libraryActions.recordProgress({
+      id,
+      kind: source.kind,
+      tmdbId: source.tmdbId,
+      title: source.title,
+      backdrop: source.backdrop,
+      season: source.season,
+      episode: source.episode,
+      position: 0,
+      duration: 0,
+      updatedAt: Date.now()
+    })
+  }, [source?.tmdbId, source?.kind, source?.season, source?.episode]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-pick the first working server the moment one resolves
   useEffect(() => {
@@ -249,7 +269,6 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
                 allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
                 allowFullScreen
                 referrerPolicy="no-referrer"
-                sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-popups-to-escape-sandbox"
               />
             )}
           </div>

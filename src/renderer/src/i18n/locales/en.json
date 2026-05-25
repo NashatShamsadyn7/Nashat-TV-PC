@@ -6,6 +6,7 @@
   "nav": {
     "home": "Home",
     "livetv": "Live TV",
+    "multilive": "Multi-view",
     "movies": "Movies",
     "series": "Series",
     "actors": "Actors",
@@ -17,7 +18,9 @@
     "trending": "Trending Now",
     "topRated": "Top Rated",
     "nowPlaying": "Now Playing",
-    "continueWatching": "Continue Watching"
+    "continueWatching": "Continue Watching",
+    "myList": "My List",
+    "favorites": "Favorites"
   },
   "common": {
     "loading": "Loading…",

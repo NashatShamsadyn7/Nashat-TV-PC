@@ -6,6 +6,7 @@
   "nav": {
     "home": "سەرەکی",
     "livetv": "بەشی ڕاستەوخۆ",
+    "multilive": "بینینی چەند کەناڵ",
     "movies": "فیلمەکان",
     "series": "زنجیرە",
     "actors": "ئەکتەرەکان",
@@ -17,7 +18,9 @@
     "trending": "زۆرترین بینراو",
     "topRated": "باشترین هەڵسەنگاندن",
     "nowPlaying": "ئێستا پیشاندەدرێ",
-    "continueWatching": "بەردەوامبە لە بینین"
+    "continueWatching": "بەردەوامبە لە بینین",
+    "myList": "لیستی من",
+    "favorites": "دڵخوازەکان"
   },
   "common": {
     "loading": "بارکردن…",

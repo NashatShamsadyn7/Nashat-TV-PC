@@ -9,10 +9,12 @@ import {
   Search,
   Library,
   Settings,
+  LayoutGrid,
   type LucideIcon
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/cn'
+import { useProfilesStore } from '@/stores/profilesStore'
 
 type NavEntry = {
   to: string
@@ -23,6 +25,7 @@ type NavEntry = {
 const NAV: NavEntry[] = [
   { to: '/', icon: Home, labelKey: 'nav.home' },
   { to: '/live', icon: Tv, labelKey: 'nav.livetv' },
+  { to: '/live/multi', icon: LayoutGrid, labelKey: 'nav.multilive' },
   { to: '/movies', icon: Film, labelKey: 'nav.movies' },
   { to: '/series', icon: MonitorPlay, labelKey: 'nav.series' },
   { to: '/actors', icon: Users, labelKey: 'nav.actors' },
@@ -32,15 +35,30 @@ const NAV: NavEntry[] = [
 
 export default function Sidebar() {
   const { t } = useTranslation()
+  const profiles = useProfilesStore((s) => s.profiles)
+  const activeId = useProfilesStore((s) => s.activeId)
+  const active = profiles.find((p) => p.id === activeId)
 
   return (
     <aside className="w-60 shrink-0 h-full bg-ink-900/80 backdrop-blur-md border-e border-ink-700/50 flex flex-col">
-      <div className="px-6 py-7">
+      <div className="px-6 py-5">
         <h1 className="text-2xl font-extrabold bg-gradient-to-r from-brand-400 to-brand-600 bg-clip-text text-transparent">
           {t('app.name')}
         </h1>
         <p className="text-xs text-ink-300 mt-1">{t('app.tagline')}</p>
       </div>
+      {active && (
+        <NavLink
+          to="/profiles"
+          className="mx-3 mb-3 flex items-center gap-3 px-3 py-2 rounded-xl bg-ink-700/30 hover:bg-ink-700/60 transition-colors"
+        >
+          <span className="text-xl">{active.avatar}</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-ink-300">Profile</p>
+            <p className="text-sm font-semibold truncate">{active.name}</p>
+          </div>
+        </NavLink>
+      )}
 
       <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
         {NAV.map(({ to, icon: Icon, labelKey }) => (

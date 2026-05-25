@@ -6,6 +6,7 @@
   "nav": {
     "home": "الرئيسية",
     "livetv": "البث المباشر",
+    "multilive": "مشاهدة متعددة",
     "movies": "أفلام",
     "series": "مسلسلات",
     "actors": "ممثلون",
@@ -17,7 +18,9 @@
     "trending": "الأكثر رواجاً",
     "topRated": "الأعلى تقييماً",
     "nowPlaying": "تُعرض الآن",
-    "continueWatching": "تابع المشاهدة"
+    "continueWatching": "تابع المشاهدة",
+    "myList": "قائمتي",
+    "favorites": "المفضّلة"
   },
   "common": {
     "loading": "جارٍ التحميل…",

@@ -1,0 +1,130 @@
+name: Release
+
+# Triggered by pushing a v* tag (e.g. `git tag v1.2.2 && git push --tags`).
+# Builds the Windows installer, sends it to SignPath for code signing, then
+# attaches the signed artifact + auto-updater metadata to a GitHub Release.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write     # required to create the GitHub Release
+  id-token: write     # required by SignPath GitHub Action
+
+jobs:
+  build:
+    name: Build unsigned installer
+    runs-on: windows-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      artifact-id: ${{ steps.upload.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Resolve version
+        id: meta
+        shell: bash
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Write .env from repo secrets
+        shell: bash
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_DATABASE_URL: ${{ secrets.VITE_FIREBASE_DATABASE_URL }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_GOOGLE_CLIENT_SECRET: ${{ secrets.VITE_GOOGLE_CLIENT_SECRET }}
+          TMDB_V3_KEY: ${{ secrets.TMDB_V3_KEY }}
+          TMDB_V4_TOKEN: ${{ secrets.TMDB_V4_TOKEN }}
+        run: |
+          {
+            echo "VITE_FIREBASE_API_KEY=$VITE_FIREBASE_API_KEY"
+            echo "VITE_FIREBASE_AUTH_DOMAIN=$VITE_FIREBASE_AUTH_DOMAIN"
+            echo "VITE_FIREBASE_DATABASE_URL=$VITE_FIREBASE_DATABASE_URL"
+            echo "VITE_FIREBASE_PROJECT_ID=$VITE_FIREBASE_PROJECT_ID"
+            echo "VITE_FIREBASE_STORAGE_BUCKET=$VITE_FIREBASE_STORAGE_BUCKET"
+            echo "VITE_FIREBASE_MESSAGING_SENDER_ID=$VITE_FIREBASE_MESSAGING_SENDER_ID"
+            echo "VITE_FIREBASE_APP_ID=$VITE_FIREBASE_APP_ID"
+            echo "VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID"
+            echo "VITE_GOOGLE_CLIENT_SECRET=$VITE_GOOGLE_CLIENT_SECRET"
+            echo "TMDB_V3_KEY=$TMDB_V3_KEY"
+            echo "TMDB_V4_TOKEN=$TMDB_V4_TOKEN"
+          } > .env
+
+      - name: Build app bundles (electron-vite)
+        run: node scripts/run.mjs build
+
+      - name: Package Windows installer (unsigned)
+        run: npx electron-builder --win --publish never
+
+      - name: Upload unsigned artifact
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-installer
+          path: |
+            dist/Nashat TV-Setup-*.exe
+            dist/Nashat TV-Setup-*.exe.blockmap
+            dist/latest.yml
+          if-no-files-found: error
+          retention-days: 7
+
+  sign:
+    name: Sign installer via SignPath
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Submit signing request to SignPath
+        id: signpath
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
+          organization-id: '${{ secrets.SIGNPATH_ORG_ID }}'
+          project-slug: 'nashat-tv-pc'
+          signing-policy-slug: 'release-signing'
+          artifact-configuration-slug: 'installer'
+          github-artifact-id: '${{ needs.build.outputs.artifact-id }}'
+          wait-for-completion: true
+          output-artifact-directory: 'signed'
+
+      - name: Upload signed artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: signed-installer
+          path: signed/**
+          retention-days: 30
+
+  release:
+    name: Publish GitHub Release
+    needs: [build, sign]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: signed-installer
+          path: ./release
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Nashat TV PC ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            release/**/*.exe
+            release/**/*.blockmap
+            release/**/latest.yml

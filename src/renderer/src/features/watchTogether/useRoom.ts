@@ -14,6 +14,13 @@ export type RoomMedia = {
   subtitle?: string
 }
 
+export type RoomPlaybackState = {
+  playing: boolean
+  position: number
+  anchorAt: number
+  updatedAt: number
+}
+
 export type RoomState = {
   ownerId: string
   createdAt: number
@@ -21,7 +28,7 @@ export type RoomState = {
   mediaId?: string
   kind?: 'movie' | 'tv' | 'channel'
   media?: RoomMedia
-  state: { playing: boolean; position: number; updatedAt: number }
+  state: RoomPlaybackState
   members?: Record<string, { name: string; joinedAt: number }>
   chat?: Record<string, ChatMsg>
 }
@@ -29,7 +36,9 @@ export type RoomState = {
 export type ChatMsg = {
   uid: string
   name: string
-  text: string
+  text?: string
+  image?: string
+  gif?: string
   createdAt: number
 }
 
@@ -41,14 +50,21 @@ export function createRoomId(): string {
   return uid() + '-' + uid()
 }
 
-// Firebase RTDB rejects writes containing undefined values, so strip them
-// before sending. Returns a new object with only defined entries.
 function stripUndefined<T extends Record<string, unknown>>(obj: T): Partial<T> {
   const out: Record<string, unknown> = {}
   for (const [k, v] of Object.entries(obj)) {
     if (v !== undefined) out[k] = v
   }
   return out as Partial<T>
+}
+
+// Compute the position the viewer SHOULD be at right now, given the admin's
+// server-time anchor. Returns `position` directly when paused.
+export function computeLivePosition(state: RoomPlaybackState | undefined): number {
+  if (!state) return 0
+  if (!state.playing) return state.position
+  const driftSec = Math.max(0, (Date.now() - state.anchorAt) / 1000)
+  return state.position + driftSec
 }
 
 export async function createRoom(opts: {
@@ -60,26 +76,28 @@ export async function createRoom(opts: {
   const user = useAuthStore.getState().user
   if (!user) throw new Error('يجب تسجيل الدخول')
   const roomId = createRoomId()
+  const now = Date.now()
   await set(ref(db, `rooms/${roomId}`), {
     ownerId: user.uid,
-    createdAt: Date.now(),
+    createdAt: now,
     mediaId: opts.mediaId,
     mediaTitle: opts.mediaTitle,
     kind: opts.kind,
     ...(opts.media ? { media: stripUndefined(opts.media as Record<string, unknown>) } : {}),
-    state: { playing: false, position: 0, updatedAt: Date.now() },
-    members: { [user.uid]: { name: user.displayName || 'Guest', joinedAt: Date.now() } }
+    state: { playing: false, position: 0, anchorAt: now, updatedAt: now },
+    members: { [user.uid]: { name: user.displayName || 'Guest', joinedAt: now } }
   })
   return roomId
 }
 
 export async function setRoomMedia(roomId: string, media: RoomMedia) {
+  const now = Date.now()
   await update(ref(db, `rooms/${roomId}`), {
     media,
     mediaId: media.mediaId,
     mediaTitle: media.title,
     kind: media.kind,
-    state: { playing: false, position: 0, updatedAt: Date.now() }
+    state: { playing: false, position: 0, anchorAt: now, updatedAt: now }
   })
 }
 
@@ -98,23 +116,63 @@ export async function leaveRoom(roomId: string) {
   await remove(ref(db, `rooms/${roomId}/members/${user.uid}`))
 }
 
-export async function syncState(roomId: string, playing: boolean, position: number) {
+// Admin: start (or resume) playback. anchorAt = server time when admin pressed play.
+export async function adminPlay(roomId: string, position: number) {
   await update(ref(db, `rooms/${roomId}/state`), {
-    playing,
+    playing: true,
     position,
+    anchorAt: serverTimestamp() as unknown as number,
     updatedAt: serverTimestamp() as unknown as number
   })
 }
 
-export async function sendChat(roomId: string, text: string) {
+// Admin: pause at a specific position.
+export async function adminPause(roomId: string, position: number) {
+  await update(ref(db, `rooms/${roomId}/state`), {
+    playing: false,
+    position,
+    anchorAt: serverTimestamp() as unknown as number,
+    updatedAt: serverTimestamp() as unknown as number
+  })
+}
+
+// Admin: seek to position (keeps playing flag as-is).
+export async function adminSeek(roomId: string, position: number, playing: boolean) {
+  await update(ref(db, `rooms/${roomId}/state`), {
+    playing,
+    position,
+    anchorAt: serverTimestamp() as unknown as number,
+    updatedAt: serverTimestamp() as unknown as number
+  })
+}
+
+// Legacy helper kept for compatibility; prefer the admin* variants.
+export async function syncState(roomId: string, playing: boolean, position: number) {
+  await update(ref(db, `rooms/${roomId}/state`), {
+    playing,
+    position,
+    anchorAt: serverTimestamp() as unknown as number,
+    updatedAt: serverTimestamp() as unknown as number
+  })
+}
+
+export async function sendChat(
+  roomId: string,
+  payload: { text?: string; image?: string; gif?: string }
+) {
   const user = useAuthStore.getState().user
   if (!user) return
-  await push(ref(db, `rooms/${roomId}/chat`), {
-    uid: user.uid,
-    name: user.displayName || 'Guest',
-    text,
-    createdAt: Date.now()
-  })
+  await push(
+    ref(db, `rooms/${roomId}/chat`),
+    stripUndefined({
+      uid: user.uid,
+      name: user.displayName || 'Guest',
+      text: payload.text,
+      image: payload.image,
+      gif: payload.gif,
+      createdAt: Date.now()
+    })
+  )
 }
 
 export function useRoom(roomId: string | null) {

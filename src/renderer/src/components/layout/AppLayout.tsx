@@ -6,6 +6,8 @@ import TopBar from './TopBar'
 import PlayerModal from '@/components/player/PlayerModal'
 import MoviePlayerModal from '@/components/player/MoviePlayerModal'
 import ShortcutHelp from '@/components/ui/ShortcutHelp'
+import OnboardingModal from '@/features/friends/OnboardingModal'
+import UpdateNotifier from '@/components/system/UpdateNotifier'
 import { usePlayerStore } from '@/stores/playerStore'
 import { useGlobalShortcuts } from '@/hooks/useGlobalShortcuts'
 import { useSettingsStore } from '@/stores/settingsStore'
@@ -94,6 +96,8 @@ export default function AppLayout() {
       <PlayerModal source={playerSource} onClose={closePlayer} />
       <MoviePlayerModal source={tmdbSource} onClose={closePlayer} />
       <ShortcutHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
+      <OnboardingModal />
+      <UpdateNotifier />
     </div>
   )
 }

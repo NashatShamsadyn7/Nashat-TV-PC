@@ -14,4 +14,10 @@ export const useAuthStore = create<AuthState>(() => ({
 
 onAuthStateChanged(auth, (user) => {
   useAuthStore.setState({ user, loading: false })
+  if (user) {
+    // Lazy import to avoid a circular dep through services/firebase.
+    void import('@/features/friends/useFriends').then(({ ensureProfile }) =>
+      ensureProfile().catch((err) => console.warn('[auth] ensureProfile failed:', err))
+    )
+  }
 })

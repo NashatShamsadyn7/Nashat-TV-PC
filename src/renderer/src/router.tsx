@@ -17,6 +17,9 @@ const Settings = lazy(() => import('@/pages/Settings'))
 const Profiles = lazy(() => import('@/pages/Profiles'))
 const Stats = lazy(() => import('@/pages/Stats'))
 const WatchTogether = lazy(() => import('@/pages/WatchTogether'))
+const Friends = lazy(() => import('@/pages/Friends'))
+const Profile = lazy(() => import('@/pages/Profile'))
+const Chats = lazy(() => import('@/pages/Chats'))
 
 function PageFallback() {
   return (
@@ -52,7 +55,10 @@ export const router = createHashRouter([
       { path: 'stats', element: wrap(<Stats />) },
       { path: 'settings', element: wrap(<Settings />) },
       { path: 'profiles', element: wrap(<Profiles />) },
-      { path: 'together', element: wrap(<WatchTogether />) }
+      { path: 'together', element: wrap(<WatchTogether />) },
+      { path: 'friends', element: wrap(<Friends />) },
+      { path: 'profile', element: wrap(<Profile />) },
+      { path: 'chats', element: wrap(<Chats />) }
     ]
   }
 ])

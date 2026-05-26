@@ -7,6 +7,11 @@ import type { ExtractedStream } from '@shared/stream'
 import { libraryActions } from '@/stores/libraryStore'
 import { makeChannelProgressId } from '@/features/library/types'
 import RoomChatOverlay from '@/features/watchTogether/RoomChatOverlay'
+import RoomSyncOverlay from '@/features/watchTogether/RoomSyncOverlay'
+import VoiceCallButton from '@/features/voiceCall/VoiceCallButton'
+import { useRoomSync } from '@/features/watchTogether/useRoomSync'
+import { adminPause, adminPlay, adminSeek } from '@/features/watchTogether/useRoom'
+import { useRoomStore } from '@/stores/roomStore'
 
 export type PlayerSource = {
   title: string
@@ -40,6 +45,49 @@ function directKind(url: string): ExtractedStream['kind'] {
 export default function PlayerModal({ source, onClose }: Props) {
   const playerRef = useRef<PlayerHandle>(null)
   const [state, setState] = useState<ExtractState>({ status: 'idle' })
+  const sync = useRoomSync()
+  const activeRoomId = useRoomStore((s) => s.activeRoomId)
+
+  // Admin: broadcast play / pause / seek from the local video element to the
+  // room so every viewer follows. Coalesce rapid seeks (e.g. scrubbing) by
+  // letting the `seeked` event win — `timeupdate` is too noisy to forward.
+  useEffect(() => {
+    if (!sync.inRoom || !sync.isAdmin || !activeRoomId) return
+    if (state.status !== 'ready') return
+    const v = playerRef.current?.getElement()
+    if (!v) return
+    const onPlay = () => void adminPlay(activeRoomId, v.currentTime)
+    const onPause = () => void adminPause(activeRoomId, v.currentTime)
+    const onSeeked = () => void adminSeek(activeRoomId, v.currentTime, !v.paused)
+    v.addEventListener('play', onPlay)
+    v.addEventListener('pause', onPause)
+    v.addEventListener('seeked', onSeeked)
+    return () => {
+      v.removeEventListener('play', onPlay)
+      v.removeEventListener('pause', onPause)
+      v.removeEventListener('seeked', onSeeked)
+    }
+  }, [sync.inRoom, sync.isAdmin, activeRoomId, state.status])
+
+  // Watch Together: when a viewer in a room sees the admin take action,
+  // drive the video element to match (seek + play/pause). Channels with HLS
+  // are direct-controllable so sync is accurate to ~half a second.
+  useEffect(() => {
+    if (!sync.inRoom || sync.isAdmin) return
+    if (state.status !== 'ready') return
+    const v = playerRef.current?.getElement()
+    if (!v) return
+    const target = sync.livePosition
+    if (Math.abs(v.currentTime - target) > 1.5) {
+      try {
+        v.currentTime = target
+      } catch {
+        /* live edge or unseekable */
+      }
+    }
+    if (sync.room?.state.playing && v.paused) v.play().catch(() => {})
+    if (!sync.room?.state.playing && !v.paused) v.pause()
+  }, [sync.syncTick, sync.inRoom, sync.isAdmin, state.status]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Record channel into "Continue Watching" on open
   useEffect(() => {
@@ -309,6 +357,20 @@ export default function PlayerModal({ source, onClose }: Props) {
             Space · F · M · J/L · C ترجمة · P نافذة · ←→ ±10s · R إعادة · Esc
           </footer>
 
+          <RoomSyncOverlay
+            onResync={() => {
+              const v = playerRef.current?.getElement()
+              if (v && sync.inRoom) {
+                try {
+                  v.currentTime = sync.livePosition
+                  if (sync.room?.state.playing) v.play().catch(() => {})
+                } catch {
+                  /* ignore */
+                }
+              }
+            }}
+          />
+          <VoiceCallButton />
           <RoomChatOverlay />
         </motion.div>
       )}

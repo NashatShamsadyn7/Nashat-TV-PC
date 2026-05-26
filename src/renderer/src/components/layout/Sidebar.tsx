@@ -12,6 +12,8 @@ import {
   LayoutGrid,
   BarChart3,
   PartyPopper,
+  UserPlus,
+  MessageCircle,
   type LucideIcon
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -34,7 +36,9 @@ const NAV: NavEntry[] = [
   { to: '/search', icon: Search, labelKey: 'nav.search' },
   { to: '/library', icon: Library, labelKey: 'nav.library' },
   { to: '/stats', icon: BarChart3, labelKey: 'nav.stats' },
-  { to: '/together', icon: PartyPopper, labelKey: 'nav.together' }
+  { to: '/together', icon: PartyPopper, labelKey: 'nav.together' },
+  { to: '/friends', icon: UserPlus, labelKey: 'nav.friends' },
+  { to: '/chats', icon: MessageCircle, labelKey: 'nav.chats' }
 ]
 
 export default function Sidebar() {

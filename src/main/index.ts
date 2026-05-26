@@ -111,10 +111,38 @@ app.whenReady().then(async () => {
   installAdblock()
   installFrameHeaderBypass()
   installStreamHeaders()
-  // Deny notifications/geolocation/media/etc. requested by embed iframes.
+  // Permission policy:
+  //   - allow microphone for OUR renderer (top-level frame), needed for the
+  //     Watch Together voice call.
+  //   - deny everything else, including any permission requested by an
+  //     embedded streaming iframe.
   const { session } = await import('electron')
-  session.defaultSession.setPermissionRequestHandler((_wc, _perm, callback) => {
+  session.defaultSession.setPermissionRequestHandler((wc, perm, callback, details) => {
+    const requestingUrl = details?.requestingUrl || ''
+    const isTopFrame = wc?.mainFrame?.url === requestingUrl
+    const isOurOrigin =
+      requestingUrl.startsWith('http://localhost') ||
+      requestingUrl.startsWith('http://127.0.0.1') ||
+      requestingUrl.startsWith(prodRendererOrigin || '__never__') ||
+      requestingUrl.startsWith('file://')
+    if (perm === 'media' && isTopFrame && isOurOrigin) {
+      callback(true)
+      return
+    }
     callback(false)
+  })
+  // Auto-approve mic prompts that Chromium sometimes routes through the
+  // synchronous check (older getUserMedia path).
+  session.defaultSession.setPermissionCheckHandler((_wc, perm, requestingOrigin) => {
+    if (perm === 'media') {
+      const ok =
+        requestingOrigin.startsWith('http://localhost') ||
+        requestingOrigin.startsWith('http://127.0.0.1') ||
+        requestingOrigin.startsWith(prodRendererOrigin || '__never__') ||
+        requestingOrigin.startsWith('file://')
+      return ok
+    }
+    return false
   })
   registerTmdbIpc()
   registerStreamIpc()

@@ -21,6 +21,9 @@ import {
 } from '@/features/player/useServerHealth'
 import { cn } from '@/lib/cn'
 import RoomChatOverlay from '@/features/watchTogether/RoomChatOverlay'
+import RoomSyncOverlay from '@/features/watchTogether/RoomSyncOverlay'
+import VoiceCallButton from '@/features/voiceCall/VoiceCallButton'
+import { useRoomSync, withStartTime } from '@/features/watchTogether/useRoomSync'
 
 type Props = {
   source: TmdbMediaSource | null
@@ -94,7 +97,16 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
   }, [sorted, autoPicked, activeId])
 
   const active = activeId ? servers.find((s) => s.id === activeId) : null
-  const url = active?.url ?? ''
+  const baseUrl = active?.url ?? ''
+
+  // Watch Together: when in a room, append ?t=position and reload the iframe
+  // every time the admin issues a play/pause/seek. `syncTick` bumps on each
+  // admin action, which combines with reloadKey to form the iframe key.
+  const sync = useRoomSync()
+  const [manualResync, setManualResync] = useState(0)
+  const startAt = sync.inRoom ? sync.livePosition : 0
+  const url = sync.inRoom && baseUrl ? withStartTime(baseUrl, startAt) : baseUrl
+  const iframeKey = `${activeId}-${reloadKey}-${sync.syncTick}-${manualResync}`
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -264,7 +276,7 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
             {activeId && url && (
               <iframe
                 id="movie-iframe"
-                key={`${activeId}-${reloadKey}`}
+                key={iframeKey}
                 src={url}
                 className="w-full h-full border-0"
                 allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
@@ -281,6 +293,8 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
             <kbd className="bg-ink-700/50 rounded px-1.5 py-0.5 mx-1">Esc</kbd> إغلاق
           </footer>
 
+          <RoomSyncOverlay onResync={() => setManualResync((k) => k + 1)} />
+          <VoiceCallButton />
           <RoomChatOverlay />
         </motion.div>
       )}

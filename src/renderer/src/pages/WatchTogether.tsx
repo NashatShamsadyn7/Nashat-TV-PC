@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Users, Send, LogOut, Crown, Share2, Play, Pause, RotateCcw, FastForward, Rewind, Film } from 'lucide-react'
+import { Users, Send, LogOut, Crown, Share2, Play, Pause, RotateCcw, FastForward, Rewind, Film, Smile, Image as ImageIcon, Loader2 } from 'lucide-react'
 import PageHeader from '@/components/ui/PageHeader'
 import InviteModal from '@/components/modals/InviteModal'
 import {
@@ -13,6 +13,10 @@ import {
 import { useAuthStore } from '@/stores/authStore'
 import { useRoomStore } from '@/stores/roomStore'
 import { usePlayerStore } from '@/stores/playerStore'
+import VoiceCallButton from '@/features/voiceCall/VoiceCallButton'
+import EmojiPicker from '@/features/watchTogether/EmojiPicker'
+import GifPicker from '@/features/watchTogether/GifPicker'
+import { uploadChatImage } from '@/features/watchTogether/chatUploads'
 
 function formatTime(seconds: number): string {
   if (!isFinite(seconds) || seconds < 0) return '00:00'
@@ -35,8 +39,11 @@ export default function WatchTogether() {
   const [inviteOpen, setInviteOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [picker, setPicker] = useState<'none' | 'emoji' | 'gif'>('none')
+  const [uploading, setUploading] = useState(false)
   const { room } = useRoom(roomId)
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   // If we arrived from Details.tsx with a freshly created room, auto-open the
   // invite modal so the user can share the code immediately.
@@ -345,23 +352,113 @@ export default function WatchTogether() {
                   {!mine && (
                     <div className="text-xs font-semibold text-brand-300">{m.name}</div>
                   )}
-                  <div className="text-ink-100 break-words">{m.text}</div>
+                  {m.text && <div className="text-ink-100 break-words">{m.text}</div>}
+                  {m.image && (
+                    <img
+                      src={m.image}
+                      alt=""
+                      className="rounded-md mt-1 max-w-full max-h-[180px] cursor-zoom-in"
+                      onClick={() => window.open(m.image, '_blank')}
+                    />
+                  )}
+                  {m.gif && (
+                    <img
+                      src={m.gif}
+                      alt="GIF"
+                      className="rounded-md mt-1 max-w-full max-h-[180px]"
+                    />
+                  )}
                 </div>
               )
             })}
             <div ref={chatEndRef} />
           </div>
+          {picker !== 'none' && (
+            <div className="relative">
+              <div className="absolute bottom-2 end-0 z-10">
+                {picker === 'emoji' && (
+                  <EmojiPicker
+                    onPick={(e) => {
+                      setMsg((m) => m + e)
+                      setPicker('none')
+                    }}
+                  />
+                )}
+                {picker === 'gif' && (
+                  <GifPicker
+                    onPick={(gifUrl) => {
+                      void sendChat(roomId, { gif: gifUrl })
+                      setPicker('none')
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+          )}
           <form
             onSubmit={(e) => {
               e.preventDefault()
               const text = msg.trim()
               if (text) {
-                void sendChat(roomId, text)
+                void sendChat(roomId, { text })
                 setMsg('')
               }
             }}
-            className="flex gap-2 mt-3"
+            className="flex items-center gap-1.5 mt-3"
           >
+            <button
+              type="button"
+              onClick={() => setPicker((p) => (p === 'emoji' ? 'none' : 'emoji'))}
+              className={`w-9 h-9 grid place-items-center rounded-lg hover:bg-ink-700/60 ${
+                picker === 'emoji' ? 'text-brand-400 bg-ink-700/40' : 'text-ink-300'
+              }`}
+              title="إيموجي"
+            >
+              <Smile className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setPicker((p) => (p === 'gif' ? 'none' : 'gif'))}
+              className={`px-2 h-9 text-[11px] font-bold rounded-lg hover:bg-ink-700/60 ${
+                picker === 'gif' ? 'text-brand-400 bg-ink-700/40' : 'text-ink-300'
+              }`}
+              title="GIF"
+            >
+              GIF
+            </button>
+            <button
+              type="button"
+              disabled={uploading}
+              onClick={() => fileRef.current?.click()}
+              className="w-9 h-9 grid place-items-center rounded-lg hover:bg-ink-700/60 text-ink-300 disabled:opacity-50"
+              title="صورة"
+            >
+              {uploading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <ImageIcon className="w-4 h-4" />
+              )}
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0]
+                e.target.value = ''
+                if (!file || !user) return
+                setUploading(true)
+                try {
+                  const url = await uploadChatImage(roomId, user.uid, file)
+                  await sendChat(roomId, { image: url })
+                } catch (err) {
+                  window.alert(`فشل رفع الصورة: ${(err as Error).message}`)
+                } finally {
+                  setUploading(false)
+                }
+              }}
+            />
             <input
               value={msg}
               onChange={(e) => setMsg(e.target.value)}
@@ -369,7 +466,11 @@ export default function WatchTogether() {
               maxLength={500}
               className="flex-1 bg-ink-700 ring-1 ring-ink-600 rounded-lg px-3 py-2 text-sm"
             />
-            <button className="bg-brand-500 hover:bg-brand-600 px-3 rounded-lg">
+            <button
+              type="submit"
+              disabled={!msg.trim()}
+              className="bg-brand-500 hover:bg-brand-600 disabled:opacity-40 px-3 h-9 rounded-lg grid place-items-center"
+            >
               <Send className="w-4 h-4" />
             </button>
           </form>
@@ -382,6 +483,7 @@ export default function WatchTogether() {
         mediaTitle={room?.mediaTitle}
         onClose={() => setInviteOpen(false)}
       />
+      <VoiceCallButton />
     </div>
   )
 }

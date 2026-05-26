@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Search, Bell, User } from 'lucide-react'
 import { changeLanguage, type Language } from '@/i18n'
+import { useMyProfile } from '@/features/friends/useFriends'
 
 const LANGS: { code: Language; label: string }[] = [
   { code: 'ar', label: 'عر' },
@@ -15,6 +16,7 @@ export default function TopBar() {
   const navigate = useNavigate()
   const current = i18n.language as Language
   const [q, setQ] = useState('')
+  const profile = useMyProfile()
 
   const onChange = (value: string) => {
     setQ(value)
@@ -65,10 +67,15 @@ export default function TopBar() {
       </button>
 
       <button
-        onClick={() => navigate('/profiles')}
-        className="w-10 h-10 grid place-items-center rounded-xl bg-ink-700/40 text-ink-200 hover:text-white hover:bg-ink-700/60 transition-colors"
+        onClick={() => navigate('/profile')}
+        title={profile?.displayName || 'الملف الشخصي'}
+        className="w-10 h-10 grid place-items-center rounded-xl overflow-hidden bg-ink-700/40 text-ink-200 hover:text-white hover:bg-ink-700/60 transition-colors"
       >
-        <User className="w-5 h-5" />
+        {profile?.photoURL ? (
+          <img src={profile.photoURL} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <User className="w-5 h-5" />
+        )}
       </button>
     </header>
   )

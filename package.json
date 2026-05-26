@@ -6,7 +6,7 @@
   "author": {
     "name": "Nashat Shamsadyne"
   },
-  "license": "UNLICENSED",
+  "license": "MIT",
   "main": "./out/main/index.js",
   "homepage": "./",
   "scripts": {

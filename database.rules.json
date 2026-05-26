@@ -31,7 +31,7 @@
     "trending_counters": {
       ".read": true,
       "$mediaId": {
-        ".write": "auth != null && newData.isNumber() && newData.val() == (data.val() || 0) + 1"
+        ".write": "auth != null && newData.isNumber() && newData.val() == (data.exists() ? data.val() : 0) + 1"
       }
     },
 

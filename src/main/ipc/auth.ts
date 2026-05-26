@@ -29,11 +29,22 @@ function startCallbackServer(): Promise<{
       const code = url.searchParams.get('code')
       const error = url.searchParams.get('error')
 
+      // The browser fires extra requests (favicon, devtools, prefetch) at the
+      // same origin. Only the request that carries `code` or `error` is the
+      // real OAuth redirect — ignore the rest so we don't reject the flow
+      // prematurely or send the success page to a favicon request.
+      if (!code && !error) {
+        res.writeHead(204)
+        res.end()
+        return
+      }
+
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
       res.end(
         '<html><body dir="rtl" style="font-family:sans-serif;text-align:center;padding:40px">' +
-          '<h2>✓ تم تسجيل الدخول بنجاح!</h2>' +
-          '<p>يمكنك إغلاق هذه النافذة والعودة إلى Nashat TV.</p>' +
+          (code
+            ? '<h2>✓ تم تسجيل الدخول بنجاح!</h2><p>يمكنك إغلاق هذه النافذة والعودة إلى Nashat TV.</p>'
+            : `<h2>✗ فشل تسجيل الدخول</h2><p>${error}</p>`) +
           '<script>setTimeout(()=>window.close(),2000)</script>' +
           '</body></html>'
       )
@@ -96,7 +107,14 @@ export function registerAuthIpc(): void {
 
       if (!tokenRes.ok) {
         const body = await tokenRes.text()
-        throw new Error(`token_exchange_failed: ${body}`)
+        let detail = body
+        try {
+          const parsed = JSON.parse(body) as { error?: string; error_description?: string }
+          detail = parsed.error_description ?? parsed.error ?? body
+        } catch {
+          // body wasn't JSON, use as-is
+        }
+        throw new Error(`token_exchange_failed: ${detail}`)
       }
 
       const tokens = (await tokenRes.json()) as { id_token: string; access_token: string }

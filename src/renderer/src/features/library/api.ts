@@ -15,6 +15,8 @@ function readLocal<T>(key: string): Record<string, T> {
 }
 function writeLocal<T>(key: string, value: Record<string, T>) {
   localStorage.setItem(key, JSON.stringify(value))
+  // Same-window 'storage' events don't fire — dispatch our own so subscribers refresh.
+  window.dispatchEvent(new CustomEvent('nashat:library-changed', { detail: { key } }))
 }
 
 function listPath(uid: string, list: 'watchlist' | 'favorites' | 'progress') {
@@ -31,7 +33,14 @@ export const libraryApi = {
     const local = readLocal<LibraryItem>(key)
     local[item.id] = item
     writeLocal(key, local)
-    if (uid) await set(ref(db, `${listPath(uid, list)}/${item.id}`), item)
+    if (uid) {
+      try {
+        await set(ref(db, `${listPath(uid, list)}/${item.id}`), item)
+      } catch (err) {
+        // Cloud write failed — local copy persists; cross-device sync will catch up later.
+        console.warn('library cloud write failed', err)
+      }
+    }
   },
 
   async removeFromList(
@@ -43,7 +52,13 @@ export const libraryApi = {
     const local = readLocal<LibraryItem>(key)
     delete local[id]
     writeLocal(key, local)
-    if (uid) await remove(ref(db, `${listPath(uid, list)}/${id}`))
+    if (uid) {
+      try {
+        await remove(ref(db, `${listPath(uid, list)}/${id}`))
+      } catch (err) {
+        console.warn('library cloud delete failed', err)
+      }
+    }
   },
 
   subscribeList(
@@ -56,14 +71,23 @@ export const libraryApi = {
     cb(Object.values(local).sort((a, b) => b.addedAt - a.addedAt))
 
     if (!uid) {
+      const refresh = () => {
+        const next = readLocal<LibraryItem>(key)
+        cb(Object.values(next).sort((a, b) => b.addedAt - a.addedAt))
+      }
       const onStorage = (e: StorageEvent) => {
-        if (e.key === key) {
-          const next = readLocal<LibraryItem>(key)
-          cb(Object.values(next).sort((a, b) => b.addedAt - a.addedAt))
-        }
+        if (e.key === key) refresh()
+      }
+      const onLocal = (e: Event) => {
+        const detail = (e as CustomEvent<{ key: string }>).detail
+        if (detail?.key === key) refresh()
       }
       window.addEventListener('storage', onStorage)
-      return () => window.removeEventListener('storage', onStorage)
+      window.addEventListener('nashat:library-changed', onLocal)
+      return () => {
+        window.removeEventListener('storage', onStorage)
+        window.removeEventListener('nashat:library-changed', onLocal)
+      }
     }
 
     const r = ref(db, listPath(uid, list))
@@ -80,7 +104,11 @@ export const libraryApi = {
     local[item.id] = item
     writeLocal(LS_PROGRESS, local)
     if (uid) {
-      await update(ref(db, `${listPath(uid, 'progress')}/${item.id}`), item)
+      try {
+        await update(ref(db, `${listPath(uid, 'progress')}/${item.id}`), item)
+      } catch (err) {
+        console.warn('progress cloud write failed', err)
+      }
     }
   },
 
@@ -88,7 +116,13 @@ export const libraryApi = {
     const local = readLocal<ProgressItem>(LS_PROGRESS)
     delete local[id]
     writeLocal(LS_PROGRESS, local)
-    if (uid) await remove(ref(db, `${listPath(uid, 'progress')}/${id}`))
+    if (uid) {
+      try {
+        await remove(ref(db, `${listPath(uid, 'progress')}/${id}`))
+      } catch (err) {
+        console.warn('progress cloud delete failed', err)
+      }
+    }
   },
 
   subscribeProgress(
@@ -99,14 +133,23 @@ export const libraryApi = {
     cb(Object.values(local).sort((a, b) => b.updatedAt - a.updatedAt))
 
     if (!uid) {
+      const refresh = () => {
+        const next = readLocal<ProgressItem>(LS_PROGRESS)
+        cb(Object.values(next).sort((a, b) => b.updatedAt - a.updatedAt))
+      }
       const onStorage = (e: StorageEvent) => {
-        if (e.key === LS_PROGRESS) {
-          const next = readLocal<ProgressItem>(LS_PROGRESS)
-          cb(Object.values(next).sort((a, b) => b.updatedAt - a.updatedAt))
-        }
+        if (e.key === LS_PROGRESS) refresh()
+      }
+      const onLocal = (e: Event) => {
+        const detail = (e as CustomEvent<{ key: string }>).detail
+        if (detail?.key === LS_PROGRESS) refresh()
       }
       window.addEventListener('storage', onStorage)
-      return () => window.removeEventListener('storage', onStorage)
+      window.addEventListener('nashat:library-changed', onLocal)
+      return () => {
+        window.removeEventListener('storage', onStorage)
+        window.removeEventListener('nashat:library-changed', onLocal)
+      }
     }
 
     const r = ref(db, listPath(uid, 'progress'))

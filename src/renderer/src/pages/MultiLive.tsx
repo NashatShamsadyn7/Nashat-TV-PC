@@ -216,12 +216,7 @@ export default function MultiLive() {
       <div className="px-8 pb-8">
         <div className={cn('grid gap-3 h-[calc(100vh-220px)]', gridClass)}>
           {cells.map((cell, i) => {
-            const span =
-              layout === '1+3' && i === 0
-                ? 'col-span-2 row-span-2'
-                : layout === '1+3' && i > 0
-                  ? ''
-                  : ''
+            const span = layout === '1+3' && i === 0 ? 'col-span-2 row-span-3' : ''
             return (
               <div key={i} className={span}>
                 <MiniPlayer

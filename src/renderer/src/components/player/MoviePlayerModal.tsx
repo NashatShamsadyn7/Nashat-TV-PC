@@ -20,6 +20,7 @@ import {
   type ServerStatus
 } from '@/features/player/useServerHealth'
 import { cn } from '@/lib/cn'
+import RoomChatOverlay from '@/features/watchTogether/RoomChatOverlay'
 
 type Props = {
   source: TmdbMediaSource | null
@@ -279,6 +280,8 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
             <kbd className="bg-ink-700/50 rounded px-1.5 py-0.5">R</kbd> إعادة ·
             <kbd className="bg-ink-700/50 rounded px-1.5 py-0.5 mx-1">Esc</kbd> إغلاق
           </footer>
+
+          <RoomChatOverlay />
         </motion.div>
       )}
     </AnimatePresence>,

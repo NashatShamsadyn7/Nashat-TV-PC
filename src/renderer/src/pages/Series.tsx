@@ -1,24 +1,27 @@
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AlertCircle } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { AlertCircle, Search as SearchIcon, Loader2, X } from 'lucide-react'
 import PageHeader from '@/components/ui/PageHeader'
 import PosterCard from '@/components/cards/PosterCard'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { usePopularTv, useTrendingTv } from '@/features/tmdb/hooks'
-import { usePlayerStore } from '@/stores/playerStore'
-import { posterUrl, type TmdbTv } from '@shared/tmdb'
+import { useDebounced } from '@/features/search/useSearch'
+import { tmdbApi } from '@/services/tmdb'
+import { posterUrl, backdropUrl, type TmdbTv } from '@shared/tmdb'
 
 function TvSection({
   title,
   data,
   loading,
   error,
-  onPlay
+  onOpen
 }: {
   title: string
   data: TmdbTv[] | null
   loading: boolean
   error: string | null
-  onPlay: (t: TmdbTv) => void
+  onOpen: (t: TmdbTv) => void
 }) {
   return (
     <section className="mb-8">
@@ -46,7 +49,15 @@ function TvSection({
                 title={s.name}
                 imageUrl={posterUrl(s.poster_path)}
                 rating={s.vote_average}
-                onClick={() => onPlay(s)}
+                onClick={() => onOpen(s)}
+                libItem={{
+                  kind: 'tv',
+                  tmdbId: s.id,
+                  title: s.name,
+                  poster: posterUrl(s.poster_path),
+                  backdrop: backdropUrl(s.backdrop_path, 'w780'),
+                  year: s.first_air_date?.slice(0, 4)
+                }}
               />
             ))}
       </div>
@@ -56,38 +67,120 @@ function TvSection({
 
 export default function Series() {
   const { t, i18n } = useTranslation()
+  const navigate = useNavigate()
   const lang = i18n.language === 'ku' ? 'ar' : i18n.language
 
   const trending = useTrendingTv(lang)
   const popular = usePopularTv(lang)
-  const openTmdb = usePlayerStore((s) => s.openTmdb)
-  const playTv = (tv: TmdbTv) =>
-    openTmdb({
-      kind: 'tv',
-      tmdbId: tv.id,
-      title: tv.name,
-      subtitle: tv.first_air_date ? tv.first_air_date.slice(0, 4) : undefined,
-      season: 1,
-      episode: 1
-    })
+
+  const [query, setQuery] = useState('')
+  const debounced = useDebounced(query, 300)
+  const [results, setResults] = useState<TmdbTv[] | null>(null)
+  const [searching, setSearching] = useState(false)
+  const [searchErr, setSearchErr] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!debounced.trim()) {
+      setResults(null)
+      setSearchErr(null)
+      return
+    }
+    let cancelled = false
+    setSearching(true)
+    tmdbApi
+      .searchTv(debounced, lang)
+      .then((res) => {
+        if (cancelled) return
+        setResults(res.results || [])
+        setSearchErr(null)
+      })
+      .catch((err: Error) => {
+        if (!cancelled) setSearchErr(err.message)
+      })
+      .finally(() => {
+        if (!cancelled) setSearching(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [debounced, lang])
+
+  const openDetails = (s: TmdbTv) => navigate(`/details/tv/${s.id}`)
 
   return (
     <div className="pb-10">
       <PageHeader title={t('nav.series')} />
-      <TvSection
-        title={t('home.trending')}
-        data={trending.data?.results ?? null}
-        loading={trending.loading}
-        error={trending.error}
-        onPlay={playTv}
-      />
-      <TvSection
-        title="الأكثر شعبية"
-        data={popular.data?.results ?? null}
-        loading={popular.loading}
-        error={popular.error}
-        onPlay={playTv}
-      />
+
+      <div className="px-8 mb-6 max-w-md">
+        <div className="relative">
+          <SearchIcon className="absolute top-1/2 -translate-y-1/2 start-3 w-4 h-4 text-ink-300" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="ابحث في المسلسلات…"
+            className="w-full bg-ink-700/40 ring-1 ring-ink-600/50 rounded-xl ps-10 pe-9 py-2 text-sm placeholder:text-ink-300 focus:outline-none focus:ring-brand-500"
+          />
+          {searching ? (
+            <Loader2 className="absolute top-1/2 -translate-y-1/2 end-3 w-4 h-4 animate-spin text-ink-300" />
+          ) : query ? (
+            <button
+              onClick={() => setQuery('')}
+              className="absolute top-1/2 -translate-y-1/2 end-2 w-6 h-6 grid place-items-center rounded-full hover:bg-ink-700/60"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          ) : null}
+        </div>
+      </div>
+
+      {results !== null ? (
+        <section className="px-8">
+          <h2 className="text-xl font-bold mb-3">
+            نتائج البحث ({results.length})
+          </h2>
+          {searchErr && <p className="text-rose-300 text-sm mb-3">{searchErr}</p>}
+          {results.length === 0 && !searching && (
+            <p className="text-ink-300">لا توجد نتائج</p>
+          )}
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4">
+            {results.map((s) => (
+              <PosterCard
+                key={s.id}
+                title={s.name}
+                imageUrl={posterUrl(s.poster_path)}
+                rating={s.vote_average}
+                onClick={() => openDetails(s)}
+                libItem={{
+                  kind: 'tv',
+                  tmdbId: s.id,
+                  title: s.name,
+                  poster: posterUrl(s.poster_path),
+                  backdrop: backdropUrl(s.backdrop_path, 'w780'),
+                  year: s.first_air_date?.slice(0, 4)
+                }}
+              />
+            ))}
+          </div>
+        </section>
+      ) : (
+        <>
+          <TvSection
+            title={t('home.trending')}
+            data={trending.data?.results ?? null}
+            loading={trending.loading}
+            error={trending.error}
+            onOpen={openDetails}
+          />
+          <TvSection
+            title="الأكثر شعبية"
+            data={popular.data?.results ?? null}
+            loading={popular.loading}
+            error={popular.error}
+            onOpen={openDetails}
+          />
+        </>
+      )}
     </div>
   )
 }

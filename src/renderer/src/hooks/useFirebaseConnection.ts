@@ -10,9 +10,19 @@ export function useFirebaseConnection(): ConnectionStatus {
 
   useEffect(() => {
     const connectedRef = ref(db, '.info/connected')
-    const unsub = onValue(connectedRef, (snap) => {
-      setStatus(snap.val() === true ? 'connected' : 'disconnected')
-    })
+    console.log('[rtdb] subscribing to .info/connected, db url:', db.app.options.databaseURL)
+    const unsub = onValue(
+      connectedRef,
+      (snap) => {
+        const value = snap.val()
+        console.log('[rtdb] connection state ->', value)
+        setStatus(value === true ? 'connected' : 'disconnected')
+      },
+      (err) => {
+        console.error('[rtdb] connection subscription error:', err)
+        setStatus('disconnected')
+      }
+    )
     return () => unsub()
   }, [])
 

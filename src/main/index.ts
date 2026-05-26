@@ -17,6 +17,8 @@ import { startLocalRendererServer } from './services/localServer'
 const EXTERNAL_LINK_ALLOWLIST = [
   'https://github.com/',
   'https://nashat.tv/',
+  'https://wa.me/',
+  'https://t.me/',
   'mailto:'
 ]
 

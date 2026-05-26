@@ -4,6 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Maximize2, Loader2, AlertCircle, ExternalLink, RefreshCw } from 'lucide-react'
 import VideoPlayer, { type PlayerHandle } from './VideoPlayer'
 import type { ExtractedStream } from '@shared/stream'
+import { libraryActions } from '@/stores/libraryStore'
+import { makeChannelProgressId } from '@/features/library/types'
+import RoomChatOverlay from '@/features/watchTogether/RoomChatOverlay'
 
 export type PlayerSource = {
   title: string
@@ -37,6 +40,25 @@ function directKind(url: string): ExtractedStream['kind'] {
 export default function PlayerModal({ source, onClose }: Props) {
   const playerRef = useRef<PlayerHandle>(null)
   const [state, setState] = useState<ExtractState>({ status: 'idle' })
+
+  // Record channel into "Continue Watching" on open
+  useEffect(() => {
+    if (!source) return
+    const key = `${source.title}|${source.url}`
+    libraryActions.recordProgress({
+      id: makeChannelProgressId(key),
+      kind: 'channel',
+      title: source.title,
+      poster: source.logo,
+      backdrop: source.logo,
+      streamUrl: source.url,
+      channelKey: key,
+      channelCategory: source.subtitle,
+      position: 0,
+      duration: 0,
+      updatedAt: Date.now()
+    })
+  }, [source])
 
   useEffect(() => {
     if (!source) {
@@ -286,6 +308,8 @@ export default function PlayerModal({ source, onClose }: Props) {
           <footer className="px-4 py-2 text-center text-xs text-ink-400">
             Space · F · M · J/L · C ترجمة · P نافذة · ←→ ±10s · R إعادة · Esc
           </footer>
+
+          <RoomChatOverlay />
         </motion.div>
       )}
     </AnimatePresence>,

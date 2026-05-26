@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Search as SearchIcon, X, Clock, Tv, Film, Loader2, Mic, MicOff } from 'lucide-react'
 import PageHeader from '@/components/ui/PageHeader'
 import { useChannels } from '@/features/livetv/useChannels'
 import { useFuzzy, useDebounced, getSearchHistory, pushSearchHistory, clearSearchHistory } from '@/features/search/useSearch'
 import { useVoiceSearch } from '@/hooks/useVoiceSearch'
 import { tmdbApi } from '@/services/tmdb'
-import { posterUrl, backdropUrl, type TmdbMovie, type TmdbTv } from '@shared/tmdb'
+import { posterUrl, type TmdbMovie, type TmdbTv } from '@shared/tmdb'
 import type { Channel } from '@shared/types'
 import { usePlayerStore } from '@/stores/playerStore'
 
@@ -19,7 +20,16 @@ function isTv(r: TmdbResult): r is TmdbTv & { media_type?: 'tv' } {
 export default function SearchPage() {
   const { t, i18n } = useTranslation()
   const { channels } = useChannels()
-  const [query, setQuery] = useState('')
+  const [searchParams] = useSearchParams()
+  const initialQ = searchParams.get('q') ?? ''
+  const [query, setQuery] = useState(initialQ)
+
+  // Sync external (?q=) → input
+  useEffect(() => {
+    const q = searchParams.get('q') ?? ''
+    if (q !== query) setQuery(q)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
   const [history, setHistory] = useState<string[]>(() => getSearchHistory())
   const debounced = useDebounced(query, 300)
   const lang = i18n.language === 'ku' ? 'ar' : i18n.language
@@ -31,7 +41,7 @@ export default function SearchPage() {
   const [tmdbError, setTmdbError] = useState<string | null>(null)
 
   const open = usePlayerStore((s) => s.open)
-  const openTmdb = usePlayerStore((s) => s.openTmdb)
+  const navigate = useNavigate()
   const voiceLang = lang === 'ar' ? 'ar-SA' : lang === 'ku' ? 'ar-SA' : 'en-US'
   const voice = useVoiceSearch((text) => setQuery(text), voiceLang)
 
@@ -193,24 +203,8 @@ export default function SearchPage() {
                     <button
                       key={`${(r as any).media_type}-${r.id}`}
                       onClick={() => {
-                        if (isTv(r)) {
-                          openTmdb({
-                            kind: 'tv',
-                            tmdbId: r.id,
-                            title: r.name,
-                            backdrop: backdropUrl(r.backdrop_path),
-                            season: 1,
-                            episode: 1
-                          })
-                        } else {
-                          const m = r as TmdbMovie
-                          openTmdb({
-                            kind: 'movie',
-                            tmdbId: m.id,
-                            title: m.title,
-                            backdrop: backdropUrl(m.backdrop_path)
-                          })
-                        }
+                        if (isTv(r)) navigate(`/details/tv/${r.id}`)
+                        else navigate(`/details/movie/${r.id}`)
                       }}
                       className="text-start group"
                     >

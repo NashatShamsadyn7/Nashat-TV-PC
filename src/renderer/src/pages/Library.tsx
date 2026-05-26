@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import { Heart, History, Bookmark, Play, Trash2 } from 'lucide-react'
 import PageHeader from '@/components/ui/PageHeader'
 import { useLibraryStore, libraryActions } from '@/stores/libraryStore'
@@ -21,6 +22,8 @@ export default function Library() {
   const favorites = useLibraryStore((s) => s.favorites)
   const progress = useLibraryStore((s) => s.progress)
   const openTmdb = usePlayerStore((s) => s.openTmdb)
+  const openChannel = usePlayerStore((s) => s.open)
+  const navigate = useNavigate()
 
   const counts = { watchlist: watchlist.length, favorites: favorites.length, progress: progress.length }
 
@@ -60,17 +63,7 @@ export default function Library() {
                   poster={it.poster}
                   year={it.year}
                   onPlay={() => {
-                    if (it.kind === 'movie' && it.tmdbId)
-                      openTmdb({ kind: 'movie', tmdbId: it.tmdbId, title: it.title, backdrop: it.backdrop })
-                    else if (it.kind === 'tv' && it.tmdbId)
-                      openTmdb({
-                        kind: 'tv',
-                        tmdbId: it.tmdbId,
-                        title: it.title,
-                        season: 1,
-                        episode: 1,
-                        backdrop: it.backdrop
-                      })
+                    if (it.tmdbId) navigate(`/details/${it.kind}/${it.tmdbId}`)
                   }}
                   onRemove={() => libraryActions.toggleWatchlist(it)}
                 />
@@ -90,17 +83,7 @@ export default function Library() {
                   poster={it.poster}
                   year={it.year}
                   onPlay={() => {
-                    if (it.kind === 'movie' && it.tmdbId)
-                      openTmdb({ kind: 'movie', tmdbId: it.tmdbId, title: it.title, backdrop: it.backdrop })
-                    else if (it.kind === 'tv' && it.tmdbId)
-                      openTmdb({
-                        kind: 'tv',
-                        tmdbId: it.tmdbId,
-                        title: it.title,
-                        season: 1,
-                        episode: 1,
-                        backdrop: it.backdrop
-                      })
+                    if (it.tmdbId) navigate(`/details/${it.kind}/${it.tmdbId}`)
                   }}
                   onRemove={() => libraryActions.toggleFavorite(it)}
                 />
@@ -115,23 +98,40 @@ export default function Library() {
             ) : (
               progress.map((p) => {
                 const pct = p.duration > 0 ? Math.min(100, (p.position / p.duration) * 100) : 0
+                const yearLabel =
+                  p.kind === 'channel'
+                    ? p.channelCategory || 'قناة'
+                    : p.season
+                      ? `S${p.season}·E${p.episode}`
+                      : undefined
                 return (
                   <Tile
                     key={p.id}
                     title={p.title}
-                    poster={p.backdrop}
-                    year={p.season ? `S${p.season}·E${p.episode}` : undefined}
+                    poster={p.backdrop || p.poster}
+                    year={yearLabel}
                     progress={pct}
-                    onPlay={() =>
-                      openTmdb({
-                        kind: p.kind,
-                        tmdbId: p.tmdbId,
-                        title: p.title,
-                        backdrop: p.backdrop,
-                        season: p.season,
-                        episode: p.episode
-                      })
-                    }
+                    onPlay={() => {
+                      if (p.kind === 'channel') {
+                        if (p.streamUrl) {
+                          openChannel({
+                            title: p.title,
+                            subtitle: p.channelCategory,
+                            logo: p.poster,
+                            url: p.streamUrl
+                          })
+                        }
+                      } else if (p.tmdbId) {
+                        openTmdb({
+                          kind: p.kind,
+                          tmdbId: p.tmdbId,
+                          title: p.title,
+                          backdrop: p.backdrop,
+                          season: p.season,
+                          episode: p.episode
+                        })
+                      }
+                    }}
                     onRemove={() => libraryActions.clearProgress(p.id)}
                   />
                 )

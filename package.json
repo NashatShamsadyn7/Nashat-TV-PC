@@ -20,7 +20,8 @@
     "format": "prettier --write \"**/*.{ts,tsx,json,css,md}\"",
     "package:win": "node scripts/run.mjs build && electron-builder --win",
     "package:mac": "node scripts/run.mjs build && electron-builder --mac",
-    "package:linux": "node scripts/run.mjs build && electron-builder --linux"
+    "package:linux": "node scripts/run.mjs build && electron-builder --linux",
+    "release:win": "node scripts/run.mjs build && electron-builder --win --publish always"
   },
   "dependencies": {
     "clsx": "^2.1.1",

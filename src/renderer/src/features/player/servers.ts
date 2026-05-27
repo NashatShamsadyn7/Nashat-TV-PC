@@ -6,6 +6,11 @@ export type MediaKind = 'movie' | 'tv'
 export interface StreamServer {
   id: string
   label: string
+  // false = the host responds to a health ping but its player frequently refuses
+  // to play inside an embed (e.g. VidSrc's "Sandbox not allowed" anti-embed gate).
+  // Such servers stay selectable manually but are skipped by auto-pick when a
+  // reliable working server exists.
+  reliable?: boolean
   build: (args: { kind: MediaKind; tmdbId: number; season?: number; episode?: number }) => string
 }
 
@@ -13,6 +18,7 @@ export const STREAM_SERVERS: StreamServer[] = [
   {
     id: 'vidsrc',
     label: 'VidSrc',
+    reliable: false,
     build: ({ kind, tmdbId, season, episode }) =>
       kind === 'movie'
         ? `https://vidsrc.to/embed/movie/${tmdbId}`
@@ -21,6 +27,7 @@ export const STREAM_SERVERS: StreamServer[] = [
   {
     id: 'vidsrc-xyz',
     label: 'VidSrc XYZ',
+    reliable: false,
     build: ({ kind, tmdbId, season, episode }) =>
       kind === 'movie'
         ? `https://vidsrc.xyz/embed/movie?tmdb=${tmdbId}`

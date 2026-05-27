@@ -8,6 +8,7 @@ export type ServerHealth = {
   url: string
   status: ServerStatus
   latencyMs?: number
+  reliable: boolean
 }
 
 type Args = {
@@ -53,7 +54,8 @@ export function useServerHealth(args: Args | null): ServerHealth[] {
       id: s.id,
       label: s.label,
       url: '',
-      status: 'checking' as ServerStatus
+      status: 'checking' as ServerStatus,
+      reliable: s.reliable !== false
     }))
   )
 
@@ -63,7 +65,8 @@ export function useServerHealth(args: Args | null): ServerHealth[] {
     const targets = STREAM_SERVERS.map((s) => ({
       id: s.id,
       label: s.label,
-      url: s.build(args)
+      url: s.build(args),
+      reliable: s.reliable !== false
     }))
 
     setResults(targets.map((t) => ({ ...t, status: 'checking' as ServerStatus })))
@@ -90,12 +93,18 @@ export function useServerHealth(args: Args | null): ServerHealth[] {
   return results
 }
 
-/** Sort working first, then checking, then failed; within each group by latency. */
+/**
+ * Sort working first, then checking, then failed. Within the same status,
+ * reliable servers come before unreliable ones (e.g. VidSrc, which pings OK but
+ * its player often refuses to embed), then by latency. This keeps auto-pick —
+ * which grabs the first 'ok' server — on a server that actually plays.
+ */
 export function sortByHealth(servers: ServerHealth[]): ServerHealth[] {
   const order: Record<ServerStatus, number> = { ok: 0, checking: 1, fail: 2 }
   return [...servers].sort((a, b) => {
     const byStatus = order[a.status] - order[b.status]
     if (byStatus !== 0) return byStatus
+    if (a.reliable !== b.reliable) return a.reliable ? -1 : 1
     return (a.latencyMs ?? Infinity) - (b.latencyMs ?? Infinity)
   })
 }

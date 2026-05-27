@@ -50,15 +50,22 @@ export function useRoomSync(): RoomSync {
   }
 }
 
-// Append `?t=N` (or `&t=N`) to an embed URL so the iframe starts at that
-// position. Servers that ignore it simply start from 0 — harmless.
-export function withStartTime(url: string, positionSec: number): string {
+// Append `?t=N` (and optionally `&autoplay=1`) to an embed URL so the iframe
+// starts at the right spot. Servers that ignore these params simply start
+// from 0 / paused — harmless.
+export function withStartTime(
+  url: string,
+  positionSec: number,
+  autoplay = false
+): string {
   if (!url) return url
   const t = Math.max(0, Math.floor(positionSec))
-  if (t === 0) return url
+  if (t === 0 && !autoplay) return url
+  const params: string[] = []
+  if (t > 0) params.push(`t=${t}`)
+  if (autoplay) params.push('autoplay=1')
   const sep = url.includes('?') ? '&' : '?'
-  // `t` is the most widely supported param across vidsrc, vidlink, autoembed
-  // and the standard HTML5 `#t=` hash. We add both for maximum coverage.
-  const base = `${url}${sep}t=${t}`
-  return base.includes('#') ? base : `${base}#t=${t}`
+  const base = `${url}${sep}${params.join('&')}`
+  // Also append the HTML5 `#t=` hash for direct .mp4 fallback embeds.
+  return t > 0 && !base.includes('#') ? `${base}#t=${t}` : base
 }

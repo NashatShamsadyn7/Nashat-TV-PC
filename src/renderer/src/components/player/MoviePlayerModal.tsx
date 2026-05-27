@@ -99,13 +99,22 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
   const active = activeId ? servers.find((s) => s.id === activeId) : null
   const baseUrl = active?.url ?? ''
 
-  // Watch Together: when in a room, append ?t=position and reload the iframe
-  // every time the admin issues a play/pause/seek. `syncTick` bumps on each
-  // admin action, which combines with reloadKey to form the iframe key.
+  // Watch Together: snapshot the admin's position at the moment of the last
+  // sync event (or manual resync). The URL must NOT update on every tick —
+  // doing so re-points the iframe's `src` every second and the embed never
+  // finishes loading (black screen). Memoizing on syncTick freezes the URL
+  // between admin actions, so the iframe plays freely inside.
   const sync = useRoomSync()
   const [manualResync, setManualResync] = useState(0)
-  const startAt = sync.inRoom ? sync.livePosition : 0
-  const url = sync.inRoom && baseUrl ? withStartTime(baseUrl, startAt) : baseUrl
+  const url = useMemo(() => {
+    if (!baseUrl) return ''
+    if (!sync.inRoom || !sync.room?.state) return baseUrl
+    const s = sync.room.state
+    const driftSec = s.playing ? Math.max(0, (Date.now() - s.anchorAt) / 1000) : 0
+    const pos = s.position + driftSec
+    return withStartTime(baseUrl, pos, s.playing)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [baseUrl, sync.inRoom, sync.syncTick, manualResync])
   const iframeKey = `${activeId}-${reloadKey}-${sync.syncTick}-${manualResync}`
 
   // Keyboard shortcuts

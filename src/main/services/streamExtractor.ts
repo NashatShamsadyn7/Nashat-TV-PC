@@ -87,11 +87,15 @@ async function scrape(targetUrl: string, hop: number): Promise<string | null> {
     return scrape(next, hop + 1)
   }
 
-  // 2. dash: "..." / hls: "..." config in page JS
-  const dashMatch = html.match(/dash\s*:\s*['"]([^'"]+)['"]/i)
-  if (dashMatch) return dashMatch[1]
+  // 2. hls: "..." / dash: "..." config in page JS. Prefer HLS — the renderer's
+  // VideoPlayer only plays HLS/MP4. A .mpd (DASH) URL has no player, so it ends
+  // up in an <iframe> that Chromium downloads to disk instead of playing (the
+  // "needs download" symptom on channels like NRT). Only fall back to DASH when
+  // no HLS source exists on the page.
   const hlsMatch = html.match(/hls\s*:\s*['"]([^'"]+)['"]/i)
   if (hlsMatch) return hlsMatch[1]
+  const dashMatch = html.match(/dash\s*:\s*['"]([^'"]+)['"]/i)
+  if (dashMatch) return dashMatch[1]
 
   // 3. Fallback: redirect landed on /embed.html
   if (finalUrl.includes('/embed.html')) {

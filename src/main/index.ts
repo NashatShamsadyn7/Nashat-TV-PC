@@ -117,6 +117,13 @@ app.whenReady().then(async () => {
   //   - deny everything else, including any permission requested by an
   //     embedded streaming iframe.
   const { session } = await import('electron')
+  // A stream we can't play (e.g. a raw .mpd/.ts URL that lands in an <iframe>)
+  // makes Chromium download the file to disk instead of playing it — the
+  // "needs download" symptom on some channels. We never want the app to save
+  // media files, so cancel every download silently.
+  session.defaultSession.on('will-download', (event) => {
+    event.preventDefault()
+  })
   session.defaultSession.setPermissionRequestHandler((wc, perm, callback, details) => {
     const requestingUrl = details?.requestingUrl || ''
     const isTopFrame = wc?.mainFrame?.url === requestingUrl

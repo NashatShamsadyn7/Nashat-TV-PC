@@ -134,7 +134,18 @@ const BLOCKED_URL_PATTERNS: RegExp[] = [
   /\/(ads|adserver|adsense|adframe|adcontent|advertisement|pop(up|under)?|prebid|analytics|tracker|telemetry)(\/|\.|\?|$)/i,
   /\bgoogle_ads_iframe\b/i,
   /\/gtm\.js/i,
-  /\/gtag\/js/i
+  /\/gtag\/js/i,
+  // Popunder/push-ad tag signatures observed in the embed players (Adsterra,
+  // Galaksion, PropellerAds-style). These query shapes never appear on real
+  // video streams, so matching them by signature avoids chasing rotating hosts:
+  //   tag.min.js?z=11064923&var=10966354   (zone-id ad loader)
+  //   /push?clientId=...&clickId=...        (push-notification ad)
+  //   ?...&oaid=...&navIng=...              (in-page display ad)
+  /\/tag\.min\.js\?z=\d+/i,
+  /[?&]z=\d+&var=\d+/i,
+  /[?&](oaid|clickId|clickid)=/i,
+  /\/push\?.*clientId=/i,
+  /\/mm\.js(\?|$)/i
 ]
 
 function hostBlocked(hostname: string): boolean {

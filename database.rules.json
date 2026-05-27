@@ -75,6 +75,11 @@
             "$fromUid": {
               ".write": "auth != null && (auth.uid === $uid || auth.uid === $fromUid)"
             }
+          },
+          "outgoing": {
+            "$toUid": {
+              ".write": "auth != null && (auth.uid === $uid || auth.uid === $toUid)"
+            }
           }
         },
         "roomInvites": {

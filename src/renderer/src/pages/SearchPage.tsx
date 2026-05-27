@@ -31,6 +31,7 @@ export default function SearchPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams])
   const [history, setHistory] = useState<string[]>(() => getSearchHistory())
+  const [filter, setFilter] = useState<'all' | 'movie' | 'tv' | 'channel'>('all')
   const debounced = useDebounced(query, 300)
   const lang = i18n.language === 'ku' ? 'ar' : i18n.language
 
@@ -78,6 +79,21 @@ export default function SearchPage() {
 
   const showHistory = !query.trim() && history.length > 0
 
+  // Apply the active type filter. TMDB rows carry media_type; channels are a
+  // separate bucket. 'all' shows everything.
+  const visibleTmdb = tmdbResults.filter((r) =>
+    filter === 'all' ? true : (r as any).media_type === filter
+  )
+  const showChannels = filter === 'all' || filter === 'channel'
+  const showTmdb = filter === 'all' || filter === 'movie' || filter === 'tv'
+
+  const FILTERS: Array<{ id: typeof filter; label: string }> = [
+    { id: 'all', label: 'الكل' },
+    { id: 'movie', label: 'أفلام' },
+    { id: 'tv', label: 'مسلسلات' },
+    { id: 'channel', label: 'قنوات' }
+  ]
+
   return (
     <div>
       <PageHeader title={t('nav.search')} />
@@ -117,6 +133,24 @@ export default function SearchPage() {
             )}
           </div>
 
+          {debounced.trim() && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {FILTERS.map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setFilter(f.id)}
+                  className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${
+                    filter === f.id
+                      ? 'bg-brand-500 text-white'
+                      : 'bg-ink-700/40 text-ink-200 hover:bg-ink-700/70'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          )}
+
           {showHistory && (
             <div className="mt-6">
               <div className="flex items-center justify-between mb-2">
@@ -149,7 +183,7 @@ export default function SearchPage() {
 
         {debounced.trim() && (
           <div className="mt-8 max-w-7xl mx-auto space-y-8 pb-10">
-            {channelHits.length > 0 && (
+            {showChannels && channelHits.length > 0 && (
               <section>
                 <h2 className="font-semibold mb-3 flex items-center gap-2">
                   <Tv className="w-5 h-5 text-brand-400" />
@@ -184,17 +218,18 @@ export default function SearchPage() {
               </section>
             )}
 
+            {showTmdb && (
             <section>
               <h2 className="font-semibold mb-3 flex items-center gap-2">
                 <Film className="w-5 h-5 text-brand-400" />
                 أفلام ومسلسلات {tmdbLoading && <Loader2 className="w-4 h-4 animate-spin" />}
               </h2>
               {tmdbError && <p className="text-rose-400 text-sm">{tmdbError}</p>}
-              {!tmdbLoading && tmdbResults.length === 0 && !tmdbError && (
+              {!tmdbLoading && visibleTmdb.length === 0 && !tmdbError && (
                 <p className="text-ink-300 text-sm">لا توجد نتائج TMDB</p>
               )}
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3">
-                {tmdbResults.map((r) => {
+                {visibleTmdb.map((r) => {
                   const title = isTv(r) ? r.name : (r as TmdbMovie).title
                   const year = isTv(r)
                     ? r.first_air_date?.slice(0, 4)
@@ -222,6 +257,7 @@ export default function SearchPage() {
                 })}
               </div>
             </section>
+            )}
           </div>
         )}
       </div>

@@ -89,6 +89,32 @@ export default function FriendsPage() {
     }
   }
 
+  const handleAccept = async (fromUid: string) => {
+    setError(null)
+    setSuccess(null)
+    setBusy(`accept-${fromUid}`)
+    try {
+      await acceptFriendRequest(fromUid)
+      setSuccess('تمت إضافة الصديق')
+    } catch (err) {
+      setError((err as Error).message)
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const handleDecline = async (fromUid: string) => {
+    setError(null)
+    setBusy(`decline-${fromUid}`)
+    try {
+      await declineFriendRequest(fromUid)
+    } catch (err) {
+      setError((err as Error).message)
+    } finally {
+      setBusy(null)
+    }
+  }
+
   const handleInvite = async (friendUid: string, friendName: string) => {
     if (!activeRoomId) {
       setError('أنشئ غرفة أولاً من صفحة "مشاهدة مع الأصدقاء"')
@@ -246,15 +272,21 @@ export default function FriendsPage() {
                     <p className="text-sm font-semibold">{r.name}</p>
                   </div>
                   <button
-                    onClick={() => acceptFriendRequest(r.uid)}
-                    className="w-8 h-8 grid place-items-center rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30"
+                    onClick={() => handleAccept(r.uid)}
+                    disabled={busy === `accept-${r.uid}`}
+                    className="w-8 h-8 grid place-items-center rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-50"
                     title="قبول"
                   >
-                    <Check className="w-4 h-4" />
+                    {busy === `accept-${r.uid}` ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Check className="w-4 h-4" />
+                    )}
                   </button>
                   <button
-                    onClick={() => declineFriendRequest(r.uid)}
-                    className="w-8 h-8 grid place-items-center rounded-lg text-ink-300 hover:text-rose-300 hover:bg-rose-500/10"
+                    onClick={() => handleDecline(r.uid)}
+                    disabled={busy === `decline-${r.uid}`}
+                    className="w-8 h-8 grid place-items-center rounded-lg text-ink-300 hover:text-rose-300 hover:bg-rose-500/10 disabled:opacity-50"
                     title="رفض"
                   >
                     <XIcon className="w-4 h-4" />

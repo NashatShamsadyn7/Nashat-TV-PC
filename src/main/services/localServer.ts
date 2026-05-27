@@ -21,6 +21,39 @@ const MIME: Record<string, string> = {
   '.map': 'application/json'
 }
 
+// Stable port candidates. The renderer origin (http://localhost:PORT) is the
+// storage key for Firebase auth (indexedDB), search history (localStorage) and
+// every other browser store. A random port (listen(0)) changes the origin on
+// every launch, wiping login + local history. Binding a FIXED port keeps the
+// origin stable across restarts; we try a small ordered list in case one is
+// already taken, but always in the same deterministic order.
+const PORT_CANDIDATES = [17645, 17646, 17647, 17648, 17649]
+
+function listenOnFirstFree(server: Server, ports: number[]): Promise<number> {
+  return new Promise((resolveListen, rejectListen) => {
+    const tryPort = (idx: number) => {
+      if (idx >= ports.length) {
+        rejectListen(new Error('No fixed renderer port available'))
+        return
+      }
+      const onError = (err: NodeJS.ErrnoException) => {
+        if (err.code === 'EADDRINUSE') {
+          server.removeListener('error', onError)
+          tryPort(idx + 1)
+        } else {
+          rejectListen(err)
+        }
+      }
+      server.once('error', onError)
+      server.listen(ports[idx], '127.0.0.1', () => {
+        server.removeListener('error', onError)
+        resolveListen(ports[idx])
+      })
+    }
+    tryPort(0)
+  })
+}
+
 export async function startLocalRendererServer(rootDir: string): Promise<{
   origin: string
   server: Server
@@ -59,16 +92,7 @@ export async function startLocalRendererServer(rootDir: string): Promise<{
     }
   })
 
-  return new Promise((resolve, reject) => {
-    server.once('error', reject)
-    server.listen(0, '127.0.0.1', () => {
-      const addr = server.address()
-      if (!addr || typeof addr === 'string') {
-        reject(new Error('Failed to bind local renderer server'))
-        return
-      }
-      // Firebase Auth whitelists `localhost` — use that hostname, not 127.0.0.1.
-      resolve({ origin: `http://localhost:${addr.port}`, server })
-    })
-  })
+  const port = await listenOnFirstFree(server, PORT_CANDIDATES)
+  // Firebase Auth whitelists `localhost` — use that hostname, not 127.0.0.1.
+  return { origin: `http://localhost:${port}`, server }
 }

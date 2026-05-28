@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
@@ -9,7 +9,10 @@ import {
   XCircle,
   Loader2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ThumbsUp,
+  ThumbsDown,
+  PlayCircle
 } from 'lucide-react'
 import type { TmdbMediaSource } from '@/stores/playerStore'
 import { libraryActions } from '@/stores/libraryStore'
@@ -19,11 +22,23 @@ import {
   useServerHealth,
   type ServerStatus
 } from '@/features/player/useServerHealth'
+import { contentKey, useServerPrefs } from '@/features/player/useServerPrefs'
+import { tmdbApi } from '@/services/tmdb'
 import { cn } from '@/lib/cn'
 import RoomChatOverlay from '@/features/watchTogether/RoomChatOverlay'
 import RoomSyncOverlay from '@/features/watchTogether/RoomSyncOverlay'
 import VoiceCallButton from '@/features/voiceCall/VoiceCallButton'
 import { useRoomSync, withStartTime } from '@/features/watchTogether/useRoomSync'
+
+// How long a freshly-selected iframe gets to fire `load` before we assume it
+// is broken and auto-advance to the next server. Generous — embed players
+// can be slow on first hit. Reload-on-failure stops the silent black screen
+// on servers that pass the health ping but refuse to embed.
+const IFRAME_LOAD_TIMEOUT_MS = 12_000
+// Once an iframe loads, wait this long without the user switching before we
+// commit it as "last working server for this title". Avoids saving a server
+// the user immediately abandons (e.g. "Sandbox not allowed" they switched away from).
+const LAST_USED_COMMIT_DELAY_MS = 8_000
 
 type Props = {
   source: TmdbMediaSource | null
@@ -59,14 +74,88 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
   )
 
   const servers = useServerHealth(healthArgs)
-  const sorted = useMemo(() => sortByHealth(servers), [servers])
+  const prefs = useServerPrefs()
+  // Sort with the user's own vote scores factored in — upvoted servers float
+  // toward auto-pick over time, downvoted ones drop.
+  const sorted = useMemo(() => sortByHealth(servers, prefs.scoreOf), [servers, prefs.scoreOf])
+
+  const key = source ? contentKey(source.kind, source.tmdbId, source.season, source.episode) : ''
+  const remembered = key ? prefs.lastUsed[key] : undefined
 
   // Reset on new media
   useEffect(() => {
     setActiveId(null)
     setAutoPicked(false)
     setReloadKey(0)
+    setLoadState('idle')
+    setShowTrailer(false)
+    setTrailerKey(null)
   }, [source?.tmdbId, source?.kind, source?.season, source?.episode])
+
+  // ── Iframe load-timeout auto-advance ──────────────────────────────────────
+  // Cross-origin iframes hide playback failure, but a frame that never fires
+  // its `load` event within ~12s is almost always a dead server. We watch the
+  // event and bail to the next 'ok' candidate when it doesn't show up.
+  const [loadState, setLoadState] = useState<'idle' | 'loading' | 'loaded' | 'timeout'>('idle')
+  const loadedAtRef = useRef<number | null>(null)
+  const failedServersRef = useRef<Set<string>>(new Set())
+  useEffect(() => {
+    if (!activeId) return
+    setLoadState('loading')
+    loadedAtRef.current = null
+    const t = window.setTimeout(() => {
+      // Mark this server as failed-to-load for this session and try the next
+      // working candidate. Avoids loops by skipping any server we already gave up on.
+      failedServersRef.current.add(activeId)
+      setLoadState('timeout')
+      const remaining = sorted.filter(
+        (s) => s.status === 'ok' && !failedServersRef.current.has(s.id)
+      )
+      const next = remaining[0]
+      if (next) setActiveId(next.id)
+    }, IFRAME_LOAD_TIMEOUT_MS)
+    return () => window.clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeId, reloadKey])
+
+  // ── "Last working server" commit ──────────────────────────────────────────
+  // Once the iframe has been loaded AND the user hasn't switched away within
+  // LAST_USED_COMMIT_DELAY_MS, write it as the preferred server for this title.
+  useEffect(() => {
+    if (!activeId || loadState !== 'loaded' || !key) return
+    const at = loadedAtRef.current ?? Date.now()
+    const wait = Math.max(0, LAST_USED_COMMIT_DELAY_MS - (Date.now() - at))
+    const t = window.setTimeout(() => prefs.rememberLastUsed(key, activeId), wait)
+    return () => window.clearTimeout(t)
+  }, [activeId, loadState, key, prefs])
+
+  // ── Trailer fallback ──────────────────────────────────────────────────────
+  // When every server is failed AND none is currently loading, offer the TMDB
+  // trailer. The button is opt-in (not auto) so we don't yank the user out of
+  // a server they were about to manually try.
+  const [showTrailer, setShowTrailer] = useState(false)
+  const [trailerKey, setTrailerKey] = useState<string | null>(null)
+  const fetchTrailer = async () => {
+    if (!source) return
+    try {
+      const res =
+        source.kind === 'movie'
+          ? await tmdbApi.movieVideos(source.tmdbId)
+          : await tmdbApi.tvVideos(source.tmdbId)
+      // Prefer official YouTube trailers, then any YouTube video.
+      const yt = res.results.filter((v) => v.site === 'YouTube')
+      const pick =
+        yt.find((v) => v.type === 'Trailer' && v.official) ??
+        yt.find((v) => v.type === 'Trailer') ??
+        yt[0]
+      if (pick) {
+        setTrailerKey(pick.key)
+        setShowTrailer(true)
+      }
+    } catch {
+      /* swallow — user can dismiss the modal */
+    }
+  }
 
   // Record into "Continue Watching" the moment a media item opens.
   useEffect(() => {
@@ -86,15 +175,25 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
     })
   }, [source?.tmdbId, source?.kind, source?.season, source?.episode]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-pick the first working server the moment one resolves
+  // Auto-pick: prefer the server the user last successfully watched this title
+  // on; otherwise grab the highest-ranked working candidate from sortByHealth.
   useEffect(() => {
     if (autoPicked || activeId) return
+    // Remembered server, if it's also healthy right now.
+    if (remembered) {
+      const rem = sorted.find((s) => s.id === remembered && s.status === 'ok')
+      if (rem) {
+        setActiveId(rem.id)
+        setAutoPicked(true)
+        return
+      }
+    }
     const firstWorking = sorted.find((s) => s.status === 'ok')
     if (firstWorking) {
       setActiveId(firstWorking.id)
       setAutoPicked(true)
     }
-  }, [sorted, autoPicked, activeId])
+  }, [sorted, autoPicked, activeId, remembered])
 
   const active = activeId ? servers.find((s) => s.id === activeId) : null
   const baseUrl = active?.url ?? ''
@@ -261,6 +360,36 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
+            {/* Per-user up/down vote on the active server — biases auto-pick
+                next time. Re-click the same side to clear. */}
+            {activeId && (
+              <div className="flex items-center gap-1 ms-2 ps-2 border-s border-ink-600/40">
+                <button
+                  onClick={() => prefs.vote(activeId, 'up')}
+                  title="السيرفر شغّال ممتاز"
+                  className={cn(
+                    'w-9 h-9 grid place-items-center rounded-full transition-colors',
+                    prefs.myVotes[activeId] === 'up'
+                      ? 'bg-emerald-500 text-white'
+                      : 'bg-ink-700/40 hover:bg-emerald-500/30 text-ink-200'
+                  )}
+                >
+                  <ThumbsUp className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => prefs.vote(activeId, 'down')}
+                  title="هذا السيرفر سيّئ"
+                  className={cn(
+                    'w-9 h-9 grid place-items-center rounded-full transition-colors',
+                    prefs.myVotes[activeId] === 'down'
+                      ? 'bg-rose-500 text-white'
+                      : 'bg-ink-700/40 hover:bg-rose-500/30 text-ink-200'
+                  )}
+                >
+                  <ThumbsDown className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="flex-1 min-h-0 bg-black grid place-items-center">
@@ -273,16 +402,23 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
                 </p>
               </div>
             )}
-            {!activeId && stats.ok === 0 && stats.checking === 0 && (
+            {!activeId && stats.ok === 0 && stats.checking === 0 && !showTrailer && (
               <div className="text-center max-w-md px-6">
                 <XCircle className="w-12 h-12 text-rose-400 mx-auto mb-3" />
-                <p className="font-semibold mb-2">جميع السيرفرات معطّلة</p>
-                <p className="text-ink-300 text-sm">
-                  حاول لاحقاً أو جرّب فلماً آخر
+                <p className="font-semibold mb-2">لا يوجد سيرفر يعمل لهذا العنوان</p>
+                <p className="text-ink-300 text-sm mb-5">
+                  ربما لم يصدر بعد، أو السيرفرات معطّلة الآن.
                 </p>
+                <button
+                  onClick={fetchTrailer}
+                  className="inline-flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-xl text-sm transition-colors"
+                >
+                  <PlayCircle className="w-4 h-4" />
+                  عرض الإعلان الرسمي
+                </button>
               </div>
             )}
-            {activeId && url && (
+            {activeId && url && !showTrailer && (
               <iframe
                 id="movie-iframe"
                 key={iframeKey}
@@ -291,6 +427,19 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
                 allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
                 allowFullScreen
                 referrerPolicy="no-referrer"
+                onLoad={() => {
+                  loadedAtRef.current = Date.now()
+                  setLoadState('loaded')
+                }}
+              />
+            )}
+            {showTrailer && trailerKey && (
+              <iframe
+                key={`trailer-${trailerKey}`}
+                src={`https://www.youtube-nocookie.com/embed/${trailerKey}?autoplay=1&rel=0`}
+                className="w-full h-full border-0"
+                allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                allowFullScreen
               />
             )}
           </div>

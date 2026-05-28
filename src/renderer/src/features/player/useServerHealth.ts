@@ -94,17 +94,26 @@ export function useServerHealth(args: Args | null): ServerHealth[] {
 }
 
 /**
- * Sort working first, then checking, then failed. Within the same status,
- * reliable servers come before unreliable ones (e.g. VidSrc, which pings OK but
- * its player often refuses to embed), then by latency. This keeps auto-pick —
- * which grabs the first 'ok' server — on a server that actually plays.
+ * Sort: working → checking → failed; reliable → unreliable; higher user score
+ * → lower; then by latency. `scoreOf` is optional — when omitted, scores are
+ * treated as 0 and the sort falls back to status/reliability/latency.
+ *
+ * `scoreOf` lets each user's own up/down votes bias auto-pick toward servers
+ * they have personally rated higher.
  */
-export function sortByHealth(servers: ServerHealth[]): ServerHealth[] {
+export function sortByHealth(
+  servers: ServerHealth[],
+  scoreOf?: (serverId: string) => number
+): ServerHealth[] {
   const order: Record<ServerStatus, number> = { ok: 0, checking: 1, fail: 2 }
+  const score = scoreOf ?? (() => 0)
   return [...servers].sort((a, b) => {
     const byStatus = order[a.status] - order[b.status]
     if (byStatus !== 0) return byStatus
     if (a.reliable !== b.reliable) return a.reliable ? -1 : 1
+    const sB = score(b.id)
+    const sA = score(a.id)
+    if (sA !== sB) return sB - sA
     return (a.latencyMs ?? Infinity) - (b.latencyMs ?? Infinity)
   })
 }

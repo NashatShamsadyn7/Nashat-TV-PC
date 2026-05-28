@@ -62,6 +62,24 @@ export const STREAM_SERVERS: StreamServer[] = [
         : `https://vembed.click/play/${tmdbId}_s${season ?? 1}_e${episode ?? 1}`
   },
   {
+    // Let's Embed — claims DUB content; newer next-gen API.
+    id: 'letsembed',
+    label: "Let's Embed",
+    build: ({ kind, tmdbId, season, episode }) =>
+      kind === 'movie'
+        ? `https://letsembed.cc/embed/movie/?id=${tmdbId}`
+        : `https://letsembed.cc/embed/tv/?id=${tmdbId}/${season ?? 1}/${episode ?? 1}`
+  },
+  {
+    // GoDrivePlayer — VidSrc alternative, mostly 1080p, uses TMDB id.
+    id: 'godrive',
+    label: 'GoDrive',
+    build: ({ kind, tmdbId, season, episode }) =>
+      kind === 'movie'
+        ? `https://databasegdriveplayer.co/player.php?type=movie&tmdb=${tmdbId}`
+        : `https://databasegdriveplayer.co/player.php?type=series&tmdb=${tmdbId}&season=${season ?? 1}&episode=${episode ?? 1}`
+  },
+  {
     id: '2embed',
     label: '2Embed',
     build: ({ kind, tmdbId, season, episode }) =>

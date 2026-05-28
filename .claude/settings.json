@@ -25,7 +25,13 @@
       "WebFetch(domain:www.2embed.stream)",
       "WebFetch(domain:vembed.click)",
       "WebFetch(domain:cinesrc.st)",
-      "WebFetch(domain:vidapi.xyz)"
+      "WebFetch(domain:vidapi.xyz)",
+      "Bash(cp \"dist/Nashat TV-Setup-1.3.5.exe\" \"dist/Nashat-TV-Setup-1.3.5.exe\")",
+      "Bash(cp \"dist/Nashat TV-Setup-1.3.5.exe.blockmap\" \"dist/Nashat-TV-Setup-1.3.5.exe.blockmap\")",
+      "WebFetch(domain:sussy-code.github.io)",
+      "WebFetch(domain:www.npmjs.com)",
+      "mcp__github__get_file_contents",
+      "mcp__github__list_commits"
     ]
   }
 }

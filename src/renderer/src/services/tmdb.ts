@@ -82,6 +82,20 @@ export const tmdbApi = {
       params: { query, language, include_adult: 'false' }
     }),
 
+  // Trailers — used by the player's "no stream" fallback. Cheaper than
+  // pulling full details when we only need the YouTube key.
+  movieVideos: (id: number, language = 'en') =>
+    tmdb<{ id: number; results: Array<{ key: string; site: string; type: string; official?: boolean }> }>({
+      endpoint: `/movie/${id}/videos`,
+      params: { language }
+    }),
+
+  tvVideos: (id: number, language = 'en') =>
+    tmdb<{ id: number; results: Array<{ key: string; site: string; type: string; official?: boolean }> }>({
+      endpoint: `/tv/${id}/videos`,
+      params: { language }
+    }),
+
   movieDetails: (id: number, language = 'ar') =>
     tmdb<TmdbMovieDetails>({
       endpoint: `/movie/${id}`,

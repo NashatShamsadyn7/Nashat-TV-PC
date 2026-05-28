@@ -27,6 +27,7 @@ const api = {
     ipcRenderer.invoke('pip:open', payload),
   closePip: (): Promise<void> => ipcRenderer.invoke('pip:close'),
   // System integration
+  getAppVersion: (): Promise<string> => ipcRenderer.invoke('system:get-version'),
   showTray: (): Promise<void> => ipcRenderer.invoke('system:show-tray'),
   setPresence: (payload: { title?: string; status?: 'playing' | 'paused' | 'idle' }): Promise<void> =>
     ipcRenderer.invoke('system:set-presence', payload),

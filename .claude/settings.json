@@ -1,7 +1,23 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git commit -m 'fix\\(watch-together\\): freeze iframe URL between admin actions *)"
+      "Bash(git commit -m 'fix\\(watch-together\\): freeze iframe URL between admin actions *)",
+      "Bash(node scripts/run.mjs build)",
+      "Bash(cp \"dist/Nashat TV-Setup-1.3.1.exe\" \"dist/Nashat-TV-Setup-1.3.1.exe\")",
+      "Bash(cp \"dist/Nashat TV-Setup-1.3.1.exe.blockmap\" \"dist/Nashat-TV-Setup-1.3.1.exe.blockmap\")",
+      "Bash(findstr /i \"store auth persist friends search server stream\")",
+      "mcp__firebase__firebase_validate_security_rules",
+      "mcp__firebase__firebase_deploy",
+      "mcp__firebase__firebase_deploy_status",
+      "Bash(git commit -m ' *)",
+      "Bash(node -p \"require\\('./package.json'\\).version\")",
+      "Bash(sed -n '1,20p' .github/workflows/release.yml)",
+      "Bash(node -e \"const s=require\\('./package.json'\\).scripts; console.log\\(JSON.stringify\\(s,null,2\\)\\)\")",
+      "Bash(grep -i \"DATABASE_URL\" .env)",
+      "Bash(grep -i \"DATABASE_URL\" .env.example)",
+      "Bash(python3 -c ' *)",
+      "Bash(node scripts/_tmp_chan.cjs \"C:\\\\Users\\\\nasha\\\\.claude\\\\projects\\\\d--Nashat-TV-PC\\\\021a83ee-cecd-48cd-9ec1-d7eda48e6ced\\\\tool-results\\\\mcp-firebase-realtimedatabase_get_data-1779926200372.txt\")",
+      "Bash(grep -iA1 \"billing\\\\|locked\\\\|ANNOTATION\\\\|not started\")"
     ]
   }
 }

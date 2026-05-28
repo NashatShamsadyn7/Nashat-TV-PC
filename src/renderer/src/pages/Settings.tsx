@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   LogIn,
@@ -92,6 +92,11 @@ export default function Settings() {
   const authLoading = useAuthStore((s) => s.loading)
   const [authOpen, setAuthOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
+  // Real app version from the main process (was hardcoded for ages).
+  const [appVersion, setAppVersion] = useState<string>('…')
+  useEffect(() => {
+    window.nashat.getAppVersion().then(setAppVersion).catch(() => setAppVersion('?'))
+  }, [])
 
   const settings = useSettingsStore()
   const profiles = useProfilesStore((s) => s.profiles)
@@ -354,7 +359,7 @@ export default function Settings() {
         <Section title="إصدار التطبيق">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm">v1.1.0 — Nashat TV PC</p>
+              <p className="text-sm">v{appVersion} — Nashat TV PC</p>
               <p className="text-xs text-ink-300">التحديث يصل تلقائياً من GitHub Releases</p>
             </div>
             {update.status === 'checking' && <StatusBadge tone="info">جارٍ الفحص…</StatusBadge>}

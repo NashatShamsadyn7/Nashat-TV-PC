@@ -28,6 +28,10 @@ export function registerSystemIpc(getMainWindow: () => BrowserWindow | null) {
     const win = getMainWindow()
     win?.flashFrame(true)
   })
+
+  // Report the real app version so the Settings page stops showing a stale
+  // hardcoded string and users can actually tell which build they're on.
+  ipcMain.handle('system:get-version', () => app.getVersion())
 }
 
 function rebuildMenu(

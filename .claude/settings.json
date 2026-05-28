@@ -17,7 +17,15 @@
       "Bash(grep -i \"DATABASE_URL\" .env.example)",
       "Bash(python3 -c ' *)",
       "Bash(node scripts/_tmp_chan.cjs \"C:\\\\Users\\\\nasha\\\\.claude\\\\projects\\\\d--Nashat-TV-PC\\\\021a83ee-cecd-48cd-9ec1-d7eda48e6ced\\\\tool-results\\\\mcp-firebase-realtimedatabase_get_data-1779926200372.txt\")",
-      "Bash(grep -iA1 \"billing\\\\|locked\\\\|ANNOTATION\\\\|not started\")"
+      "Bash(grep -iA1 \"billing\\\\|locked\\\\|ANNOTATION\\\\|not started\")",
+      "Bash(cp \"dist/Nashat TV-Setup-1.3.4.exe\" \"dist/Nashat-TV-Setup-1.3.4.exe\")",
+      "Bash(cp \"dist/Nashat TV-Setup-1.3.4.exe.blockmap\" \"dist/Nashat-TV-Setup-1.3.4.exe.blockmap\")",
+      "WebFetch(domain:vidbinge.to)",
+      "WebFetch(domain:ezvidapi.com)",
+      "WebFetch(domain:www.2embed.stream)",
+      "WebFetch(domain:vembed.click)",
+      "WebFetch(domain:cinesrc.st)",
+      "WebFetch(domain:vidapi.xyz)"
     ]
   }
 }

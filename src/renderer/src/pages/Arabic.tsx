@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { tmdbApi } from '@/services/tmdb'
 import { posterUrl, backdropUrl, type TmdbMovie, type TmdbTv } from '@shared/tmdb'
 import { ARABIC_DUB_MOVIE_IDS, ARABIC_DUB_TV_IDS } from '@/features/arabic/dubs'
+import { useDubVotes } from '@/features/arabic/useDubVotes'
 
 type Tab = 'originals-movies' | 'originals-tv' | 'dubbed-movies' | 'dubbed-tv'
 
@@ -44,6 +45,20 @@ export default function Arabic() {
   const [dubTv, setDubTv] = useState<TmdbTv[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  // Live community votes — merged into the dubbed tabs alongside the seed
+  // list. Subscribing to both kinds is cheap (one shallow path each).
+  const movieVotes = useDubVotes('movie')
+  const tvVotes = useDubVotes('tv')
+  // Union of (curated seed) + (community-voted ids). Recomputes when the
+  // votes change so a fresh user vote shows immediately.
+  const dubbedMovieIds = useMemo(
+    () => Array.from(new Set([...ARABIC_DUB_MOVIE_IDS, ...movieVotes.topIds])),
+    [movieVotes.topIds]
+  )
+  const dubbedTvIds = useMemo(
+    () => Array.from(new Set([...ARABIC_DUB_TV_IDS, ...tvVotes.topIds])),
+    [tvVotes.topIds]
+  )
 
   // Lazy-fetch each tab the first time it's opened. Cached afterwards.
   useEffect(() => {
@@ -64,7 +79,7 @@ export default function Arabic() {
           // Convert detail responses into TmdbMovie shape. movieDetails returns
           // a richer object but the keys we use (id, title, poster_path,
           // backdrop_path, release_date, vote_average) are present.
-          const items = await fetchByIds(ARABIC_DUB_MOVIE_IDS, (id) =>
+          const items = await fetchByIds(dubbedMovieIds, (id) =>
             tmdbApi.movieDetails(id, 'ar')
           )
           if (!cancelled) {
@@ -80,7 +95,7 @@ export default function Arabic() {
           }
         } else if (tab === 'dubbed-tv' && !dubTv) {
           setLoading(true)
-          const items = await fetchByIds(ARABIC_DUB_TV_IDS, (id) =>
+          const items = await fetchByIds(dubbedTvIds, (id) =>
             tmdbApi.tvDetails(id, 'ar')
           )
           if (!cancelled) {
@@ -105,7 +120,17 @@ export default function Arabic() {
     return () => {
       cancelled = true
     }
-  }, [tab, origMovies, origTv, dubMovies, dubTv])
+  }, [tab, origMovies, origTv, dubMovies, dubTv, dubbedMovieIds, dubbedTvIds])
+
+  // When community votes change the dubbed id set, drop the cached lists so
+  // the effect above refetches with the expanded ids. Votes are rare, so the
+  // refetch cost is negligible.
+  useEffect(() => {
+    setDubMovies(null)
+  }, [dubbedMovieIds.length])
+  useEffect(() => {
+    setDubTv(null)
+  }, [dubbedTvIds.length])
 
   const grid = useMemo(() => {
     if (tab === 'originals-movies') return origMovies

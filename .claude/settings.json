@@ -35,7 +35,9 @@
       "Bash(cp \"dist/Nashat TV-Setup-1.3.6.exe\" \"dist/Nashat-TV-Setup-1.3.6.exe\")",
       "Bash(cp \"dist/Nashat TV-Setup-1.3.6.exe.blockmap\" \"dist/Nashat-TV-Setup-1.3.6.exe.blockmap\")",
       "WebFetch(domain:www.themoviedb.org)",
-      "WebFetch(domain:vidlink.pro)"
+      "WebFetch(domain:vidlink.pro)",
+      "Bash(cp \"dist/Nashat TV-Setup-1.3.7.exe\" \"dist/Nashat-TV-Setup-1.3.7.exe\")",
+      "Bash(cp \"dist/Nashat TV-Setup-1.3.7.exe.blockmap\" \"dist/Nashat-TV-Setup-1.3.7.exe.blockmap\")"
     ]
   }
 }

@@ -13,8 +13,10 @@ import {
   AlertCircle,
   Tv as TvIcon,
   ListVideo,
-  Users
+  Users,
+  Languages
 } from 'lucide-react'
+import { useDubVotes } from '@/features/arabic/useDubVotes'
 import { tmdbApi } from '@/services/tmdb'
 import {
   posterUrl,
@@ -282,6 +284,11 @@ export default function Details() {
   const isFav = useLibraryStore((s) =>
     itemId ? s.favorites.some((i) => i.id === itemId) : false
   )
+  // Community "this title has an Arabic dub" votes. Anyone can vote; the
+  // Arabic page merges these with the curated seed list.
+  const dubVotes = useDubVotes(kind === 'tv' ? 'tv' : 'movie')
+  const isDubVoted = tmdbId ? dubVotes.mine.has(tmdbId) : false
+  const dubCount = tmdbId ? dubVotes.counts[tmdbId] ?? 0 : 0
 
   useEffect(() => {
     if (!kind || !tmdbId) return
@@ -533,6 +540,34 @@ export default function Details() {
                 )}
               >
                 {inWatchlist ? <Check className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+              </button>
+              <button
+                onClick={() => user && dubVotes.toggle(tmdbId)}
+                disabled={!user}
+                title={
+                  !user
+                    ? 'سجّل الدخول للتصويت'
+                    : isDubVoted
+                      ? 'إلغاء التصويت'
+                      : 'هذا العمل له دبلجة عربية'
+                }
+                className={cn(
+                  'h-11 px-3 flex items-center gap-2 rounded-full transition ring-1 text-xs font-semibold',
+                  isDubVoted
+                    ? 'bg-emerald-500/20 ring-emerald-500 text-emerald-300'
+                    : 'bg-ink-700/40 ring-ink-600/40 hover:bg-ink-700/70 disabled:opacity-50'
+                )}
+              >
+                <Languages className="w-4 h-4" />
+                <span>{isDubVoted ? 'مدبلج ✓' : 'مدبلج؟'}</span>
+                {dubCount > 0 && (
+                  <span className={cn(
+                    'rounded-full px-1.5 py-0.5 text-[10px] tabular-nums',
+                    isDubVoted ? 'bg-emerald-500/30' : 'bg-ink-800/80'
+                  )}>
+                    {dubCount}
+                  </span>
+                )}
               </button>
             </div>
             {roomError && (

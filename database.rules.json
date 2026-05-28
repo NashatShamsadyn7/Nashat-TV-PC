@@ -131,6 +131,19 @@
       }
     },
 
+    "dubVotes": {
+      "$kind": {
+        ".read": "auth != null",
+        ".validate": "$kind === 'movie' || $kind === 'tv'",
+        "$tmdbId": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid",
+            ".validate": "newData.isBoolean() || newData.val() === null"
+          }
+        }
+      }
+    },
+
     "rooms": {
       "$roomId": {
         ".read": "auth != null",

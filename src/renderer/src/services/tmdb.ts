@@ -120,6 +120,32 @@ export const tmdbApi = {
       params: { language }
     }),
 
+  // /discover/movie + /discover/tv — used by the Arabic content page to pull
+  // Arabic-original films & series (Egyptian, Lebanese, Saudi, Gulf, etc.).
+  discoverArabicMovies: (page = 1, language = 'ar') =>
+    tmdb<TmdbPaged<TmdbMovie>>({
+      endpoint: '/discover/movie',
+      params: {
+        page,
+        language,
+        with_original_language: 'ar',
+        sort_by: 'popularity.desc',
+        include_adult: 'false'
+      }
+    }),
+
+  discoverArabicTv: (page = 1, language = 'ar') =>
+    tmdb<TmdbPaged<TmdbTv>>({
+      endpoint: '/discover/tv',
+      params: {
+        page,
+        language,
+        with_original_language: 'ar',
+        sort_by: 'popularity.desc',
+        include_adult: 'false'
+      }
+    }),
+
   popularPeople: (page = 1, language = 'ar') =>
     tmdb<TmdbPaged<TmdbPerson>>({
       endpoint: '/person/popular',

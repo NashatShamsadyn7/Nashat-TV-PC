@@ -14,6 +14,7 @@ import {
   PartyPopper,
   UserPlus,
   MessageCircle,
+  Languages,
   type LucideIcon
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -32,6 +33,7 @@ const NAV: NavEntry[] = [
   { to: '/live/multi', icon: LayoutGrid, labelKey: 'nav.multilive' },
   { to: '/movies', icon: Film, labelKey: 'nav.movies' },
   { to: '/series', icon: MonitorPlay, labelKey: 'nav.series' },
+  { to: '/arabic', icon: Languages, labelKey: 'nav.arabic' },
   { to: '/actors', icon: Users, labelKey: 'nav.actors' },
   { to: '/search', icon: Search, labelKey: 'nav.search' },
   { to: '/library', icon: Library, labelKey: 'nav.library' },

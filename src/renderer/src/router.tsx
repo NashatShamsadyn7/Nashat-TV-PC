@@ -8,6 +8,7 @@ const LiveTV = lazy(() => import('@/pages/LiveTV'))
 const MultiLive = lazy(() => import('@/pages/MultiLive'))
 const Movies = lazy(() => import('@/pages/Movies'))
 const Series = lazy(() => import('@/pages/Series'))
+const Arabic = lazy(() => import('@/pages/Arabic'))
 const Actors = lazy(() => import('@/pages/Actors'))
 const ActorDetail = lazy(() => import('@/pages/ActorDetail'))
 const Details = lazy(() => import('@/pages/Details'))
@@ -47,6 +48,7 @@ export const router = createHashRouter([
       { path: 'live/multi', element: wrap(<MultiLive />) },
       { path: 'movies', element: wrap(<Movies />) },
       { path: 'series', element: wrap(<Series />) },
+      { path: 'arabic', element: wrap(<Arabic />) },
       { path: 'actors', element: wrap(<Actors />) },
       { path: 'actors/:id', element: wrap(<ActorDetail />) },
       { path: 'details/:kind/:id', element: wrap(<Details />) },

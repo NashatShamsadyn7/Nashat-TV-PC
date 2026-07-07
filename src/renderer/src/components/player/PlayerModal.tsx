@@ -32,6 +32,12 @@ type ExtractState =
   | { status: 'ready'; stream: ExtractedStream }
   | { status: 'failed'; error: string }
 
+function isEditable(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false
+  const tag = target.tagName
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable
+}
+
 function isDirectStream(url: string): boolean {
   return /\.(m3u8|mpd|mp4)(\?|$)/i.test(url)
 }
@@ -167,9 +173,13 @@ export default function PlayerModal({ source, onClose }: Props) {
   useEffect(() => {
     if (!source) return
     const handleKey = (e: KeyboardEvent) => {
+      if (isEditable(e.target)) return
       const p = playerRef.current
       switch (e.key) {
         case 'Escape':
+          // If we're in fullscreen, Esc should only exit fullscreen (the
+          // browser handles that) — not close the whole player.
+          if (document.fullscreenElement) break
           onClose()
           break
         case ' ':

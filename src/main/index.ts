@@ -125,6 +125,14 @@ app.whenReady().then(async () => {
     event.preventDefault()
   })
   session.defaultSession.setPermissionRequestHandler((wc, perm, callback, details) => {
+    // Allow HTML fullscreen (element.requestFullscreen) everywhere — our own
+    // player, the F shortcut, and the fullscreen buttons inside embedded
+    // third-party players. Without this carve-out the blanket callback(false)
+    // below silently denies every fullscreen request app-wide.
+    if (perm === 'fullscreen') {
+      callback(true)
+      return
+    }
     const requestingUrl = details?.requestingUrl || ''
     const isTopFrame = wc?.mainFrame?.url === requestingUrl
     const isOurOrigin =
@@ -141,6 +149,7 @@ app.whenReady().then(async () => {
   // Auto-approve mic prompts that Chromium sometimes routes through the
   // synchronous check (older getUserMedia path).
   session.defaultSession.setPermissionCheckHandler((_wc, perm, requestingOrigin) => {
+    if (perm === 'fullscreen') return true
     if (perm === 'media') {
       const ok =
         requestingOrigin.startsWith('http://localhost') ||

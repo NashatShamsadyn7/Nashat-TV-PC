@@ -142,6 +142,10 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer(
         if (v && Number.isFinite(v.duration)) v.currentTime = v.duration * ratio
       },
       requestFullscreen: () => {
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {})
+          return
+        }
         const target = containerRef.current ?? videoRef.current ?? iframeRef.current
         target?.requestFullscreen().catch(() => {})
       },

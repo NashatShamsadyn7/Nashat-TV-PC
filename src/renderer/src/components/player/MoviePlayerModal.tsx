@@ -45,6 +45,12 @@ type Props = {
   onClose: () => void
 }
 
+function isEditable(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false
+  const tag = target.tagName
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable
+}
+
 function StatusDot({ status }: { status: ServerStatus }) {
   if (status === 'checking') {
     return <Loader2 className="w-3.5 h-3.5 text-sky-300 animate-spin shrink-0" />
@@ -104,6 +110,9 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
     setLoadState('loading')
     loadedAtRef.current = null
     const t = window.setTimeout(() => {
+      // The iframe already fired `load` — the server is working. Never mark
+      // it as failed or auto-advance away from a playing server.
+      if (loadedAtRef.current !== null) return
       // Mark this server as failed-to-load for this session and try the next
       // working candidate. Avoids loops by skipping any server we already gave up on.
       failedServersRef.current.add(activeId)
@@ -220,13 +229,29 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
   useEffect(() => {
     if (!source) return
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (isEditable(e.target)) return
+      if (e.key === 'Escape') {
+        // In fullscreen, Esc only exits fullscreen (browser handles that) —
+        // it must not close the whole player.
+        if (document.fullscreenElement) return
+        onClose()
+      }
+      if (e.key === 'f' || e.key === 'F') {
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {})
+        } else {
+          const iframe = document.getElementById('movie-iframe') as HTMLIFrameElement | null
+          iframe?.requestFullscreen().catch(() => {})
+        }
+      }
       if (e.key === 'r' || e.key === 'R') setReloadKey((k) => k + 1)
       if (e.key === ']' || e.key === '[') {
         const idx = sorted.findIndex((s) => s.id === activeId)
         if (idx < 0) return
         const next = e.key === ']' ? idx + 1 : idx - 1
         const wrapped = (next + sorted.length) % sorted.length
+        // Manual pick: give a previously mis-flagged server another chance.
+        failedServersRef.current.delete(sorted[wrapped].id)
         setActiveId(sorted[wrapped].id)
       }
     }
@@ -298,6 +323,7 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
                 const idx = sorted.findIndex((s) => s.id === activeId)
                 if (idx < 0) return
                 const prev = (idx - 1 + sorted.length) % sorted.length
+                failedServersRef.current.delete(sorted[prev].id)
                 setActiveId(sorted[prev].id)
               }}
               title="سابق ([)"
@@ -322,7 +348,13 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
                   return (
                     <button
                       key={s.id}
-                      onClick={() => s.status !== 'fail' && setActiveId(s.id)}
+                      onClick={() => {
+                        if (s.status === 'fail') return
+                        // Manual pick: clear the failed flag so a previously
+                        // mis-flagged server can be retried.
+                        failedServersRef.current.delete(s.id)
+                        setActiveId(s.id)
+                      }}
                       disabled={s.status === 'fail'}
                       title={
                         s.latencyMs !== undefined ? `${s.latencyMs}ms` : 'يفحص…'
@@ -352,6 +384,7 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
                 const idx = sorted.findIndex((s) => s.id === activeId)
                 if (idx < 0) return
                 const next = (idx + 1) % sorted.length
+                failedServersRef.current.delete(sorted[next].id)
                 setActiveId(sorted[next].id)
               }}
               title="تالي (])"

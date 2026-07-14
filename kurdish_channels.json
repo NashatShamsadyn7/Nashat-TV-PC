@@ -1,0 +1,123 @@
+[
+  {
+    "category": "Kurdish",
+    "dbIndex": 1,
+    "id": "rudaw_tv",
+    "isAlive": true,
+    "key": "rudaw_tv",
+    "logo": "https://i.imgur.com/Zo3IWOn.png",
+    "name": "Rudaw TV",
+    "streamUrl": "https://hlspackager.akamaized.net/live/DB/RUDAW/HLS/RUDAW.m3u8",
+    "url": "https://www.rudaw.net/"
+  },
+  {
+    "category": "Kurdish",
+    "dbIndex": 2,
+    "id": "kurdistan_24",
+    "isAlive": true,
+    "key": "kurdistan_24",
+    "logo": "https://i.imgur.com/9QWs2ms.png",
+    "name": "Kurdistan 24",
+    "streamUrl": "https://hlspackager.akamaized.net/live/DB/K24/HLS/K24.m3u8",
+    "url": "https://www.kurdistan24.net/"
+  },
+  {
+    "category": "Kurdish",
+    "dbIndex": 3,
+    "id": "kurdsat",
+    "isAlive": true,
+    "key": "kurdsat",
+    "logo": "https://i.imgur.com/UAbSwYA.png",
+    "name": "Kurdsat",
+    "streamUrl": "https://hlspackager.akamaized.net/live/DB/KURDSAT_HD/HLS/KURDSAT_HD.m3u8",
+    "url": "https://www.kurdsat.tv/"
+  },
+  {
+    "category": "Kurdish",
+    "dbIndex": 4,
+    "id": "kurdsat_news",
+    "isAlive": true,
+    "key": "kurdsat_news",
+    "logo": "https://i.imgur.com/F3XRwkt.png",
+    "name": "Kurdsat News",
+    "streamUrl": "https://hlspackager.akamaized.net/live/DB/KURDSAT_NEWS/HLS/KURDSAT_NEWS.m3u8",
+    "url": "https://www.kurdsat.tv/"
+  },
+  {
+    "category": "Kurdish",
+    "dbIndex": 5,
+    "id": "waar_tv",
+    "isAlive": true,
+    "key": "waar_tv",
+    "logo": "https://i.imgur.com/rK0y02d.png",
+    "name": "Waar TV",
+    "streamUrl": "https://hlspackager.akamaized.net/live/DB/WAAR_HD/HLS/WAAR_HD.m3u8",
+    "url": "https://waartv.net/"
+  },
+  {
+    "category": "Kurdish",
+    "dbIndex": 6,
+    "id": "trt_kurdi",
+    "isAlive": true,
+    "key": "trt_kurdi",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/TRT_Kurd%C3%AE_logo.svg/960px-TRT_Kurd%C3%AE_logo.svg.png",
+    "name": "TRT Kurdî",
+    "streamUrl": "https://tv-trtkurdi.medya.trt.com.tr/master.m3u8",
+    "url": "https://www.trt.net.tr/kurdish"
+  },
+  {
+    "category": "Kids",
+    "dbIndex": 7,
+    "id": "afarin_tv",
+    "isAlive": true,
+    "key": "afarin_tv",
+    "logo": "https://i.imgur.com/6MnXD7g.png",
+    "name": "Afarin TV",
+    "streamUrl": "https://65f16f0fdfc51.streamlock.net/afarinTV/livestream/playlist.m3u8",
+    "url": "https://afarintv.com/"
+  },
+  {
+    "category": "Kids",
+    "dbIndex": 8,
+    "id": "zarok_tv",
+    "isAlive": true,
+    "key": "zarok_tv",
+    "logo": "https://i.imgur.com/o0eevnb.png",
+    "name": "Zarok TV",
+    "streamUrl": "https://zindikurmanci.zaroktv.com.tr/hls/stream.m3u8",
+    "url": "https://zaroktv.com.tr/"
+  },
+  {
+    "category": "Kurdish",
+    "dbIndex": 9,
+    "id": "kurd_channel",
+    "isAlive": true,
+    "key": "kurd_channel",
+    "logo": "https://i.imgur.com/xPwzad9.png",
+    "name": "Kurd Channel",
+    "streamUrl": "https://kurdchhls.wns.live/hls/stream.m3u8",
+    "url": "https://kurdchannel.tv/"
+  },
+  {
+    "category": "Religious",
+    "dbIndex": 10,
+    "id": "amozhgary_tv",
+    "isAlive": true,
+    "key": "amozhgary_tv",
+    "logo": "https://i.imgur.com/sseqFsO.png",
+    "name": "Amozhgary TV",
+    "streamUrl": "https://app-live.org/live/3268334b/index.m3u8",
+    "url": "https://amozhgary.tv/"
+  },
+  {
+    "category": "Kurdish",
+    "dbIndex": 11,
+    "id": "payam_tv",
+    "isAlive": true,
+    "key": "payam_tv",
+    "logo": "https://i.imgur.com/qySEibb.png",
+    "name": "Payam TV",
+    "streamUrl": "https://hlspackager.akamaized.net/live/DB/PAYAM_TV/HLS/PAYAM_TV.m3u8",
+    "url": "https://payamtv.net/"
+  }
+]

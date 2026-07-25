@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Loader2, AlertCircle, UserRound, Film, Tv as TvIcon } from 'lucide-react'
 import { tmdbApi } from '@/services/tmdb'
 import {
@@ -9,12 +9,13 @@ import {
   type TmdbPersonDetails,
   type TmdbPersonCredits
 } from '@shared/tmdb'
+import { useTmdbLanguage } from '@/i18n/tmdbLocale'
 
 export default function ActorDetail() {
+  const { t } = useTranslation()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { i18n } = useTranslation()
-  const lang = i18n.language === 'ku' ? 'ar' : i18n.language
+  const lang = useTmdbLanguage()
   const personId = Number(id)
 
   const [person, setPerson] = useState<TmdbPersonDetails | null>(null)
@@ -61,13 +62,13 @@ export default function ActorDetail() {
       .slice(0, 40)
   }, [credits])
 
-  if (!personId) return <div className="p-8 text-rose-300">معرّف غير صحيح</div>
+  if (!personId) return <div className="p-8 text-rose-300">{t('actorDetail.badId')}</div>
 
   if (loading) {
     return (
       <div className="p-16 text-center text-ink-300">
         <Loader2 className="w-10 h-10 mx-auto animate-spin mb-3" />
-        جارٍ التحميل…
+        {t('common.loading')}
       </div>
     )
   }
@@ -76,7 +77,7 @@ export default function ActorDetail() {
     return (
       <div className="p-8 max-w-md mx-auto text-center">
         <AlertCircle className="w-12 h-12 text-rose-400 mx-auto mb-3" />
-        <p className="font-semibold mb-2">تعذّر تحميل بيانات الممثّل</p>
+        <p className="font-semibold mb-2">{t('actorDetail.loadFailed')}</p>
         <p className="text-ink-300 text-sm">{error}</p>
       </div>
     )
@@ -109,14 +110,14 @@ export default function ActorDetail() {
           <div className="mt-3 text-sm text-ink-200 space-y-1">
             {person.birthday && (
               <p>
-                <span className="text-ink-300">تاريخ الميلاد: </span>
+                <span className="text-ink-300">{t('actorDetail.birthday')}</span>
                 {person.birthday}
                 {person.deathday && ` — ${person.deathday}`}
               </p>
             )}
             {person.place_of_birth && (
               <p>
-                <span className="text-ink-300">مكان الميلاد: </span>
+                <span className="text-ink-300">{t('actorDetail.birthplace')}</span>
                 {person.place_of_birth}
               </p>
             )}
@@ -131,7 +132,7 @@ export default function ActorDetail() {
 
       {filmography.length > 0 && (
         <section className="mt-10">
-          <h2 className="px-8 text-xl font-bold mb-3">الأعمال الفنية</h2>
+          <h2 className="px-8 text-xl font-bold mb-3">{t('actorDetail.filmography')}</h2>
           <div className="px-8 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4">
             {filmography.map((c: any) => {
               const isTv = c.media_type === 'tv'

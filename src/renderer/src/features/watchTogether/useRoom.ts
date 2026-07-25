@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { off, onValue, ref, set, update, push, serverTimestamp, remove } from 'firebase/database'
 import { db } from '@/services/firebase'
 import { useAuthStore } from '@/stores/authStore'
+import i18n from '@/i18n'
 
 export type RoomMedia = {
   kind: 'movie' | 'tv' | 'channel'
@@ -74,7 +75,7 @@ export async function createRoom(opts: {
   media?: RoomMedia
 }): Promise<string> {
   const user = useAuthStore.getState().user
-  if (!user) throw new Error('يجب تسجيل الدخول')
+  if (!user) throw new Error(i18n.t('common.signInRequiredShort'))
   const roomId = createRoomId()
   const now = Date.now()
   await set(ref(db, `rooms/${roomId}`), {
@@ -103,7 +104,7 @@ export async function setRoomMedia(roomId: string, media: RoomMedia) {
 
 export async function joinRoom(roomId: string) {
   const user = useAuthStore.getState().user
-  if (!user) throw new Error('يجب تسجيل الدخول')
+  if (!user) throw new Error(i18n.t('common.signInRequiredShort'))
   await update(ref(db, `rooms/${roomId}/members/${user.uid}`), {
     name: user.displayName || 'Guest',
     joinedAt: Date.now()

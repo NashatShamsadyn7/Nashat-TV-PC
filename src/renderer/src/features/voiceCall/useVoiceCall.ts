@@ -14,6 +14,7 @@ import {
 } from 'firebase/database'
 import { db } from '@/services/firebase'
 import { useAuthStore } from '@/stores/authStore'
+import i18n from '@/i18n'
 
 // Free public STUN servers from Google. Sufficient for ~80% of networks; if a
 // peer is behind a symmetric NAT they will fail to connect — that's a TURN
@@ -168,7 +169,7 @@ export function useVoiceCall(roomId: string | null): VoiceCallState {
   )
 
   const start = useCallback(async () => {
-    if (!roomId || !myUid) throw new Error('غير مسجّل دخول أو لا توجد غرفة')
+    if (!roomId || !myUid) throw new Error(i18n.t('voicecall.noRoom'))
     if (inCall) return
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }

@@ -11,6 +11,7 @@ import {
 import { db } from '@/services/firebase'
 import { useAuthStore } from '@/stores/authStore'
 import type { ChatMsg } from '@/features/watchTogether/useRoom'
+import i18n from '@/i18n'
 
 export type DMSummary = {
   chatId: string
@@ -30,7 +31,7 @@ export function chatIdFor(uidA: string, uidB: string): string {
 
 function previewOf(m: { text?: string; image?: string; gif?: string }): string {
   if (m.text) return m.text
-  if (m.image) return '📷 صورة'
+  if (m.image) return i18n.t('dm.imageMessage')
   if (m.gif) return '🎞 GIF'
   return ''
 }
@@ -50,7 +51,7 @@ export async function sendDM(
   payload: { text?: string; image?: string; gif?: string }
 ): Promise<void> {
   const user = useAuthStore.getState().user
-  if (!user) throw new Error('غير مسجّل دخول')
+  if (!user) throw new Error(i18n.t('friendsErr.notSignedIn'))
   const chatId = chatIdFor(user.uid, otherUid)
   const now = Date.now()
   const myName = user.displayName || 'Guest'
@@ -197,7 +198,7 @@ export function useDMInbox(): DMSummary[] {
       return {
         chatId,
         otherUid: e.otherUid,
-        otherName: profile?.displayName || 'مستخدم',
+        otherName: profile?.displayName || i18n.t('common.user'),
         otherPhoto: profile?.photoURL,
         lastMessage: e.lastMessage,
         lastMessageAt: e.lastMessageAt,

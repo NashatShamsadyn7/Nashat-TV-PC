@@ -37,6 +37,7 @@ function isAllowedExternal(url: string): boolean {
 const isDev = !app.isPackaged
 let prodRendererOrigin: string | null = null
 let mainWin: BrowserWindow | null = null
+let rendererServer: import('node:http').Server | null = null
 
 function createMainWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -170,8 +171,9 @@ app.whenReady().then(async () => {
   if (!isDev) {
     try {
       const rendererDir = join(__dirname, '../renderer')
-      const { origin } = await startLocalRendererServer(rendererDir)
+      const { origin, server } = await startLocalRendererServer(rendererDir)
       prodRendererOrigin = origin
+      rendererServer = server
     } catch (err) {
       console.error('[main] failed to start local renderer server, falling back to file://', err)
     }
@@ -191,4 +193,14 @@ app.whenReady().then(async () => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
+})
+
+// Release the fixed renderer port on shutdown. Leaving it bound makes the next
+// launch fall through to the following port candidate, which changes the origin
+// and silently wipes the stored login + local history.
+app.on('before-quit', () => {
+  if (rendererServer) {
+    rendererServer.close()
+    rendererServer = null
+  }
 })

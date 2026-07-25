@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Plus, Edit2, Trash2, Lock, Check, X } from 'lucide-react'
 import PageHeader from '@/components/ui/PageHeader'
 import { useProfilesStore, hashPin, type Profile } from '@/stores/profilesStore'
+import PinPrompt from '@/components/modals/PinPrompt'
 import { cn } from '@/lib/cn'
 
 const AVATARS = ['🎬', '🍿', '🎭', '🎮', '👾', '🐯', '🦊', '🐱', '🐻', '🌟', '🚀', '🎨']
@@ -17,6 +19,7 @@ function ProfileEditor({
   onCancel: () => void
   onDelete?: () => void
 }) {
+  const { t } = useTranslation()
   const [name, setName] = useState(profile.name)
   const [avatar, setAvatar] = useState(profile.avatar)
   const [isKid, setIsKid] = useState(profile.isKid)
@@ -24,7 +27,7 @@ function ProfileEditor({
   const [keepPin, setKeepPin] = useState(!!profile.pinHash)
 
   const save = async () => {
-    const next: Profile = { ...profile, name: name.trim() || 'بدون اسم', avatar, isKid }
+    const next: Profile = { ...profile, name: name.trim() || t('profiles.unnamed'), avatar, isKid }
     if (pin) next.pinHash = await hashPin(pin)
     else if (!keepPin) delete next.pinHash
     await onSave(next)
@@ -33,7 +36,7 @@ function ProfileEditor({
   return (
     <div className="bg-ink-700/30 rounded-2xl p-6 space-y-4">
       <div>
-        <label className="text-xs text-ink-300 block mb-1">الاسم</label>
+        <label className="text-xs text-ink-300 block mb-1">{t('profiles.name')}</label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -41,7 +44,7 @@ function ProfileEditor({
         />
       </div>
       <div>
-        <label className="text-xs text-ink-300 block mb-2">الصورة الرمزية</label>
+        <label className="text-xs text-ink-300 block mb-2">{t('profiles.avatar')}</label>
         <div className="flex flex-wrap gap-2">
           {AVATARS.map((a) => (
             <button
@@ -59,12 +62,12 @@ function ProfileEditor({
       </div>
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" checked={isKid} onChange={(e) => setIsKid(e.target.checked)} />
-        ملف أطفال (سيُخفي المحتوى للبالغين)
+        {t('profiles.kidsProfile')}
       </label>
       <div>
         <label className="text-xs text-ink-300 block mb-1 flex items-center gap-2">
           <Lock className="w-3 h-3" />
-          رمز PIN (اختياري — 4 أرقام)
+          {t('profiles.pinLabel')}
         </label>
         <div className="flex items-center gap-2">
           <input
@@ -72,14 +75,14 @@ function ProfileEditor({
             inputMode="numeric"
             maxLength={4}
             value={pin}
-            placeholder={profile.pinHash && keepPin ? '••••' : 'بدون رمز'}
+            placeholder={profile.pinHash && keepPin ? '••••' : t('profiles.noPin')}
             onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
             className="flex-1 bg-ink-700 ring-1 ring-ink-600 rounded-lg px-3 py-2 text-sm tracking-widest"
           />
           {profile.pinHash && (
             <label className="text-xs flex items-center gap-1">
               <input type="checkbox" checked={keepPin} onChange={(e) => setKeepPin(e.target.checked)} />
-              إبقاء
+              {t('profiles.keepPin')}
             </label>
           )}
         </div>
@@ -89,20 +92,20 @@ function ProfileEditor({
           onClick={save}
           className="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 px-4 py-2 rounded-xl text-sm font-semibold"
         >
-          <Check className="w-4 h-4" /> حفظ
+          <Check className="w-4 h-4" /> {t('common.save')}
         </button>
         <button
           onClick={onCancel}
           className="flex items-center gap-2 bg-ink-700/40 hover:bg-ink-700/70 px-4 py-2 rounded-xl text-sm"
         >
-          <X className="w-4 h-4" /> إلغاء
+          <X className="w-4 h-4" /> {t('common.cancel')}
         </button>
         {onDelete && (
           <button
             onClick={onDelete}
             className="ms-auto flex items-center gap-2 text-rose-400 hover:text-rose-300 text-sm"
           >
-            <Trash2 className="w-4 h-4" /> حذف
+            <Trash2 className="w-4 h-4" /> {t('common.delete')}
           </button>
         )}
       </div>
@@ -111,6 +114,7 @@ function ProfileEditor({
 }
 
 export default function Profiles() {
+  const { t } = useTranslation()
   const profiles = useProfilesStore((s) => s.profiles)
   const activeId = useProfilesStore((s) => s.activeId)
   const setActive = useProfilesStore((s) => s.setActive)
@@ -119,10 +123,12 @@ export default function Profiles() {
   const remove = useProfilesStore((s) => s.remove)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
+  // Profile awaiting PIN entry before it becomes active.
+  const [pendingProfile, setPendingProfile] = useState<Profile | null>(null)
 
   return (
     <div>
-      <PageHeader title="الملفّات الشخصيّة" subtitle="من يشاهد؟ — كل شخص له قائمته وذوقه" />
+      <PageHeader title={t('settings.profiles')} subtitle={t('profiles.subtitle')} />
       <div className="px-8 max-w-3xl pb-10 space-y-4">
         {profiles.map((p) => {
           const isEditing = editingId === p.id
@@ -165,10 +171,16 @@ export default function Profiles() {
               </div>
               {activeId !== p.id && (
                 <button
-                  onClick={() => setActive(p.id)}
+                  onClick={() => {
+                    // A PIN-protected profile must be unlocked first. This used
+                    // to call setActive() directly, which made both the PIN and
+                    // the Kids flag purely cosmetic.
+                    if (p.pinHash) setPendingProfile(p)
+                    else setActive(p.id)
+                  }}
                   className="text-xs bg-ink-700/60 hover:bg-brand-500 px-3 py-1.5 rounded-lg"
                 >
-                  تفعيل
+                  {t('profiles.activate')}
                 </button>
               )}
               <button
@@ -196,10 +208,19 @@ export default function Profiles() {
             className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl bg-ink-700/20 hover:bg-ink-700/40 ring-1 ring-dashed ring-ink-600/60 text-ink-300 hover:text-white"
           >
             <Plus className="w-5 h-5" />
-            إضافة ملف جديد
+            {t('profiles.addProfile')}
           </button>
         )}
       </div>
+
+      <PinPrompt
+        profile={pendingProfile}
+        onUnlocked={(p) => {
+          setActive(p.id)
+          setPendingProfile(null)
+        }}
+        onCancel={() => setPendingProfile(null)}
+      />
     </div>
   )
 }

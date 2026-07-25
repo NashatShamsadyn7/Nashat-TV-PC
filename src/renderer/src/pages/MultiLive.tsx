@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Hls from 'hls.js'
 import { Plus, X, Volume2, VolumeX, Search as SearchIcon } from 'lucide-react'
 import PageHeader from '@/components/ui/PageHeader'
@@ -26,6 +27,7 @@ function MiniPlayer({
   onToggleMute: () => void
   onActivate: () => void
 }) {
+  const { t } = useTranslation()
   const videoRef = useRef<HTMLVideoElement>(null)
   const url = channel?.streamUrl || channel?.url || ''
 
@@ -58,7 +60,7 @@ function MiniPlayer({
       >
         <div className="text-center">
           <Plus className="w-8 h-8 text-brand-400 mx-auto mb-2" />
-          <p className="text-sm text-ink-200">إضافة قناة</p>
+          <p className="text-sm text-ink-200">{t('multilive.addChannel')}</p>
         </div>
       </button>
     )
@@ -119,6 +121,7 @@ function ChannelPicker({
   onPick: (c: Channel) => void
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   const [q, setQ] = useState('')
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase()
@@ -139,7 +142,7 @@ function ChannelPicker({
               autoFocus
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="ابحث عن قناة…"
+              placeholder={t('multilive.searchPlaceholder')}
               className="w-full bg-ink-700/40 ring-1 ring-ink-600/50 rounded-xl ps-10 pe-3 py-2 text-sm focus:outline-none focus:ring-brand-500"
             />
           </div>
@@ -165,6 +168,7 @@ function ChannelPicker({
 }
 
 export default function MultiLive() {
+  const { t } = useTranslation()
   const { channels, loading } = useChannels()
   const layout = useSettingsStore((s) => s.multiLiveLayout)
   const setSetting = useSettingsStore((s) => s.set)
@@ -195,11 +199,11 @@ export default function MultiLive() {
   return (
     <div>
       <PageHeader
-        title="مشاهدة متعددة"
-        subtitle={loading ? 'جارٍ تحميل القنوات…' : `4 قنوات في نفس الوقت — ${channels.length} قناة متاحة`}
+        title={t('nav.multilive')}
+        subtitle={loading ? t('livetv.loadingChannels') : t('multilive.subtitle', { count: channels.length })}
       />
       <div className="px-8 mb-3 flex items-center gap-2">
-        <span className="text-xs text-ink-300">الشكل:</span>
+        <span className="text-xs text-ink-300">{t('multilive.layoutLabel')}</span>
         {(['2x2', '1+3', '3x1'] as const).map((opt) => (
           <button
             key={opt}

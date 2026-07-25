@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Download, RefreshCw, X } from 'lucide-react'
 
@@ -18,6 +19,7 @@ function fmtSpeed(bps: number): string {
 // Floating banner that surfaces auto-updater events from the main process.
 // Silent for "checking" and "not-available" — only shows when there's news.
 export default function UpdateNotifier() {
+  const { t } = useTranslation()
   const [state, setState] = useState<UpdateState>({ kind: 'idle' })
   const [dismissed, setDismissed] = useState(false)
 
@@ -43,7 +45,7 @@ export default function UpdateNotifier() {
         setState({ kind: 'downloaded', version: v })
         setDismissed(false)
       } else if (event === 'error') {
-        const msg = typeof payload === 'string' ? payload : 'تعذّر التحقق من التحديث'
+        const msg = typeof payload === 'string' ? payload : t('notifier.checkFailed')
         setState({ kind: 'error', message: msg })
       } else if (event === 'not-available') {
         setState({ kind: 'idle' })
@@ -67,9 +69,9 @@ export default function UpdateNotifier() {
           <div className="flex items-center gap-3">
             <Download className="w-5 h-5 text-brand-400 shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold">تحديث متاح</p>
+              <p className="text-sm font-semibold">{t('notifier.updateAvailable')}</p>
               <p className="text-xs text-ink-300">
-                جاري التحميل {state.version && `v${state.version}`}…
+                {t('notifier.downloading', { version: state.version ? `v${state.version}` : '' })}
               </p>
             </div>
             <button
@@ -86,7 +88,7 @@ export default function UpdateNotifier() {
             <div className="flex items-center gap-3 mb-2">
               <Download className="w-5 h-5 text-brand-400 shrink-0 animate-pulse" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold">جاري تحميل التحديث</p>
+                <p className="text-sm font-semibold">{t('notifier.downloadingTitle')}</p>
                 <p className="text-[11px] text-ink-300">
                   {state.percent.toFixed(0)}% · {fmtSpeed(state.bps)}
                 </p>
@@ -107,16 +109,16 @@ export default function UpdateNotifier() {
               <RefreshCw className="w-4 h-4 text-emerald-300" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold">جاهز للتثبيت!</p>
+              <p className="text-sm font-semibold">{t('notifier.readyTitle')}</p>
               <p className="text-[11px] text-ink-300">
-                v{state.version} — أعد التشغيل لتطبيق التحديث
+                {t('notifier.readyBody', { version: `v${state.version}` })}
               </p>
             </div>
             <button
               onClick={() => window.nashat.installUpdate?.()}
               className="bg-brand-500 hover:bg-brand-600 text-white text-xs font-semibold px-3 py-2 rounded-lg shrink-0"
             >
-              إعادة التشغيل
+              {t('notifier.restart')}
             </button>
             <button
               onClick={() => setDismissed(true)}

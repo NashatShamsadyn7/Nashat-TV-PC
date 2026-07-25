@@ -7,10 +7,11 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { tmdbApi } from '@/services/tmdb'
 import { profileUrl, type TmdbPerson } from '@shared/tmdb'
 import { useDebounced } from '@/features/search/useSearch'
+import { useTmdbLanguage } from '@/i18n/tmdbLocale'
 
 export default function Actors() {
-  const { t, i18n } = useTranslation()
-  const lang = i18n.language === 'ku' ? 'ar' : i18n.language
+  const { t } = useTranslation()
+  const lang = useTmdbLanguage()
   const [popular, setPopular] = useState<TmdbPerson[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -76,7 +77,7 @@ export default function Actors() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="ابحث عن ممثّل…"
+            placeholder={t('actors.searchPlaceholder')}
             className="w-full bg-ink-700/40 ring-1 ring-ink-600/50 rounded-xl ps-10 pe-3 py-2 text-sm placeholder:text-ink-300 focus:outline-none focus:ring-brand-500"
           />
           {searching && (
@@ -128,7 +129,7 @@ export default function Actors() {
               </Link>
             ))}
         {!loading && list.length === 0 && (
-          <p className="col-span-full text-center text-ink-300 py-10">لا توجد نتائج</p>
+          <p className="col-span-full text-center text-ink-300 py-10">{t('common.noResults')}</p>
         )}
       </div>
     </div>

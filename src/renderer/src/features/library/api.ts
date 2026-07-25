@@ -23,6 +23,25 @@ function listPath(uid: string, list: 'watchlist' | 'favorites' | 'progress') {
   return `users/${uid}/${list}`
 }
 
+/**
+ * Drops keys whose value is `undefined` before a Firebase write.
+ *
+ * Both LibraryItem and ProgressItem carry optional fields (`year`, `poster`,
+ * `season`, `tmdbId`, ...). The RTDB SDK rejects an object containing any
+ * `undefined` value by throwing, and every call site here wraps its write in a
+ * catch that only console.warns — so a movie (no `season`/`episode`) or a title
+ * with no release year failed to sync silently while the local copy succeeded.
+ * That made cloud sync look implemented but never actually persist.
+ *
+ * `undefined` is not representable in RTDB anyway: omitting the key is exactly
+ * the intended meaning.
+ */
+function pruneUndefined<T extends object>(value: T): T {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, v]) => v !== undefined)
+  ) as T
+}
+
 export const libraryApi = {
   async addToList(
     uid: string | null,
@@ -35,7 +54,7 @@ export const libraryApi = {
     writeLocal(key, local)
     if (uid) {
       try {
-        await set(ref(db, `${listPath(uid, list)}/${item.id}`), item)
+        await set(ref(db, `${listPath(uid, list)}/${item.id}`), pruneUndefined(item))
       } catch (err) {
         // Cloud write failed — local copy persists; cross-device sync will catch up later.
         console.warn('library cloud write failed', err)
@@ -105,7 +124,7 @@ export const libraryApi = {
     writeLocal(LS_PROGRESS, local)
     if (uid) {
       try {
-        await update(ref(db, `${listPath(uid, 'progress')}/${item.id}`), item)
+        await update(ref(db, `${listPath(uid, 'progress')}/${item.id}`), pruneUndefined(item))
       } catch (err) {
         console.warn('progress cloud write failed', err)
       }

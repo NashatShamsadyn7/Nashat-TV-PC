@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { X } from 'lucide-react'
@@ -49,6 +50,7 @@ type Props = {
 }
 
 export default function ShortcutHelp({ open, onClose }: Props) {
+  const { t } = useTranslation()
   return createPortal(
     <AnimatePresence>
       {open && (
@@ -67,11 +69,11 @@ export default function ShortcutHelp({ open, onClose }: Props) {
             className="bg-ink-800 rounded-2xl ring-1 ring-ink-600/50 max-w-3xl w-full max-h-[85vh] overflow-y-auto"
           >
             <header className="flex items-center justify-between p-5 border-b border-ink-700/50 sticky top-0 bg-ink-800">
-              <h2 className="text-xl font-semibold">اختصارات لوحة المفاتيح</h2>
+              <h2 className="text-xl font-semibold">{t('shortcutHelp.title')}</h2>
               <button
                 onClick={onClose}
                 className="w-9 h-9 grid place-items-center rounded-xl hover:bg-ink-700/50"
-                aria-label="إغلاق"
+                aria-label={t('common.close')}
               >
                 <X className="w-5 h-5" />
               </button>

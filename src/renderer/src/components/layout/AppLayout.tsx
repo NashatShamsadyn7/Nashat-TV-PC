@@ -40,16 +40,11 @@ export default function AppLayout() {
     window.nashat.showTray?.().catch(() => {})
   }, [])
 
-  // Bridge media keys → player controls + presence
-  useEffect(() => {
-    const off = window.nashat.onMediaKey?.((action) => {
-      const ev = new KeyboardEvent('keydown', {
-        key: action === 'play-pause' ? ' ' : action === 'next' ? 'ArrowRight' : 'ArrowLeft'
-      })
-      window.dispatchEvent(ev)
-    })
-    return off
-  }, [])
+  // Media transport (keyboard media keys, AirPods, Bluetooth headsets) is
+  // handled by the Media Session API inside the player — see
+  // `useMediaSession`. The old bridge here synthesised a KeyboardEvent from an
+  // IPC message, which mapped 'stop' to ArrowLeft and seeked backwards instead
+  // of stopping, and could never receive headset buttons in the first place.
 
   // Record play sessions in stats whenever a player opens
   useEffect(() => {

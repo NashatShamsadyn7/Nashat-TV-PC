@@ -1,5 +1,6 @@
 import { Component, type ReactNode } from 'react'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
+import i18n from '@/i18n'
 
 type Props = { children: ReactNode }
 type State = { error: Error | null; info: string | null }
@@ -26,12 +27,12 @@ export default class ErrorBoundary extends Component<Props, State> {
         <div className="max-w-xl w-full bg-ink-700/30 ring-1 ring-rose-500/30 rounded-2xl p-6">
           <div className="flex items-center gap-3 mb-4">
             <AlertTriangle className="w-8 h-8 text-rose-400" />
-            <h1 className="text-2xl font-bold">حدث خطأ غير متوقّع</h1>
+            <h1 className="text-2xl font-bold">{i18n.t('boundary.title')}</h1>
           </div>
           <p className="text-rose-300 font-mono text-sm mb-3 break-words">{error.message}</p>
           {info && (
             <details className="text-xs text-ink-300 mb-4">
-              <summary className="cursor-pointer hover:text-white">عرض التفاصيل</summary>
+              <summary className="cursor-pointer hover:text-white">{i18n.t('boundary.showDetails')}</summary>
               <pre className="mt-2 p-3 bg-black/40 rounded-lg overflow-auto max-h-64 whitespace-pre-wrap">
                 {info}
               </pre>
@@ -43,13 +44,13 @@ export default class ErrorBoundary extends Component<Props, State> {
               className="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 px-4 py-2 rounded-xl text-sm font-semibold"
             >
               <RefreshCw className="w-4 h-4" />
-              إعادة تحميل التطبيق
+              {i18n.t('boundary.reload')}
             </button>
             <button
               onClick={this.reset}
               className="bg-ink-700/60 hover:bg-ink-700 px-4 py-2 rounded-xl text-sm"
             >
-              متابعة
+              {i18n.t('boundary.continue')}
             </button>
           </div>
         </div>

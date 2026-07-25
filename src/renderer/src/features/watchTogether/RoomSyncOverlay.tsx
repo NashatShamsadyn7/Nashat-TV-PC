@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Crown, Play, Pause, RotateCw, ChevronsRight } from 'lucide-react'
 import { adminPause, adminPlay, adminSeek } from './useRoom'
 import { useRoomSync } from './useRoomSync'
@@ -22,6 +23,7 @@ function formatTime(sec: number): string {
 // applied so viewers can jump back to the admin's position. Only applies to
 // iframe content; HTML5 players sync automatically via React state.
 export default function RoomSyncOverlay({ onResync }: { onResync?: () => void }) {
+  const { t } = useTranslation()
   const { inRoom, isAdmin, room, livePosition } = useRoomSync()
   const [toast, setToast] = useState<string | null>(null)
   const activeRoomId = useRoomStore((s) => s.activeRoomId)
@@ -30,8 +32,8 @@ export default function RoomSyncOverlay({ onResync }: { onResync?: () => void })
   useEffect(() => {
     if (!inRoom || !room?.state) return
     if (isAdmin) return
-    const action = room.state.playing ? '▶ تشغيل' : '⏸ إيقاف'
-    setToast(`${action} على ${formatTime(room.state.position)}`)
+    const action = room.state.playing ? t('roomsync.playAction') : t('roomsync.pauseAction')
+    setToast(t('roomsync.toast', { action, time: formatTime(room.state.position) }))
     const id = window.setTimeout(() => setToast(null), 3000)
     return () => window.clearTimeout(id)
   }, [room?.state?.updatedAt]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -41,13 +43,13 @@ export default function RoomSyncOverlay({ onResync }: { onResync?: () => void })
   const playing = room.state.playing
   const ownerName =
     (room.members && Object.entries(room.members).find(([id]) => id === room.ownerId)?.[1]?.name) ||
-    'الأدمن'
+    t('roomsync.admin')
 
   if (isAdmin) {
     return (
       <div className="absolute top-20 start-4 z-20 flex flex-col gap-2 pointer-events-auto">
         <div className="bg-amber-500/90 backdrop-blur px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 self-start">
-          <Crown className="w-3.5 h-3.5" /> أنت الأدمن
+          <Crown className="w-3.5 h-3.5" /> {t('roomsync.youAreAdmin')}
         </div>
         <div className="bg-black/70 backdrop-blur-md ring-1 ring-white/10 rounded-2xl p-3 flex items-center gap-2 text-white">
           <button
@@ -57,21 +59,21 @@ export default function RoomSyncOverlay({ onResync }: { onResync?: () => void })
                 : adminPlay(activeRoomId, livePosition)
             }
             className="w-10 h-10 grid place-items-center rounded-full bg-brand-500 hover:bg-brand-600"
-            title={playing ? 'إيقاف الكل' : 'تشغيل الكل'}
+            title={playing ? t('roomsync.pauseAll') : t('roomsync.playAll')}
           >
             {playing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
           </button>
           <button
             onClick={() => adminSeek(activeRoomId, Math.max(0, livePosition - 30), playing)}
             className="w-8 h-8 grid place-items-center rounded-full bg-ink-700/70 hover:bg-ink-600"
-            title="رجوع 30 ثانية للكل"
+            title={t('roomsync.back30All')}
           >
             <RotateCw className="w-3.5 h-3.5 rotate-180" />
           </button>
           <button
             onClick={() => adminSeek(activeRoomId, livePosition + 30, playing)}
             className="w-8 h-8 grid place-items-center rounded-full bg-ink-700/70 hover:bg-ink-600"
-            title="تقديم 30 ثانية للكل"
+            title={t('roomsync.forward30All')}
           >
             <ChevronsRight className="w-3.5 h-3.5" />
           </button>
@@ -80,7 +82,7 @@ export default function RoomSyncOverlay({ onResync }: { onResync?: () => void })
           </div>
           <button
             onClick={() => {
-              const next = window.prompt('انتقل إلى (mm:ss أو ثانية)؟')
+              const next = window.prompt(t('roomsync.seekPrompt'))
               if (!next) return
               const parts = next.split(':').map((p) => parseInt(p.trim(), 10))
               let seconds = 0
@@ -92,13 +94,13 @@ export default function RoomSyncOverlay({ onResync }: { onResync?: () => void })
               }
             }}
             className="text-[10px] bg-ink-700/60 hover:bg-ink-600 px-2 py-1 rounded-md"
-            title="انتقل إلى وقت محدد"
+            title={t('roomsync.seekTitle')}
           >
-            انتقل…
+            {t('roomsync.seekLabel')}
           </button>
         </div>
         <p className="text-[10px] text-white/70 bg-black/40 backdrop-blur px-2 py-1 rounded self-start">
-          الأزرار هنا تتحكّم بكل المشاهدين. الـ play/pause داخل الفيديو يتحكم بك فقط.
+          {t('roomsync.controlsHint')}
         </p>
       </div>
     )
@@ -114,7 +116,7 @@ export default function RoomSyncOverlay({ onResync }: { onResync?: () => void })
           />
           <div className="text-xs">
             <div className="font-semibold leading-tight">
-              {ownerName} {playing ? 'يشاهد' : 'متوقّف'}
+              {ownerName} {playing ? t('roomsync.watching') : t('roomsync.stopped')}
             </div>
             <div className="text-white/60 font-mono text-[10px]">
               {formatTime(livePosition)}
@@ -124,9 +126,9 @@ export default function RoomSyncOverlay({ onResync }: { onResync?: () => void })
             <button
               onClick={onResync}
               className="text-[10px] bg-brand-500 hover:bg-brand-600 px-2 py-1 rounded-md font-semibold ms-2"
-              title="عُد إلى موقع الأدمن"
+              title={t('roomsync.resyncTitle')}
             >
-              🔄 مزامنة
+              {t('roomsync.resync')}
             </button>
           )}
         </div>

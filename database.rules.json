@@ -105,7 +105,7 @@
         },
         "progress": {
           "$id": {
-            ".validate": "newData.hasChildren(['id','kind','tmdbId','title','position','duration','updatedAt']) && newData.child('kind').val().matches(/^(movie|tv)$/) && newData.child('tmdbId').isNumber() && newData.child('position').isNumber() && newData.child('duration').isNumber() && newData.child('updatedAt').isNumber()"
+            ".validate": "newData.hasChildren(['id','kind','title','position','duration','updatedAt']) && newData.child('kind').val().matches(/^(movie|tv|channel)$/) && newData.child('position').isNumber() && newData.child('duration').isNumber() && newData.child('updatedAt').isNumber() && (newData.child('kind').val() === 'channel' ? newData.child('channelKey').isString() : newData.child('tmdbId').isNumber())"
           }
         },
         "stats": {

@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
@@ -12,9 +13,12 @@ import {
   ChevronRight,
   ThumbsUp,
   ThumbsDown,
-  PlayCircle
+  PlayCircle,
+  SkipBack,
+  SkipForward
 } from 'lucide-react'
-import type { TmdbMediaSource } from '@/stores/playerStore'
+import { usePlayerStore, type TmdbMediaSource } from '@/stores/playerStore'
+import { useEpisodeNav, type EpisodeRef } from '@/features/player/useEpisodeNav'
 import { libraryActions } from '@/stores/libraryStore'
 import { makeProgressId } from '@/features/library/types'
 import {
@@ -62,6 +66,7 @@ function StatusDot({ status }: { status: ServerStatus }) {
 }
 
 export default function MoviePlayerModal({ source, onClose }: Props) {
+  const { t } = useTranslation()
   const [activeId, setActiveId] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
   const [autoPicked, setAutoPicked] = useState(false)
@@ -77,6 +82,29 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
           }
         : null,
     [source]
+  )
+
+  // Previous/next episode for series. Resolved from TMDB season sizes so the
+  // end of a season rolls into the next one instead of dead-ending.
+  const episodeNav = useEpisodeNav(
+    source?.tmdbId ?? null,
+    source?.season,
+    source?.episode,
+    source?.kind === 'tv'
+  )
+
+  const openTmdb = usePlayerStore((s) => s.openTmdb)
+  const goToEpisode = useCallback(
+    (ref: EpisodeRef) => {
+      if (!source) return
+      openTmdb({
+        ...source,
+        season: ref.season,
+        episode: ref.episode,
+        subtitle: `S${ref.season} · E${ref.episode}`
+      })
+    },
+    [source, openTmdb]
   )
 
   const servers = useServerHealth(healthArgs)
@@ -245,6 +273,16 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
         }
       }
       if (e.key === 'r' || e.key === 'R') setReloadKey((k) => k + 1)
+      // Shift+N / Shift+P move between episodes. Plain [ and ] are already
+      // taken by server switching, so episode nav gets its own modifier.
+      if (e.shiftKey && (e.key === 'N' || e.key === 'n')) {
+        if (episodeNav.next) goToEpisode(episodeNav.next)
+        return
+      }
+      if (e.shiftKey && (e.key === 'P' || e.key === 'p')) {
+        if (episodeNav.previous) goToEpisode(episodeNav.previous)
+        return
+      }
       if (e.key === ']' || e.key === '[') {
         const idx = sorted.findIndex((s) => s.id === activeId)
         if (idx < 0) return
@@ -257,7 +295,7 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [source, sorted, activeId, onClose])
+  }, [source, sorted, activeId, onClose, episodeNav, goToEpisode])
 
   const stats = useMemo(() => {
     const checking = servers.filter((s) => s.status === 'checking').length
@@ -287,9 +325,35 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
                 <span className="text-rose-400">✕ {stats.fail}</span>
               </p>
             </div>
+            {/* Episode navigation. Only rendered for series that actually have
+                a neighbouring episode, so films and one-offs are unaffected. */}
+            {episodeNav.previous && (
+              <button
+                onClick={() => goToEpisode(episodeNav.previous!)}
+                title={t('movieplayer.prevEpisode')}
+                className="h-10 px-3 flex items-center gap-1.5 rounded-xl text-ink-200 hover:text-white hover:bg-ink-700/40 transition-colors text-sm"
+              >
+                <SkipBack className="w-4 h-4" />
+              </button>
+            )}
+            {episodeNav.next && (
+              <button
+                onClick={() => goToEpisode(episodeNav.next!)}
+                title={t('movieplayer.nextEpisode')}
+                className="h-10 px-3 flex items-center gap-1.5 rounded-xl bg-brand-500/90 hover:bg-brand-500 text-white font-semibold transition-colors text-sm"
+              >
+                <SkipForward className="w-4 h-4" />
+                <span className="hidden sm:inline">
+                  {t('movieplayer.nextEpisodeShort', {
+                    season: episodeNav.next.season,
+                    episode: episodeNav.next.episode
+                  })}
+                </span>
+              </button>
+            )}
             <button
               onClick={() => setReloadKey((k) => k + 1)}
-              title="إعادة التحميل (R)"
+              title={t('movieplayer.reload')}
               className="w-10 h-10 grid place-items-center rounded-xl text-ink-200 hover:text-white hover:bg-ink-700/40 transition-colors"
               disabled={!activeId}
             >
@@ -302,7 +366,7 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
                 ) as HTMLIFrameElement | null
                 iframe?.requestFullscreen().catch(() => {})
               }}
-              title="ملء الشاشة"
+              title={t('movieplayer.fullscreen')}
               className="w-10 h-10 grid place-items-center rounded-xl text-ink-200 hover:text-white hover:bg-ink-700/40 transition-colors"
               disabled={!activeId}
             >
@@ -310,7 +374,7 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
             </button>
             <button
               onClick={onClose}
-              title="إغلاق (Esc)"
+              title={t('movieplayer.close')}
               className="w-10 h-10 grid place-items-center rounded-xl text-ink-200 hover:text-white hover:bg-ink-700/40 transition-colors"
             >
               <X className="w-5 h-5" />
@@ -326,7 +390,7 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
                 failedServersRef.current.delete(sorted[prev].id)
                 setActiveId(sorted[prev].id)
               }}
-              title="سابق ([)"
+              title={t('movieplayer.previous')}
               disabled={!activeId}
               className="w-9 h-9 grid place-items-center rounded-full bg-ink-700/40 hover:bg-ink-700/70 disabled:opacity-40"
             >
@@ -357,7 +421,7 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
                       }}
                       disabled={s.status === 'fail'}
                       title={
-                        s.latencyMs !== undefined ? `${s.latencyMs}ms` : 'يفحص…'
+                        s.latencyMs !== undefined ? `${s.latencyMs}ms` : t('movieplayer.checking')
                       }
                       className={cn(
                         'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap ring-1 transition-colors',
@@ -387,7 +451,7 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
                 failedServersRef.current.delete(sorted[next].id)
                 setActiveId(sorted[next].id)
               }}
-              title="تالي (])"
+              title={t('movieplayer.next')}
               disabled={!activeId}
               className="w-9 h-9 grid place-items-center rounded-full bg-ink-700/40 hover:bg-ink-700/70 disabled:opacity-40"
             >
@@ -399,7 +463,7 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
               <div className="flex items-center gap-1 ms-2 ps-2 border-s border-ink-600/40">
                 <button
                   onClick={() => prefs.vote(activeId, 'up')}
-                  title="السيرفر شغّال ممتاز"
+                  title={t('movieplayer.serverGood')}
                   className={cn(
                     'w-9 h-9 grid place-items-center rounded-full transition-colors',
                     prefs.myVotes[activeId] === 'up'
@@ -411,7 +475,7 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
                 </button>
                 <button
                   onClick={() => prefs.vote(activeId, 'down')}
-                  title="هذا السيرفر سيّئ"
+                  title={t('movieplayer.serverBad')}
                   className={cn(
                     'w-9 h-9 grid place-items-center rounded-full transition-colors',
                     prefs.myVotes[activeId] === 'down'
@@ -429,25 +493,25 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
             {!activeId && stats.ok === 0 && stats.checking > 0 && (
               <div className="text-center">
                 <Loader2 className="w-12 h-12 text-brand-400 animate-spin mx-auto mb-3" />
-                <p className="font-semibold">جارٍ فحص السيرفرات…</p>
+                <p className="font-semibold">{t('movieplayer.checkingServers')}</p>
                 <p className="text-ink-300 text-sm mt-1">
-                  سنختار أسرعها تلقائياً
+                  {t('movieplayer.pickingFastest')}
                 </p>
               </div>
             )}
             {!activeId && stats.ok === 0 && stats.checking === 0 && !showTrailer && (
               <div className="text-center max-w-md px-6">
                 <XCircle className="w-12 h-12 text-rose-400 mx-auto mb-3" />
-                <p className="font-semibold mb-2">لا يوجد سيرفر يعمل لهذا العنوان</p>
+                <p className="font-semibold mb-2">{t('movieplayer.noWorkingServer')}</p>
                 <p className="text-ink-300 text-sm mb-5">
-                  ربما لم يصدر بعد، أو السيرفرات معطّلة الآن.
+                  {t('movieplayer.maybeUnreleased')}
                 </p>
                 <button
                   onClick={fetchTrailer}
                   className="inline-flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-xl text-sm transition-colors"
                 >
                   <PlayCircle className="w-4 h-4" />
-                  عرض الإعلان الرسمي
+                  {t('movieplayer.showTrailer')}
                 </button>
               </div>
             )}
@@ -478,10 +542,10 @@ export default function MoviePlayerModal({ source, onClose }: Props) {
           </div>
 
           <footer className="px-4 py-2 text-center text-xs text-ink-400">
-            <kbd className="bg-ink-700/50 rounded px-1.5 py-0.5">]</kbd> تالي ·
-            <kbd className="bg-ink-700/50 rounded px-1.5 py-0.5 mx-1">[</kbd> سابق ·
-            <kbd className="bg-ink-700/50 rounded px-1.5 py-0.5">R</kbd> إعادة ·
-            <kbd className="bg-ink-700/50 rounded px-1.5 py-0.5 mx-1">Esc</kbd> إغلاق
+            <kbd className="bg-ink-700/50 rounded px-1.5 py-0.5">]</kbd> {t('movieplayer.hintNext')} ·
+            <kbd className="bg-ink-700/50 rounded px-1.5 py-0.5 mx-1">[</kbd> {t('movieplayer.hintPrev')} ·
+            <kbd className="bg-ink-700/50 rounded px-1.5 py-0.5">R</kbd> {t('movieplayer.hintReload')} ·
+            <kbd className="bg-ink-700/50 rounded px-1.5 py-0.5 mx-1">Esc</kbd> {t('movieplayer.hintClose')}
           </footer>
 
           <RoomSyncOverlay onResync={() => setManualResync((k) => k + 1)} />

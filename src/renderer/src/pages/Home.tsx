@@ -15,6 +15,7 @@ import { useLibraryStore, libraryActions } from '@/stores/libraryStore'
 import { useRecommendations } from '@/features/recommendations/useRecommendations'
 import { posterUrl, backdropUrl, type TmdbMovie, type TmdbTv } from '@shared/tmdb'
 import { X, Play, Tv as TvIcon } from 'lucide-react'
+import { useTmdbLanguage } from '@/i18n/tmdbLocale'
 
 function CarouselSkeleton() {
   return (
@@ -46,6 +47,7 @@ function ContinueCard({
   onPlay: () => void
   onRemove: () => void
 }) {
+  const { t } = useTranslation()
   const pct = duration > 0 ? Math.min(100, (position / duration) * 100) : 0
   return (
     <div className="group relative w-64 shrink-0 snap-start">
@@ -80,7 +82,7 @@ function ContinueCard({
           e.stopPropagation()
           onRemove()
         }}
-        title="إزالة"
+        title={t('common.remove')}
         className="absolute top-2 end-2 w-7 h-7 grid place-items-center rounded-full bg-black/70 opacity-0 group-hover:opacity-100 hover:bg-rose-500 transition"
       >
         <X className="w-3.5 h-3.5" />
@@ -90,9 +92,9 @@ function ContinueCard({
 }
 
 export default function Home() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const navigate = useNavigate()
-  const lang = i18n.language === 'ku' ? 'ar' : i18n.language
+  const lang = useTmdbLanguage()
 
   const trending = useTrendingMovies(lang)
   const topRated = useTopRatedMovies(lang)
@@ -146,7 +148,7 @@ export default function Home() {
         <Carousel title={t('home.continueWatching')}>
           {progress.slice(0, 12).map((p) => {
             const badge = p.kind === 'channel'
-              ? 'قناة'
+              ? t('library.channel')
               : p.kind === 'tv' && p.season
                 ? `S${p.season}·E${p.episode}`
                 : undefined
@@ -165,7 +167,8 @@ export default function Home() {
                         title: p.title,
                         subtitle: p.channelCategory,
                         logo: p.poster,
-                        url: p.streamUrl
+                        url: p.streamUrl,
+                        channelKey: p.channelKey
                       })
                     }
                   } else {
@@ -313,7 +316,7 @@ export default function Home() {
         )}
       </Carousel>
 
-      <Carousel title="مسلسلات رائجة">
+      <Carousel title={t('series.trending')}>
         {trendingTv.loading ? (
           <CarouselSkeleton />
         ) : (

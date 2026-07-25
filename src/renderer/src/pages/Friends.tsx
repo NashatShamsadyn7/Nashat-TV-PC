@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { UserPlus, Check, X as XIcon, Trash2, Send, AtSign, Loader2, Users, MessageCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import PageHeader from '@/components/ui/PageHeader'
@@ -20,6 +21,7 @@ import {
 } from '@/features/friends/useFriends'
 
 export default function FriendsPage() {
+  const { t } = useTranslation()
   const user = useAuthStore((s) => s.user)
   const profile = useMyProfile()
   const friends = useFriends()
@@ -38,13 +40,13 @@ export default function FriendsPage() {
   if (!user) {
     return (
       <div>
-        <PageHeader title="الأصدقاء" />
+        <PageHeader title={t('nav.friends')} />
         <div className="px-8">
           <div className="bg-ink-700/30 rounded-2xl p-6 max-w-xl">
             <Users className="w-10 h-10 text-brand-400 mb-3" />
-            <p>يجب تسجيل الدخول لاستخدام الأصدقاء.</p>
+            <p>{t('common.signInRequired', { feature: t('nav.friends') })}</p>
             <a href="#/settings" className="mt-3 inline-block text-brand-400 hover:underline text-sm">
-              الذهاب إلى الإعدادات →
+              {t('common.goToSettings')}
             </a>
           </div>
         </div>
@@ -57,13 +59,13 @@ export default function FriendsPage() {
     setSuccess(null)
     const u = usernameInput.toLowerCase().trim()
     if (!isValidUsername(u)) {
-      setError('3-20 حرف، حروف إنجليزية صغيرة وأرقام و _ فقط')
+      setError(t('friends.usernameRule'))
       return
     }
     setBusy('username')
     try {
       await setUsername(u)
-      setSuccess(`تم حفظ اسم المستخدم: @${u}`)
+      setSuccess(t('friends.usernameSaved', { username: u }))
       setUsernameInput('')
     } catch (err) {
       setError((err as Error).message)
@@ -80,7 +82,7 @@ export default function FriendsPage() {
     setBusy('search')
     try {
       await sendFriendRequest(u)
-      setSuccess(`تم إرسال الطلب إلى @${u}`)
+      setSuccess(t('friends.requestSent', { username: u }))
       setSearchInput('')
     } catch (err) {
       setError((err as Error).message)
@@ -95,7 +97,7 @@ export default function FriendsPage() {
     setBusy(`accept-${fromUid}`)
     try {
       await acceptFriendRequest(fromUid)
-      setSuccess('تمت إضافة الصديق')
+      setSuccess(t('friends.friendAdded'))
     } catch (err) {
       setError((err as Error).message)
     } finally {
@@ -117,14 +119,14 @@ export default function FriendsPage() {
 
   const handleInvite = async (friendUid: string, friendName: string) => {
     if (!activeRoomId) {
-      setError('أنشئ غرفة أولاً من صفحة "مشاهدة مع الأصدقاء"')
+      setError(t('friends.createRoomFirst'))
       return
     }
     setError(null)
     setBusy(`invite-${friendUid}`)
     try {
       await inviteToRoom(friendUid, activeRoomId)
-      setSuccess(`تم إرسال دعوة إلى ${friendName}`)
+      setSuccess(t('friends.inviteSent', { name: friendName }))
     } catch (err) {
       setError((err as Error).message)
     } finally {
@@ -134,17 +136,17 @@ export default function FriendsPage() {
 
   return (
     <div>
-      <PageHeader title="الأصدقاء" subtitle="أضف أصدقاء وادعهم لمشاهدة معاً" />
+      <PageHeader title={t('nav.friends')} subtitle={t('friends.subtitle')} />
       <div className="px-8 pb-10 space-y-6 max-w-3xl">
         {/* Username panel */}
         <section className="bg-ink-700/30 rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-3">
             <AtSign className="w-4 h-4 text-brand-400" />
-            <h2 className="font-semibold">اسم المستخدم</h2>
+            <h2 className="font-semibold">{t('friends.usernameHeading')}</h2>
           </div>
           {profile?.username ? (
             <p className="text-sm text-ink-200">
-              اسمك الحالي:{' '}
+              {t('friends.currentName')}{' '}
               <span className="font-mono bg-ink-800 px-2 py-0.5 rounded">
                 @{profile.username}
               </span>
@@ -152,7 +154,7 @@ export default function FriendsPage() {
           ) : (
             <>
               <p className="text-xs text-ink-300 mb-3">
-                اختر اسماً فريداً ليتمكن أصدقاؤك من إضافتك. (3-20 حرف، إنجليزي/أرقام/_ فقط)
+                {t('friends.usernameHelp')}
               </p>
               <div className="flex gap-2">
                 <div className="flex-1 relative">
@@ -169,7 +171,7 @@ export default function FriendsPage() {
                   disabled={busy === 'username'}
                   className="bg-brand-500 hover:bg-brand-600 disabled:opacity-50 px-4 rounded-lg text-sm font-semibold flex items-center gap-2"
                 >
-                  {busy === 'username' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'حفظ'}
+                  {busy === 'username' ? <Loader2 className="w-4 h-4 animate-spin" /> : t('common.save')}
                 </button>
               </div>
             </>
@@ -180,7 +182,7 @@ export default function FriendsPage() {
         <section className="bg-ink-700/30 rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-3">
             <UserPlus className="w-4 h-4 text-brand-400" />
-            <h2 className="font-semibold">إضافة صديق</h2>
+            <h2 className="font-semibold">{t('friends.addFriend')}</h2>
           </div>
           <div className="flex gap-2">
             <div className="flex-1 relative">
@@ -188,7 +190,7 @@ export default function FriendsPage() {
               <input
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="اكتب اسم المستخدم"
+                placeholder={t('friends.usernamePlaceholder')}
                 className="w-full bg-ink-700 ring-1 ring-ink-600 rounded-lg ps-8 pe-3 py-2 text-sm font-mono"
                 onKeyDown={(e) => e.key === 'Enter' && handleSendRequest()}
               />
@@ -203,7 +205,7 @@ export default function FriendsPage() {
               ) : (
                 <Send className="w-4 h-4" />
               )}
-              إرسال طلب
+              {t('friends.sendRequest')}
             </button>
           </div>
         </section>
@@ -223,7 +225,7 @@ export default function FriendsPage() {
         {/* Room invites */}
         {invites.length > 0 && (
           <section className="bg-amber-500/10 ring-1 ring-amber-500/30 rounded-2xl p-5">
-            <h2 className="font-semibold mb-3">دعوات مشاهدة ({invites.length})</h2>
+            <h2 className="font-semibold mb-3">{t('friends.watchInvites', { count: invites.length })}</h2>
             <ul className="space-y-2">
               {invites.map((inv) => (
                 <li
@@ -233,7 +235,7 @@ export default function FriendsPage() {
                   <div className="flex-1">
                     <p className="text-sm font-semibold">{inv.fromName}</p>
                     <p className="text-xs text-ink-300">
-                      {inv.mediaTitle || 'دعوة لمشاهدة معاً'}
+                      {inv.mediaTitle || t('friends.inviteFallback')}
                     </p>
                   </div>
                   <button
@@ -244,7 +246,7 @@ export default function FriendsPage() {
                     }}
                     className="bg-brand-500 hover:bg-brand-600 px-3 py-1.5 rounded-lg text-xs font-semibold"
                   >
-                    انضم
+                    {t('friends.joinInvite')}
                   </button>
                   <button
                     onClick={() => dismissInvite(inv.id)}
@@ -261,7 +263,7 @@ export default function FriendsPage() {
         {/* Incoming requests */}
         {requests.length > 0 && (
           <section className="bg-ink-700/30 rounded-2xl p-5">
-            <h2 className="font-semibold mb-3">طلبات صداقة ({requests.length})</h2>
+            <h2 className="font-semibold mb-3">{t('friends.friendRequests', { count: requests.length })}</h2>
             <ul className="space-y-2">
               {requests.map((r) => (
                 <li
@@ -275,7 +277,7 @@ export default function FriendsPage() {
                     onClick={() => handleAccept(r.uid)}
                     disabled={busy === `accept-${r.uid}`}
                     className="w-8 h-8 grid place-items-center rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-50"
-                    title="قبول"
+                    title={t('friends.accept')}
                   >
                     {busy === `accept-${r.uid}` ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -287,7 +289,7 @@ export default function FriendsPage() {
                     onClick={() => handleDecline(r.uid)}
                     disabled={busy === `decline-${r.uid}`}
                     className="w-8 h-8 grid place-items-center rounded-lg text-ink-300 hover:text-rose-300 hover:bg-rose-500/10 disabled:opacity-50"
-                    title="رفض"
+                    title={t('friends.decline')}
                   >
                     <XIcon className="w-4 h-4" />
                   </button>
@@ -300,15 +302,15 @@ export default function FriendsPage() {
         {/* Friends list */}
         <section className="bg-ink-700/30 rounded-2xl p-5">
           <h2 className="font-semibold mb-3">
-            أصدقائي ({friends.length})
+            {t('friends.myFriends', { count: friends.length })}
             {activeRoomId && (
               <span className="ms-2 text-xs text-emerald-300 font-normal">
-                ● غرفة نشطة — يمكن الدعوة
+                {t('friends.roomActive')}
               </span>
             )}
           </h2>
           {friends.length === 0 ? (
-            <p className="text-sm text-ink-400">لا يوجد أصدقاء بعد. أضف صديقاً عبر اسم المستخدم.</p>
+            <p className="text-sm text-ink-400">{t('friends.noFriends')}</p>
           ) : (
             <ul className="space-y-2">
               {friends.map((f) => (
@@ -322,27 +324,27 @@ export default function FriendsPage() {
                   <button
                     onClick={() => navigate(`/chats?u=${f.uid}`)}
                     className="bg-ink-700/60 hover:bg-ink-600 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1"
-                    title="محادثة"
+                    title={t('common.chat')}
                   >
                     <MessageCircle className="w-3.5 h-3.5" />
-                    محادثة
+                    {t('common.chat')}
                   </button>
                   <button
                     onClick={() => handleInvite(f.uid, f.name)}
                     disabled={!activeRoomId || busy === `invite-${f.uid}`}
                     className="bg-brand-500 hover:bg-brand-600 disabled:opacity-40 px-3 py-1.5 rounded-lg text-xs font-semibold"
-                    title={activeRoomId ? 'دعوة للغرفة' : 'افتح غرفة أولاً'}
+                    title={activeRoomId ? t('friends.inviteToRoom') : t('friends.openRoomFirst')}
                   >
                     {busy === `invite-${f.uid}` ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     ) : (
-                      'دعوة'
+                      t('friends.invite')
                     )}
                   </button>
                   <button
                     onClick={() => removeFriend(f.uid)}
                     className="w-8 h-8 grid place-items-center rounded-lg text-ink-300 hover:text-rose-300 hover:bg-rose-500/10"
-                    title="إزالة"
+                    title={t('friends.removeFriend')}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

@@ -6,6 +6,7 @@ autoUpdater.logger = log
 log.transports.file.level = 'info'
 
 let mainWin: BrowserWindow | null = null
+let checkTimer: NodeJS.Timeout | null = null
 
 function emit(event: string, data?: unknown) {
   if (mainWin && !mainWin.isDestroyed()) {
@@ -43,10 +44,23 @@ export function initAutoUpdater(win: BrowserWindow): void {
 
   // Initial check + every hour
   autoUpdater.checkForUpdatesAndNotify().catch((err) => log.error('[updater] init', err))
-  setInterval(
+  checkTimer = setInterval(
     () => {
       autoUpdater.checkForUpdates().catch((err) => log.error('[updater] periodic', err))
     },
     60 * 60 * 1000
   )
+
+  // The hourly timer keeps an event-loop handle alive and fires against a
+  // destroyed window after the user closes the app. Tear it down explicitly.
+  win.on('closed', stopAutoUpdater)
+  app.once('before-quit', stopAutoUpdater)
+}
+
+export function stopAutoUpdater(): void {
+  if (checkTimer) {
+    clearInterval(checkTimer)
+    checkTimer = null
+  }
+  mainWin = null
 }

@@ -10,6 +10,18 @@ function isValidChannel(c: ChannelRaw | null | undefined): c is Channel {
   return !!c && typeof c.name === 'string' && typeof c.url === 'string'
 }
 
+// Channels excluded from the app regardless of what the RTDB list contains.
+// The channel list is served from Firebase, so removing entries from the local
+// `kurdish_channels.json` alone is not enough — anything still present in the
+// database would reappear. Filtering at this single ingress point covers every
+// consumer (LiveTV, MultiLive, SearchPage).
+const EXCLUDED_CHANNEL_PATTERNS = [/bein/i]
+
+function isExcluded(raw: ChannelRaw): boolean {
+  const haystack = `${raw.id ?? ''} ${raw.key ?? ''} ${raw.name ?? ''}`
+  return EXCLUDED_CHANNEL_PATTERNS.some((re) => re.test(haystack))
+}
+
 function normalize(raw: ChannelRaw, fallbackKey: string): Channel {
   return {
     id: raw.id ?? raw.key ?? fallbackKey,
@@ -48,7 +60,7 @@ export function subscribeChannels(
         : Object.entries(val)
 
       const channels = entries
-        .map(([k, c]) => (isValidChannel(c) ? normalize(c, k) : null))
+        .map(([k, c]) => (isValidChannel(c) && !isExcluded(c) ? normalize(c, k) : null))
         .filter((c): c is Channel => c !== null)
 
       onData(channels)

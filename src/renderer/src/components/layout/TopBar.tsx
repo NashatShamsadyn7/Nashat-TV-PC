@@ -1,18 +1,20 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Search, Bell, User } from 'lucide-react'
+import { Search, Bell, User, Baby } from 'lucide-react'
 import { changeLanguage, type Language } from '@/i18n'
 import { useMyProfile } from '@/features/friends/useFriends'
+import { useKidsMode } from '@/features/profiles/useKidsMode'
 
 const LANGS: { code: Language; label: string }[] = [
-  { code: 'ar', label: 'عر' },
+  { code: 'ar', label: 'ع' },
   { code: 'ku', label: 'ku' },
   { code: 'en', label: 'EN' }
 ]
 
 export default function TopBar() {
   const { t, i18n } = useTranslation()
+  const kidsMode = useKidsMode()
   const navigate = useNavigate()
   const current = i18n.language as Language
   const [q, setQ] = useState('')
@@ -62,13 +64,25 @@ export default function TopBar() {
         ))}
       </div>
 
+      {/* Kids mode silently removes channels and titles — say so, otherwise a
+          shrunken catalogue just looks like the app is broken. */}
+      {kidsMode && (
+        <span
+          title={t('profiles.kidsModeHint')}
+          className="flex items-center gap-1 text-[11px] font-bold bg-emerald-500/25 text-emerald-200 ring-1 ring-emerald-400/40 px-2 py-1 rounded-lg"
+        >
+          <Baby className="w-3.5 h-3.5" />
+          {t('profiles.kidsModeBadge')}
+        </span>
+      )}
+
       <button className="w-10 h-10 grid place-items-center rounded-xl text-ink-200 hover:text-white hover:bg-ink-700/40 transition-colors">
         <Bell className="w-5 h-5" />
       </button>
 
       <button
         onClick={() => navigate('/profile')}
-        title={profile?.displayName || 'الملف الشخصي'}
+        title={profile?.displayName || t('topbar.profile')}
         className="w-10 h-10 grid place-items-center rounded-xl overflow-hidden bg-ink-700/40 text-ink-200 hover:text-white hover:bg-ink-700/60 transition-colors"
       >
         {profile?.photoURL ? (

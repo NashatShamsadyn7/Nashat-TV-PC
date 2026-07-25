@@ -9,13 +9,34 @@ type PipPayload = {
   logo?: string
 }
 
+/** Escape for HTML text/attribute context (preserves the original characters). */
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+/**
+ * Embed a value inside a <script> block. JSON.stringify alone is not enough:
+ * it leaves `<` untouched, so a stream URL containing `</script>` closes the
+ * block early and injects markup. Escaping `<` as < is still valid JS and
+ * cannot terminate the element.
+ */
+function toScriptLiteral(value: unknown): string {
+  return JSON.stringify(value).replace(/</g, '\\u003c')
+}
+
 function buildHtml(payload: PipPayload, hlsPath: string): string {
+  const safeTitle = escapeHtml(payload.title || '')
   return `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>${payload.title ? payload.title.replace(/[<>"&]/g, '') : 'PiP'}</title>
+  <title>${safeTitle || 'PiP'}</title>
   <style>
     *,*::before,*::after{box-sizing:border-box}
     html,body{margin:0;height:100%;background:#000;color:#fff;font-family:Inter,system-ui,sans-serif;overflow:hidden}
@@ -36,16 +57,16 @@ function buildHtml(payload: PipPayload, hlsPath: string): string {
     <div class="drag"></div>
     <video id="v" autoplay playsinline></video>
     <div class="bar">
-      <span class="title">${(payload.title || '').replace(/[<>"&]/g, '')}</span>
+      <span class="title">${safeTitle}</span>
       <button id="play">⏯</button>
       <button id="mute">🔊</button>
       <button id="close">✕</button>
     </div>
   </div>
-  <script src="${hlsPath}"></script>
+  <script src="${escapeHtml(hlsPath)}"></script>
   <script>
     const v = document.getElementById('v')
-    const url = ${JSON.stringify(payload.streamUrl)}
+    const url = ${toScriptLiteral(payload.streamUrl)}
     const isHls = /\\.m3u8(\\?|$)/i.test(url)
     if (isHls && window.Hls && window.Hls.isSupported()) {
       const h = new window.Hls({ lowLatencyMode: true })
@@ -62,11 +83,29 @@ function buildHtml(payload: PipPayload, hlsPath: string): string {
 </html>`
 }
 
+/** Resolve the bundled hls.js as a file:// URL for the PiP document. */
+function hlsScriptUrl(): string {
+  const hlsPath = app.isPackaged
+    ? join(process.resourcesPath, 'app.asar.unpacked', 'node_modules', 'hls.js', 'dist', 'hls.min.js')
+    : join(app.getAppPath(), 'node_modules', 'hls.js', 'dist', 'hls.min.js')
+  return `file:///${hlsPath.replace(/\\/g, '/')}`
+}
+
+function loadPayload(win: BrowserWindow, payload: PipPayload): Promise<void> {
+  return win.loadURL(
+    'data:text/html;charset=utf-8,' + encodeURIComponent(buildHtml(payload, hlsScriptUrl()))
+  )
+}
+
 export function registerPipIpc() {
   ipcMain.handle('pip:open', async (_e, payload: PipPayload) => {
     if (pipWindow && !pipWindow.isDestroyed()) {
+      // The PiP document is a self-contained data: URL with no preload, so it
+      // has no ipcRenderer and cannot receive a 'pip:source' message — the old
+      // send() was a no-op and the window kept playing the previous channel.
+      // Re-render the document with the new payload instead.
       pipWindow.focus()
-      pipWindow.webContents.send('pip:source', payload)
+      await loadPayload(pipWindow, payload)
       return
     }
     pipWindow = new BrowserWindow({
@@ -91,15 +130,15 @@ export function registerPipIpc() {
       pipWindow = null
     })
 
-    // hls.js bundled as a node_module — load via file:// path
-    const hlsPath = app.isPackaged
-      ? join(process.resourcesPath, 'app.asar.unpacked', 'node_modules', 'hls.js', 'dist', 'hls.min.js')
-      : join(app.getAppPath(), 'node_modules', 'hls.js', 'dist', 'hls.min.js')
-    const hlsUrl = `file:///${hlsPath.replace(/\\/g, '/')}`
+    // The PiP document embeds third-party stream URLs. Deny popups and any
+    // navigation away from the generated data: document so an ad script inside
+    // a hostile playlist cannot repurpose the always-on-top window.
+    pipWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+    pipWindow.webContents.on('will-navigate', (event, url) => {
+      if (!url.startsWith('data:text/html')) event.preventDefault()
+    })
 
-    await pipWindow.loadURL(
-      'data:text/html;charset=utf-8,' + encodeURIComponent(buildHtml(payload, hlsUrl))
-    )
+    await loadPayload(pipWindow, payload)
   })
 
   ipcMain.handle('pip:close', () => {

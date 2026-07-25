@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { useTranslation, Trans } from 'react-i18next'
 import {
   LogIn,
   LogOut,
@@ -22,14 +22,16 @@ import { useAuthStore } from '@/stores/authStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useProfilesStore } from '@/stores/profilesStore'
 import { authApi } from '@/features/auth/api'
-import { changeLanguage, SUPPORTED_LANGUAGES, type Language } from '@/i18n'
+import { changeLanguage, SUPPORTED_LANGUAGES, LANGUAGE_NAMES, type Language } from '@/i18n'
+import { formatPercent } from '@/i18n/format'
 import { THEMES, type ThemeId } from '@/features/themes'
 import { cn } from '@/lib/cn'
 
-const STATUS_LABEL = {
-  connecting: { tone: 'info' as const, label: 'جارٍ الاتصال…' },
-  connected: { tone: 'success' as const, label: 'متصل' },
-  disconnected: { tone: 'error' as const, label: 'غير متصل' }
+// Tone is static; the label is resolved per-render so it follows the language.
+const STATUS_TONE = {
+  connecting: 'info' as const,
+  connected: 'success' as const,
+  disconnected: 'error' as const
 }
 
 function Section({ title, children, icon: Icon }: { title: string; children: React.ReactNode; icon?: typeof Sparkles }) {
@@ -102,9 +104,9 @@ export default function Settings() {
   const profiles = useProfilesStore((s) => s.profiles)
   const activeProfileId = useProfilesStore((s) => s.activeId)
 
-  const s = STATUS_LABEL[status]
+  const s = { tone: STATUS_TONE[status], label: t(`connection.${status}`) }
   const update = useUpdater()
-  const userLabel = user ? user.displayName || user.email || user.uid : 'غير مسجّل'
+  const userLabel = user ? user.displayName || user.email || user.uid : t('common.notSignedIn')
   const photoUrl = user?.photoURL
 
   return (
@@ -112,7 +114,7 @@ export default function Settings() {
       <PageHeader title={t('nav.settings')} />
       <div className="px-8 max-w-4xl space-y-6 pb-10">
         {/* Account */}
-        <Section title="الحساب">
+        <Section title={t('settings.account')}>
           <div className="flex items-center gap-4">
             {photoUrl ? (
               <img src={photoUrl} alt="" className="w-12 h-12 rounded-full ring-2 ring-brand-500/40" />
@@ -122,7 +124,7 @@ export default function Settings() {
             <div className="flex-1 min-w-0">
               <p className="font-semibold truncate">{userLabel}</p>
               <p className="text-xs text-ink-300 truncate">
-                {authLoading ? 'جارٍ التحقّق…' : user ? `${user.email} — مُزامن مع Android` : 'سجّل الدخول للمزامنة'}
+                {authLoading ? t('auth.checking') : user ? t('auth.syncedWithAndroid', { email: user.email }) : t('auth.signInToSync')}
               </p>
             </div>
             {user ? (
@@ -131,7 +133,7 @@ export default function Settings() {
                 className="flex items-center gap-2 bg-ink-700/40 hover:bg-rose-500/20 hover:text-rose-300 px-4 py-2 rounded-xl text-sm font-medium"
               >
                 <LogOut className="w-4 h-4" />
-                خروج
+                {t('auth.signOut')}
               </button>
             ) : (
               <button
@@ -139,19 +141,19 @@ export default function Settings() {
                 className="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 px-4 py-2 rounded-xl text-sm font-semibold"
               >
                 <LogIn className="w-4 h-4" />
-                دخول
+                {t('auth.signIn')}
               </button>
             )}
           </div>
           <div className="pt-2 border-t border-ink-700/40">
-            <Row label="Firebase RTDB" description="مشروع nashat-tv">
+            <Row label="Firebase RTDB" description={t('settings.firebaseProject', { project: 'nashat-tv' })}>
               <StatusBadge tone={s.tone}>{s.label}</StatusBadge>
             </Row>
           </div>
         </Section>
 
         {/* Profiles */}
-        <Section title="الملفّات الشخصيّة" icon={UserCircle2}>
+        <Section title={t('settings.profiles')} icon={UserCircle2}>
           <div className="flex flex-wrap gap-3">
             {profiles.map((p) => (
               <div
@@ -171,20 +173,30 @@ export default function Settings() {
               href="#/profiles"
               className="px-3 py-2 rounded-xl bg-ink-700/30 hover:bg-ink-700/60 text-sm text-brand-400"
             >
-              إدارة الملفات →
+              {t('settings.manageProfiles')}
             </a>
           </div>
         </Section>
 
         {/* Playback */}
-        <Section title="التشغيل" icon={Volume2}>
-          <Row label="تشغيل تلقائي للحلقة التالية">
-            <Toggle value={settings.autoplayNext} onChange={(v) => settings.set('autoplayNext', v)} />
+        <Section title={t('settings.playback')} icon={Volume2}>
+          {/* Automatic advance needs an `ended` event from the video. Series
+              play inside cross-origin embed iframes, which never expose one, so
+              this cannot be honoured — say that instead of shipping a switch
+              that silently does nothing. Episode navigation is a button in the
+              player instead. */}
+          <Row
+            label={t('settings.autoplayNext')}
+            description={t('settings.autoplayNextUnavailable')}
+          >
+            <div className="opacity-40 pointer-events-none" aria-disabled>
+              <Toggle value={false} onChange={() => {}} />
+            </div>
           </Row>
-          <Row label="تذكّر مكان التوقّف">
+          <Row label={t('settings.rememberPosition')}>
             <Toggle value={settings.rememberPosition} onChange={(v) => settings.set('rememberPosition', v)} />
           </Row>
-          <Row label="مستوى الصوت الافتراضي" description={`${Math.round(settings.defaultVolume * 100)}%`}>
+          <Row label={t('settings.defaultVolume')} description={`${Math.round(settings.defaultVolume * 100)}%`}>
             <input
               type="range"
               min={0}
@@ -194,7 +206,7 @@ export default function Settings() {
               className="w-32 accent-brand-500"
             />
           </Row>
-          <Row label="القفز" description={`${settings.seekStep} ثانية`}>
+          <Row label={t('settings.seekStep')} description={t('settings.seekStepValue', { count: settings.seekStep })}>
             <input
               type="range"
               min={5}
@@ -205,13 +217,13 @@ export default function Settings() {
               className="w-32 accent-brand-500"
             />
           </Row>
-          <Row label="جودة مفضّلة">
+          <Row label={t('settings.preferredQuality')}>
             <select
               value={settings.preferredQuality}
               onChange={(e) => settings.set('preferredQuality', e.target.value as any)}
               className="bg-ink-700 ring-1 ring-ink-600 rounded-lg px-3 py-1.5 text-sm"
             >
-              <option value="auto">تلقائي</option>
+              <option value="auto">{t('settings.qualityAuto')}</option>
               <option value="1080p">1080p</option>
               <option value="720p">720p</option>
               <option value="480p">480p</option>
@@ -220,8 +232,8 @@ export default function Settings() {
         </Section>
 
         {/* Subtitles */}
-        <Section title="الترجمة" icon={Captions}>
-          <Row label="حجم الخط" description={`${settings.subtitleStyle.fontSize}px`}>
+        <Section title={t('settings.subtitles')} icon={Captions}>
+          <Row label={t('settings.fontSize')} description={`${settings.subtitleStyle.fontSize}px`}>
             <input
               type="range"
               min={14}
@@ -236,7 +248,7 @@ export default function Settings() {
               className="w-32 accent-brand-500"
             />
           </Row>
-          <Row label="الخلفية">
+          <Row label={t('settings.background')}>
             <div className="flex gap-1">
               {(['none', 'shadow', 'box'] as const).map((bg) => (
                 <button
@@ -251,12 +263,12 @@ export default function Settings() {
                       : 'bg-ink-700/40 text-ink-200'
                   )}
                 >
-                  {bg === 'none' ? 'بدون' : bg === 'shadow' ? 'ظل' : 'صندوق'}
+                  {bg === 'none' ? t('settings.backgroundNone') : bg === 'shadow' ? t('settings.backgroundShadow') : t('settings.backgroundBox')}
                 </button>
               ))}
             </div>
           </Row>
-          <Row label="لون النص">
+          <Row label={t('settings.textColor')}>
             <input
               type="color"
               value={settings.subtitleStyle.color}
@@ -267,23 +279,25 @@ export default function Settings() {
             />
           </Row>
           <p className="text-xs text-ink-300 mt-2">
-            💡 اسحب ملف SRT أو VTT داخل المشغّل لتفعيل الترجمة فوراً
+            💡 {t('settings.subtitleHint')}
           </p>
         </Section>
 
         {/* UI */}
-        <Section title="الواجهة" icon={Sparkles}>
-          <Row label="معاينة الفأرة (Hover peek)" description="إظهار معاينة عند تمرير الفأرة فوق البطاقات">
+        <Section title={t('settings.appearance')} icon={Sparkles}>
+          <Row label={t('settings.hoverPeek')} description={t('settings.hoverPeekHint')}>
             <Toggle value={settings.hoverPeek} onChange={(v) => settings.set('hoverPeek', v)} />
           </Row>
-          <Row label="تقليل الحركة">
+          <Row label={t('settings.reduceMotion')}>
             <Toggle value={settings.reduceMotion} onChange={(v) => settings.set('reduceMotion', v)} />
           </Row>
           <div>
-            <p className="text-sm font-medium mb-2">السمة</p>
+            <p className="text-sm font-medium mb-2">{t('settings.theme')}</p>
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-              {(Object.entries(THEMES) as [ThemeId, typeof THEMES[ThemeId]][]).map(([id, t]) => {
+              {/* Map variable renamed from `t` — it shadowed the translation fn. */}
+              {(Object.entries(THEMES) as [ThemeId, typeof THEMES[ThemeId]][]).map(([id, theme]) => {
                 const active = settings.theme === id
+                const label = t(theme.labelKey)
                 return (
                   <button
                     key={id}
@@ -292,21 +306,21 @@ export default function Settings() {
                       'p-2 rounded-xl text-xs font-medium transition-all ring-2',
                       active ? 'ring-brand-500' : 'ring-transparent hover:ring-ink-600'
                     )}
-                    title={t.label}
+                    title={label}
                   >
                     <div
                       className="w-full h-12 rounded-lg mb-1"
                       style={{
-                        background: `linear-gradient(135deg, rgb(${t.vars['--ink-900']}) 0%, rgb(${t.vars['--ink-700']}) 50%, rgb(${t.vars['--brand-500']}) 100%)`
+                        background: `linear-gradient(135deg, rgb(${theme.vars['--ink-900']}) 0%, rgb(${theme.vars['--ink-700']}) 50%, rgb(${theme.vars['--brand-500']}) 100%)`
                       }}
                     />
-                    {t.label}
+                    {label}
                   </button>
                 )
               })}
             </div>
           </div>
-          <Row label="اللغة">
+          <Row label={t('settings.language')}>
             <select
               value={i18n.language}
               onChange={(e) => changeLanguage(e.target.value as Language)}
@@ -314,7 +328,7 @@ export default function Settings() {
             >
               {SUPPORTED_LANGUAGES.map((l) => (
                 <option key={l} value={l}>
-                  {l === 'ar' ? 'العربية' : l === 'ku' ? 'کوردی' : 'English'}
+                  {LANGUAGE_NAMES[l]}
                 </option>
               ))}
             </select>
@@ -322,8 +336,8 @@ export default function Settings() {
         </Section>
 
         {/* Multi-live */}
-        <Section title="مشاهدة متعددة">
-          <Row label="الشكل الافتراضي">
+        <Section title={t('settings.multiLive')}>
+          <Row label={t('settings.defaultLayout')}>
             <div className="flex gap-1">
               {(['2x2', '1+3', '3x1'] as const).map((l) => (
                 <button
@@ -344,32 +358,41 @@ export default function Settings() {
         </Section>
 
         {/* Shortcuts */}
-        <Section title="الاختصارات" icon={Keyboard}>
+        <Section title={t('settings.shortcuts')} icon={Keyboard}>
           <button
             onClick={() => setHelpOpen(true)}
             className="flex items-center gap-2 bg-ink-700/40 hover:bg-ink-700/70 px-4 py-2 rounded-xl text-sm font-semibold"
           >
             <Keyboard className="w-4 h-4" />
-            عرض جميع الاختصارات
+            {t('settings.showAllShortcuts')}
           </button>
-          <p className="text-xs text-ink-300">اضغط <kbd className="bg-ink-700/60 rounded px-1.5">?</kbd> في أي وقت</p>
+          {/* <1> in the translation marks where the <kbd> element goes, so
+              translators can move it within the sentence as their grammar needs. */}
+          <p className="text-xs text-ink-300">
+            <Trans
+              i18nKey="settings.pressAnytime"
+              components={{ 1: <kbd className="bg-ink-700/60 rounded px-1.5" /> }}
+            />
+          </p>
         </Section>
 
         {/* Updater */}
-        <Section title="إصدار التطبيق">
+        <Section title={t('settings.appVersion')}>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm">v{appVersion} — Nashat TV PC</p>
-              <p className="text-xs text-ink-300">التحديث يصل تلقائياً من GitHub Releases</p>
+              <p className="text-xs text-ink-300">{t('settings.autoUpdateHint')}</p>
             </div>
-            {update.status === 'checking' && <StatusBadge tone="info">جارٍ الفحص…</StatusBadge>}
+            {update.status === 'checking' && <StatusBadge tone="info">{t('updater.checking')}</StatusBadge>}
             {update.status === 'available' && (
-              <StatusBadge tone="warning">تحديث متاح {update.version && `v${update.version}`}</StatusBadge>
+              <StatusBadge tone="warning">
+                {t('updater.available', { version: update.version ? `v${update.version}` : '' })}
+              </StatusBadge>
             )}
-            {update.status === 'not-available' && <StatusBadge tone="success">محدّث</StatusBadge>}
+            {update.status === 'not-available' && <StatusBadge tone="success">{t('updater.upToDate')}</StatusBadge>}
             {update.status === 'progress' && <StatusBadge tone="info">{Math.round(update.percent)}%</StatusBadge>}
-            {update.status === 'downloaded' && <StatusBadge tone="success">جاهز للتثبيت</StatusBadge>}
-            {update.status === 'error' && <StatusBadge tone="error">خطأ</StatusBadge>}
+            {update.status === 'downloaded' && <StatusBadge tone="success">{t('updater.readyToInstall')}</StatusBadge>}
+            {update.status === 'error' && <StatusBadge tone="error">{t('updater.error')}</StatusBadge>}
           </div>
           {update.status === 'downloaded' && (
             <button
@@ -377,25 +400,25 @@ export default function Settings() {
               className="mt-3 flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-4 py-2 rounded-xl text-sm"
             >
               <Download className="w-4 h-4" />
-              إعادة التشغيل وتثبيت التحديث
+              {t('updater.restartAndInstall')}
             </button>
           )}
           {update.status === 'progress' && (
             <div className="mt-3 flex items-center gap-2 text-sm text-ink-200">
               <RefreshCw className="w-4 h-4 animate-spin" />
-              جارٍ تنزيل {Math.round(update.percent)}%
+              {t('updater.downloading', { percent: formatPercent(update.percent / 100) })}
             </div>
           )}
         </Section>
 
         <button
           onClick={() => {
-            if (confirm('إعادة كل الإعدادات إلى الافتراضي؟')) settings.reset()
+            if (confirm(t('settings.resetConfirm'))) settings.reset()
           }}
           className="flex items-center gap-2 text-sm text-rose-400 hover:text-rose-300"
         >
           <RotateCcw className="w-4 h-4" />
-          إعادة الإعدادات إلى الافتراضي
+          {t('settings.reset')}
         </button>
       </div>
 

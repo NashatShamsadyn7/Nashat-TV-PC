@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import i18n from '@/i18n'
 
 type SpeechRecognitionLike = {
   start: () => void
@@ -34,7 +35,7 @@ export function useVoiceSearch(onResult: (text: string) => void, lang = 'ar-SA')
   const start = () => {
     const Ctor = getCtor()
     if (!Ctor) {
-      setError('التعرف على الصوت غير مدعوم')
+      setError(i18n.t('voiceSearch.unsupported'))
       return
     }
     setError(null)

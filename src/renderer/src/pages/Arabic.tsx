@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { AlertCircle, Loader2 } from 'lucide-react'
 import PageHeader from '@/components/ui/PageHeader'
@@ -8,14 +9,15 @@ import { tmdbApi } from '@/services/tmdb'
 import { posterUrl, backdropUrl, type TmdbMovie, type TmdbTv } from '@shared/tmdb'
 import { ARABIC_DUB_MOVIE_IDS, ARABIC_DUB_TV_IDS } from '@/features/arabic/dubs'
 import { useDubVotes } from '@/features/arabic/useDubVotes'
+import { useTmdbLanguage } from '@/i18n/tmdbLocale'
 
 type Tab = 'originals-movies' | 'originals-tv' | 'dubbed-movies' | 'dubbed-tv'
 
-const TABS: Array<{ id: Tab; label: string; group: 'originals' | 'dubbed' }> = [
-  { id: 'originals-movies', label: 'أفلام عربية', group: 'originals' },
-  { id: 'originals-tv', label: 'مسلسلات عربية', group: 'originals' },
-  { id: 'dubbed-movies', label: 'أفلام مدبلجة', group: 'dubbed' },
-  { id: 'dubbed-tv', label: 'مسلسلات مدبلجة', group: 'dubbed' }
+const TABS: Array<{ id: Tab; labelKey: string; group: 'originals' | 'dubbed' }> = [
+  { id: 'originals-movies', labelKey: 'arabic.originalMovies', group: 'originals' },
+  { id: 'originals-tv', labelKey: 'arabic.originalTv', group: 'originals' },
+  { id: 'dubbed-movies', labelKey: 'arabic.dubbedMovies', group: 'dubbed' },
+  { id: 'dubbed-tv', labelKey: 'arabic.dubbedTv', group: 'dubbed' }
 ]
 
 // Fetch a curated list of titles by id, in parallel. Settled so one missing
@@ -33,8 +35,13 @@ async function fetchByIds<T>(
 }
 
 export default function Arabic() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [tab, setTab] = useState<Tab>('originals-movies')
+  // Titles/overviews follow the UI language. The catalogue itself stays Arabic —
+  // that is enforced by `with_original_language: 'ar'` in the discover query,
+  // not by this parameter, which only controls the display language.
+  const lang = useTmdbLanguage()
 
   // Arabic-originals come from TMDB discover (Egyptian / Lebanese / Saudi /
   // Gulf cinema and series — guaranteed Arabic audio).
@@ -68,11 +75,11 @@ export default function Arabic() {
         setError(null)
         if (tab === 'originals-movies' && !origMovies) {
           setLoading(true)
-          const r = await tmdbApi.discoverArabicMovies(1, 'ar')
+          const r = await tmdbApi.discoverArabicMovies(1, lang)
           if (!cancelled) setOrigMovies(r.results ?? [])
         } else if (tab === 'originals-tv' && !origTv) {
           setLoading(true)
-          const r = await tmdbApi.discoverArabicTv(1, 'ar')
+          const r = await tmdbApi.discoverArabicTv(1, lang)
           if (!cancelled) setOrigTv(r.results ?? [])
         } else if (tab === 'dubbed-movies' && !dubMovies) {
           setLoading(true)
@@ -80,7 +87,7 @@ export default function Arabic() {
           // a richer object but the keys we use (id, title, poster_path,
           // backdrop_path, release_date, vote_average) are present.
           const items = await fetchByIds(dubbedMovieIds, (id) =>
-            tmdbApi.movieDetails(id, 'ar')
+            tmdbApi.movieDetails(id, lang)
           )
           if (!cancelled) {
             setDubMovies(
@@ -96,7 +103,7 @@ export default function Arabic() {
         } else if (tab === 'dubbed-tv' && !dubTv) {
           setLoading(true)
           const items = await fetchByIds(dubbedTvIds, (id) =>
-            tmdbApi.tvDetails(id, 'ar')
+            tmdbApi.tvDetails(id, lang)
           )
           if (!cancelled) {
             setDubTv(
@@ -145,30 +152,31 @@ export default function Arabic() {
   return (
     <div className="pb-10">
       <PageHeader
-        title="محتوى عربي"
-        subtitle="أفلام ومسلسلات عربية أصلية، وأخرى مدبلجة بالعربية"
+        title={t('nav.arabic')}
+        subtitle={t('arabic.subtitle')}
       />
 
       <div className="px-8 mb-4">
         <p className="text-xs text-ink-300 mb-2 max-w-3xl leading-relaxed">
-          <strong className="text-ink-100">عربي أصلي:</strong> أفلام ومسلسلات لغتها
-          الأصلية عربية (مصرية، لبنانية، سعودية، خليجية…) من قاعدة بيانات TMDB.
+          <strong className="text-ink-100">{t('arabic.originalLabel')}</strong>{' '}
+          {t('arabic.originalHelp')}
           {' '}
-          <strong className="text-ink-100">مدبلجة:</strong> قائمة منتقاة من الأفلام
-          والمسلسلات الأجنبية المعروفة بتوفّر دبلجة عربية لها.
+          <strong className="text-ink-100">{t('arabic.dubbedLabel')}</strong>{' '}
+          {t('arabic.dubbedHelp')}
         </p>
         <div className="flex flex-wrap gap-2">
-          {TABS.map((t) => (
+          {/* Loop variable renamed from `t` — it shadowed the translation fn. */}
+          {TABS.map((tab_) => (
             <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
+              key={tab_.id}
+              onClick={() => setTab(tab_.id)}
               className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${
-                tab === t.id
+                tab === tab_.id
                   ? 'bg-brand-500 text-white'
                   : 'bg-ink-700/40 text-ink-200 hover:bg-ink-700/70'
               }`}
             >
-              {t.label}
+              {t(tab_.labelKey)}
             </button>
           ))}
         </div>
@@ -192,7 +200,7 @@ export default function Arabic() {
           </div>
         )}
         {!loading && grid && grid.length === 0 && (
-          <p className="text-ink-300 text-sm">لا توجد نتائج في هذا القسم.</p>
+          <p className="text-ink-300 text-sm">{t('arabic.noResultsSection')}</p>
         )}
         {grid && grid.length > 0 && (
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4">
@@ -225,7 +233,7 @@ export default function Arabic() {
         {loading && grid && grid.length > 0 && (
           <div className="mt-4 flex items-center gap-2 text-ink-300 text-sm">
             <Loader2 className="w-4 h-4 animate-spin" />
-            تحديث…
+            {t('common.refreshing')}
           </div>
         )}
       </section>

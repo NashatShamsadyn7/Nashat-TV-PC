@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MessageCircle, Send, X, Users, Smile, Image as ImageIcon, Loader2 } from 'lucide-react'
 import { sendChat, useRoom } from './useRoom'
@@ -38,6 +39,7 @@ function renderText(text: string) {
  * active Watch Together room. Supports text, emoji, GIFs and images.
  */
 export default function RoomChatOverlay() {
+  const { t } = useTranslation()
   const user = useAuthStore((s) => s.user)
   const roomId = useRoomStore((s) => s.activeRoomId)
   const { room } = useRoom(roomId)
@@ -92,7 +94,7 @@ export default function RoomChatOverlay() {
       await sendChat(roomId, { image: url })
     } catch (err) {
       console.error('[chat] image upload failed:', err)
-      window.alert(`فشل رفع الصورة: ${(err as Error).message}`)
+      window.alert(t('together.uploadFailed', { message: (err as Error).message }))
     } finally {
       setUploading(false)
     }
@@ -112,7 +114,7 @@ export default function RoomChatOverlay() {
             <header className="flex items-center justify-between px-4 py-3 border-b border-ink-700/50 bg-ink-800/60">
               <div className="flex items-center gap-2">
                 <MessageCircle className="w-4 h-4 text-brand-400" />
-                <span className="text-sm font-semibold">دردشة الغرفة</span>
+                <span className="text-sm font-semibold">{t('roomchat.title')}</span>
                 <span className="text-xs text-ink-400 flex items-center gap-1">
                   <Users className="w-3 h-3" />
                   {memberCount}
@@ -129,7 +131,7 @@ export default function RoomChatOverlay() {
             <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1.5">
               {messages.length === 0 && (
                 <p className="text-xs text-ink-400 text-center mt-8">
-                  لا توجد رسائل — اكتب أولاً 👋
+                  {t('roomchat.noMessages')}
                 </p>
               )}
               {messages.map((m, i) => {
@@ -207,7 +209,7 @@ export default function RoomChatOverlay() {
                 className={`w-8 h-8 grid place-items-center rounded-lg hover:bg-ink-700/60 ${
                   picker === 'emoji' ? 'text-brand-400 bg-ink-700/40' : 'text-ink-300'
                 }`}
-                title="إيموجي"
+                title={t('together.emoji')}
               >
                 <Smile className="w-4 h-4" />
               </button>
@@ -226,7 +228,7 @@ export default function RoomChatOverlay() {
                 disabled={uploading}
                 onClick={() => fileRef.current?.click()}
                 className="w-8 h-8 grid place-items-center rounded-lg hover:bg-ink-700/60 text-ink-300 disabled:opacity-50"
-                title="صورة"
+                title={t('together.image')}
               >
                 {uploading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -248,7 +250,7 @@ export default function RoomChatOverlay() {
               <input
                 value={msg}
                 onChange={(e) => setMsg(e.target.value)}
-                placeholder="اكتب رسالة…"
+                placeholder={t('chats.messagePlaceholder')}
                 maxLength={500}
                 className="flex-1 bg-ink-900/80 ring-1 ring-ink-600/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-brand-500"
               />
@@ -267,7 +269,7 @@ export default function RoomChatOverlay() {
       <button
         onClick={() => setOpen((v) => !v)}
         className="pointer-events-auto relative bg-brand-500 hover:bg-brand-600 text-white rounded-full w-14 h-14 grid place-items-center shadow-xl ring-2 ring-ink-900/40 transition-colors"
-        title={open ? 'إغلاق الشات' : 'فتح شات الغرفة'}
+        title={open ? t('roomchat.closeChat') : t('roomchat.openChat')}
       >
         <MessageCircle className="w-6 h-6" />
         {unread > 0 && (

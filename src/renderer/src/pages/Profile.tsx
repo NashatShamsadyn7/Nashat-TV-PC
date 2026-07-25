@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AtSign, Camera, Check, Loader2, User } from 'lucide-react'
 import PageHeader from '@/components/ui/PageHeader'
 import { useAuthStore } from '@/stores/authStore'
@@ -20,6 +21,7 @@ function daysUntilUnlock(changedAt: number | undefined): number {
 }
 
 export default function ProfilePage() {
+  const { t } = useTranslation()
   const user = useAuthStore((s) => s.user)
   const profile = useMyProfile()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -41,11 +43,11 @@ export default function ProfilePage() {
   if (!user) {
     return (
       <div>
-        <PageHeader title="الملف الشخصي" />
+        <PageHeader title={t('profile.title')} />
         <div className="px-8">
           <div className="bg-ink-700/30 rounded-2xl p-6 max-w-xl">
             <User className="w-10 h-10 text-brand-400 mb-3" />
-            <p>يجب تسجيل الدخول.</p>
+            <p>{t('common.signInRequired', { feature: t('profile.title') })}</p>
           </div>
         </div>
       </div>
@@ -73,7 +75,7 @@ export default function ProfilePage() {
     setBusy('name')
     try {
       await updateDisplayName(nameInput)
-      showStatus('تم تحديث الاسم')
+      showStatus(t('profile.nameUpdated'))
     } catch (err) {
       showStatus((err as Error).message, true)
     } finally {
@@ -85,7 +87,7 @@ export default function ProfilePage() {
     setBusy('username')
     try {
       await setUsername(usernameInput)
-      showStatus('تم تحديث اسم المستخدم')
+      showStatus(t('profile.usernameUpdated'))
     } catch (err) {
       showStatus((err as Error).message, true)
     } finally {
@@ -99,7 +101,7 @@ export default function ProfilePage() {
     try {
       const url = await uploadChatImage('avatars', user.uid, file)
       await updatePhotoURL(url)
-      showStatus('تم تحديث الصورة')
+      showStatus(t('profile.photoUpdated'))
     } catch (err) {
       showStatus((err as Error).message, true)
     } finally {
@@ -109,7 +111,7 @@ export default function ProfilePage() {
 
   return (
     <div>
-      <PageHeader title="الملف الشخصي" subtitle="بياناتك كما يراها أصدقاؤك" />
+      <PageHeader title={t('profile.title')} subtitle={t('profile.subtitle')} />
       <div className="px-8 pb-10 max-w-2xl space-y-5">
         {/* Avatar */}
         <section className="bg-ink-700/30 rounded-2xl p-5 flex items-center gap-5">
@@ -117,7 +119,7 @@ export default function ProfilePage() {
             onClick={() => fileRef.current?.click()}
             disabled={busy === 'photo'}
             className="relative w-24 h-24 rounded-full overflow-hidden bg-ink-700 ring-2 ring-ink-600 hover:ring-brand-500 grid place-items-center group"
-            title="تغيير الصورة"
+            title={t('profile.changePhoto')}
           >
             {profile?.photoURL ? (
               <img src={profile.photoURL} alt="" className="w-full h-full object-cover" />
@@ -150,26 +152,26 @@ export default function ProfilePage() {
             {profile?.username ? (
               <p className="text-sm text-brand-300 font-mono">@{profile.username}</p>
             ) : (
-              <p className="text-xs text-ink-400">لم يتم تعيين اسم مستخدم</p>
+              <p className="text-xs text-ink-400">{t('profile.noUsername')}</p>
             )}
-            <p className="text-[11px] text-ink-400 mt-1">انقر الصورة لتغييرها</p>
+            <p className="text-[11px] text-ink-400 mt-1">{t('profile.clickPhotoHint')}</p>
           </div>
         </section>
 
         {/* Display name */}
         <section className="bg-ink-700/30 rounded-2xl p-5">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
-            <User className="w-4 h-4 text-brand-400" /> الاسم الظاهر
+            <User className="w-4 h-4 text-brand-400" /> {t('profile.displayName')}
           </h3>
           <p className="text-xs text-ink-300 mb-3">
-            الاسم الذي يراه أصدقاؤك. يمكن تغييره في أي وقت.
+            {t('profile.displayNameHelp')}
           </p>
           <div className="flex gap-2">
             <input
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
               maxLength={40}
-              placeholder="اسمك"
+              placeholder={t('profile.namePlaceholder')}
               className="flex-1 bg-ink-700 ring-1 ring-ink-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-brand-500"
             />
             <button
@@ -182,7 +184,7 @@ export default function ProfilePage() {
               ) : (
                 <Check className="w-4 h-4" />
               )}
-              حفظ
+              {t('common.save')}
             </button>
           </div>
         </section>
@@ -190,13 +192,13 @@ export default function ProfilePage() {
         {/* Username */}
         <section className="bg-ink-700/30 rounded-2xl p-5">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
-            <AtSign className="w-4 h-4 text-brand-400" /> اسم المستخدم
+            <AtSign className="w-4 h-4 text-brand-400" /> {t('profile.username')}
           </h3>
           <p className="text-xs text-ink-300 mb-3">
-            يستخدم لإضافتك كصديق. مرة واحدة كل 30 يوماً.
+            {t('profile.usernameHelp')}
             {lockedDays > 0 && (
               <span className="block mt-1 text-amber-300">
-                ⏳ يفتح التعديل بعد {lockedDays} يوم
+                {t('profile.unlockInDays', { count: lockedDays })}
               </span>
             )}
           </p>
@@ -228,11 +230,11 @@ export default function ProfilePage() {
               ) : (
                 <Check className="w-4 h-4" />
               )}
-              حفظ
+              {t('common.save')}
             </button>
           </div>
           <p className="text-[10px] text-ink-400 mt-2">
-            3-20 حرف · حروف إنجليزية صغيرة وأرقام و _
+            {t('profile.usernameRule')}
           </p>
         </section>
 

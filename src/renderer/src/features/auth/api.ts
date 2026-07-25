@@ -1,56 +1,60 @@
 import { GoogleAuthProvider, signInWithCredential, signOut } from 'firebase/auth'
 import { auth } from '@/services/firebase'
+import i18n from '@/i18n'
 
-function mapError(err: unknown): Error {
+/**
+ * Maps a raw error from the main-process OAuth flow (or Firebase) onto a
+ * translated, user-facing message. The `code` is preserved on the returned
+ * error so callers can branch on it without string-matching prose.
+ */
+export class AuthError extends Error {
+  readonly code: string
+  constructor(code: string, message: string) {
+    super(message)
+    this.name = 'AuthError'
+    this.code = code
+  }
+}
+
+function mapError(err: unknown): AuthError {
   const msg = (err as Error)?.message ?? String(err)
+  const t = i18n.t.bind(i18n)
+
   if (msg.includes('auth_cancelled') || msg.includes('access_denied')) {
-    return new Error('تم إلغاء تسجيل الدخول')
+    return new AuthError('cancelled', t('auth.cancelled'))
   }
   if (msg.includes('auth_timeout')) {
-    return new Error('انتهت مهلة تسجيل الدخول، حاول مرة أخرى')
+    return new AuthError('timeout', t('auth.timeout'))
+  }
+  if (msg.includes('auth_not_configured')) {
+    return new AuthError('not_configured', t('auth.notConfigured'))
   }
   if (msg.includes('token_exchange_failed')) {
     const detail = msg.split('token_exchange_failed:')[1]?.trim()
-    if (detail?.toLowerCase().includes('invalid_grant')) {
-      return new Error('انتهت صلاحية رمز Google، أعد المحاولة من البداية')
+    const lower = detail?.toLowerCase() ?? ''
+    if (lower.includes('invalid_grant')) {
+      return new AuthError('expired_grant', t('auth.expiredGrant'))
     }
-    if (detail?.toLowerCase().includes('client secret')) {
-      return new Error('VITE_GOOGLE_CLIENT_SECRET في .env غير صحيح. حدّثه من Google Cloud Console.')
+    if (lower.includes('client secret')) {
+      return new AuthError('invalid_secret', t('auth.invalidSecret'))
     }
-    return new Error(`فشل التحقق من Google: ${detail ?? 'حاول مرة أخرى'}`)
-  }
-  if (msg.includes('VITE_GOOGLE_CLIENT_ID')) {
-    return new Error('يجب ضبط VITE_GOOGLE_CLIENT_ID في ملف .env')
-  }
-  return new Error(`حدث خطأ: ${msg}`)
-}
-
-export class GmailOnlyError extends Error {
-  constructor(email: string | null) {
-    super(
-      email
-        ? `يُسمح فقط بحسابات Gmail. حسابك "${email}" غير مدعوم.`
-        : 'يُسمح فقط بحسابات Gmail'
+    return new AuthError(
+      'verify_failed',
+      t('auth.verifyFailed', { detail: detail ?? t('common.retry') })
     )
-    this.name = 'GmailOnlyError'
   }
+  return new AuthError('generic', t('auth.genericError', { message: msg }))
 }
-
-const isGmail = (email: string | null | undefined): boolean =>
-  !!email && /@gmail\.com$/i.test(email.trim())
 
 export const authApi = {
   signInWithGoogle: async () => {
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined
-    const clientSecret = import.meta.env.VITE_GOOGLE_CLIENT_SECRET as string | undefined
-    if (!clientId || !clientSecret) {
-      throw new Error('VITE_GOOGLE_CLIENT_ID أو VITE_GOOGLE_CLIENT_SECRET غير مضبوط في .env')
-    }
-
+    // The OAuth client id/secret live in the main process only — the renderer
+    // never sees them, so there is nothing to validate here. A missing config
+    // surfaces as the `auth_not_configured` error mapped above.
     let idToken: string
     let accessToken: string
     try {
-      const result = await window.nashat.googleSignIn(clientId, clientSecret)
+      const result = await window.nashat.googleSignIn()
       idToken = result.idToken
       accessToken = result.accessToken
     } catch (err) {
@@ -59,21 +63,16 @@ export const authApi = {
 
     try {
       const credential = GoogleAuthProvider.credential(idToken, accessToken)
-      const result = await signInWithCredential(auth, credential)
-
-      const email = result.user.email
-      if (!isGmail(email)) {
-        await signOut(auth)
-        throw new GmailOnlyError(email)
-      }
-      return result
+      // Any Google-federated account is accepted. Sign-in used to be rejected
+      // unless the address ended in @gmail.com, which locked out Google
+      // Workspace, iCloud-linked and every other federated account — the single
+      // largest barrier to using this app outside its original audience.
+      // Nothing else in the app or in database.rules.json keyed off that check.
+      return await signInWithCredential(auth, credential)
     } catch (err) {
-      if (err instanceof GmailOnlyError) throw err
       throw mapError(err)
     }
   },
 
   signOut: () => signOut(auth)
 }
-
-export { isGmail }

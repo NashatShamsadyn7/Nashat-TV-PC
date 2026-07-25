@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import i18n from '@/i18n'
 
 export type UpdateState =
   | { status: 'idle' }
@@ -40,7 +41,7 @@ export function useUpdater(): UpdateState {
           })
           break
         case 'error':
-          setState({ status: 'error', message: (data as string) ?? 'خطأ' })
+          setState({ status: 'error', message: (data as string) ?? i18n.t('common.error') })
           break
       }
     })

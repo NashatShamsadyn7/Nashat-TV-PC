@@ -45,9 +45,10 @@ function isAuthUrl(url: string): boolean {
 function shouldRelax(url: string): boolean {
   try {
     const { hostname } = new URL(url)
-    return FRAMEABLE_HOSTS.some(
-      (h) => hostname === h || hostname.endsWith('.' + h) || hostname.endsWith(h)
-    )
+    // Exact host or true subdomain only. The previous `hostname.endsWith(h)`
+    // arm matched any host merely *ending* with the string, so `evilkarwan.tv`
+    // counted as `karwan.tv` and got every framing/CSP protection stripped.
+    return FRAMEABLE_HOSTS.some((h) => hostname === h || hostname.endsWith('.' + h))
   } catch {
     return false
   }
@@ -65,6 +66,15 @@ const STRIPPED = new Set([
 
 const COOP_ONLY = new Set(['cross-origin-opener-policy'])
 
+function isIptvRequest(url: string): boolean {
+  try {
+    const host = new URL(url).hostname.toLowerCase()
+    return host.includes('cloudenginerevo')
+  } catch {
+    return false
+  }
+}
+
 export function installFrameHeaderBypass(): void {
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     if (!details.responseHeaders) {
@@ -72,17 +82,27 @@ export function installFrameHeaderBypass(): void {
       return
     }
 
+    const isIptv = isIptvRequest(details.url)
     const stripSet = shouldRelax(details.url) ? STRIPPED : isAuthUrl(details.url) ? COOP_ONLY : null
-    if (!stripSet) {
+    
+    if (!stripSet && !isIptv) {
       callback({})
       return
     }
 
     const cleaned: Record<string, string[]> = {}
     for (const [key, value] of Object.entries(details.responseHeaders)) {
-      if (stripSet.has(key.toLowerCase())) continue
+      if (stripSet && stripSet.has(key.toLowerCase())) continue
       cleaned[key] = Array.isArray(value) ? value : [value as string]
     }
+
+    if (isIptv) {
+      cleaned['Access-Control-Allow-Origin'] = ['*']
+      cleaned['Access-Control-Allow-Methods'] = ['GET, POST, OPTIONS, HEAD']
+      cleaned['Access-Control-Allow-Headers'] = ['*']
+      cleaned['Access-Control-Allow-Credentials'] = ['true']
+    }
+
     callback({ responseHeaders: cleaned })
   })
 }

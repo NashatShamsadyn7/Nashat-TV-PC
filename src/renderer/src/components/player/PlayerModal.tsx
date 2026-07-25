@@ -1,17 +1,21 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Maximize2, Loader2, AlertCircle, ExternalLink, RefreshCw } from 'lucide-react'
 import VideoPlayer, { type PlayerHandle } from './VideoPlayer'
 import type { ExtractedStream } from '@shared/stream'
-import { libraryActions } from '@/stores/libraryStore'
 import { makeChannelProgressId } from '@/features/library/types'
+import { useWatchProgress } from '@/features/library/useWatchProgress'
 import RoomChatOverlay from '@/features/watchTogether/RoomChatOverlay'
 import RoomSyncOverlay from '@/features/watchTogether/RoomSyncOverlay'
 import VoiceCallButton from '@/features/voiceCall/VoiceCallButton'
 import { useRoomSync } from '@/features/watchTogether/useRoomSync'
 import { adminPause, adminPlay, adminSeek } from '@/features/watchTogether/useRoom'
 import { useRoomStore } from '@/stores/roomStore'
+import { useSettingsStore } from '@/stores/settingsStore'
+import { useMediaSession } from '@/hooks/useMediaSession'
+import EpgStrip from '@/features/epg/EpgStrip'
 
 export type PlayerSource = {
   title: string
@@ -19,6 +23,8 @@ export type PlayerSource = {
   logo?: string
   /** Web page URL that hosts the stream (we'll extract the .m3u8 from it). */
   url: string
+  /** Live TV only: RTDB key used to look up this channel's EPG schedule. */
+  channelKey?: string
 }
 
 type Props = {
@@ -39,20 +45,54 @@ function isEditable(target: EventTarget | null): boolean {
 }
 
 function isDirectStream(url: string): boolean {
-  return /\.(m3u8|mpd|mp4)(\?|$)/i.test(url)
+  return /\.(m3u8|mpd|mp4|ts)(\?|$)/i.test(url)
 }
 
 function directKind(url: string): ExtractedStream['kind'] {
   if (/\.m3u8/i.test(url)) return 'hls'
   if (/\.mpd/i.test(url)) return 'dash'
+  if (/\.ts/i.test(url)) return 'mp4' // MPEG-TS streams handled as raw media
   return 'mp4'
 }
 
 export default function PlayerModal({ source, onClose }: Props) {
+  const { t } = useTranslation()
   const playerRef = useRef<PlayerHandle>(null)
   const [state, setState] = useState<ExtractState>({ status: 'idle' })
   const sync = useRoomSync()
   const activeRoomId = useRoomStore((s) => s.activeRoomId)
+  // Was hardcoded to 10s in three places while the Settings slider wrote to a
+  // value nothing read.
+  const seekStep = useSettingsStore((s) => s.seekStep)
+
+  // Monotonic token for extraction requests. Every start bumps it; a resolving
+  // request only commits its result if it still owns the latest token. Without
+  // this, a slow earlier attempt (source switch, or a second press of R) lands
+  // after a newer one and overwrites the fresher state.
+  const requestIdRef = useRef(0)
+
+  const startExtraction = useCallback((src: PlayerSource) => {
+    const id = ++requestIdRef.current
+
+    // Already a direct stream — no extraction round-trip needed.
+    if (isDirectStream(src.url)) {
+      setState({
+        status: 'ready',
+        stream: { pageUrl: src.url, streamUrl: src.url, kind: directKind(src.url) }
+      })
+      return
+    }
+
+    setState({ status: 'extracting' })
+    window.nashat
+      .extractStream(src.url)
+      .then((stream) => {
+        if (requestIdRef.current === id) setState({ status: 'ready', stream })
+      })
+      .catch((err: Error) => {
+        if (requestIdRef.current === id) setState({ status: 'failed', error: err.message })
+      })
+  }, [])
 
   // Admin: broadcast play / pause / seek from the local video element to the
   // room so every viewer follows. Coalesce rapid seeks (e.g. scrubbing) by
@@ -78,6 +118,8 @@ export default function PlayerModal({ source, onClose }: Props) {
   // Watch Together: when a viewer in a room sees the admin take action,
   // drive the video element to match (seek + play/pause). Channels with HLS
   // are direct-controllable so sync is accurate to ~half a second.
+  const playing = sync.room?.state.playing ?? false
+
   useEffect(() => {
     if (!sync.inRoom || sync.isAdmin) return
     if (state.status !== 'ready') return
@@ -91,83 +133,64 @@ export default function PlayerModal({ source, onClose }: Props) {
         /* live edge or unseekable */
       }
     }
-    if (sync.room?.state.playing && v.paused) v.play().catch(() => {})
-    if (!sync.room?.state.playing && !v.paused) v.pause()
-  }, [sync.syncTick, sync.inRoom, sync.isAdmin, state.status]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (playing && v.paused) v.play().catch(() => {})
+    if (!playing && !v.paused) v.pause()
+    // `syncTick` is the intended clock: it advances once per sync interval and
+    // is what makes this effect re-run. livePosition/playing are read fresh on
+    // every tick, so they are listed as real dependencies instead of being
+    // silenced — the previous eslint-disable hid the fact that a play/pause
+    // arriving between ticks was ignored until the next tick.
+  }, [sync.syncTick, sync.inRoom, sync.isAdmin, sync.livePosition, playing, state.status])
 
-  // Record channel into "Continue Watching" on open
-  useEffect(() => {
-    if (!source) return
+  // "Continue Watching" identity for this source. Real position/duration are
+  // filled in by useWatchProgress from live playback — this used to write a
+  // fixed `position: 0, duration: 0` on open and never update, which is why
+  // every progress bar on the home page sat at 0% and nothing ever resumed.
+  const progressItem = useMemo(() => {
+    if (!source) return null
     const key = `${source.title}|${source.url}`
-    libraryActions.recordProgress({
+    return {
       id: makeChannelProgressId(key),
-      kind: 'channel',
+      kind: 'channel' as const,
       title: source.title,
       poster: source.logo,
       backdrop: source.logo,
       streamUrl: source.url,
       channelKey: key,
-      channelCategory: source.subtitle,
-      position: 0,
-      duration: 0,
-      updatedAt: Date.now()
-    })
+      channelCategory: source.subtitle
+    }
   }, [source])
+
+  const { initialPosition, onProgress } = useWatchProgress({ item: progressItem })
 
   useEffect(() => {
     if (!source) {
+      // Invalidate any in-flight request so it can't resolve into the closed player.
+      requestIdRef.current++
       setState({ status: 'idle' })
       return
     }
+    startExtraction(source)
+  }, [source, startExtraction])
 
-    // If the channel URL is already a direct stream, skip extraction.
-    if (isDirectStream(source.url)) {
-      setState({
-        status: 'ready',
-        stream: {
-          pageUrl: source.url,
-          streamUrl: source.url,
-          kind: directKind(source.url)
-        }
-      })
-      return
-    }
-
-    let cancelled = false
-    setState({ status: 'extracting' })
-    window.nashat
-      .extractStream(source.url)
-      .then((stream) => {
-        if (!cancelled) setState({ status: 'ready', stream })
-      })
-      .catch((err: Error) => {
-        if (!cancelled) setState({ status: 'failed', error: err.message })
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [source])
-
-  const retry = () => {
+  const retry = useCallback(() => {
     if (!source) return
-    if (isDirectStream(source.url)) {
-      setState({
-        status: 'ready',
-        stream: {
-          pageUrl: source.url,
-          streamUrl: source.url,
-          kind: directKind(source.url)
-        }
-      })
-      return
-    }
-    setState({ status: 'extracting' })
-    window.nashat
-      .extractStream(source.url)
-      .then((stream) => setState({ status: 'ready', stream }))
-      .catch((err: Error) => setState({ status: 'failed', error: err.message }))
-  }
+    startExtraction(source)
+  }, [source, startExtraction])
+
+  // AirPods / Bluetooth headset / OS media-key control. Only claim the media
+  // session once a stream is actually playing, so the headset button keeps
+  // controlling whatever else was playing while we sit on the loading screen.
+  const getVideoElement = useCallback(() => playerRef.current?.getElement() ?? null, [])
+  useMediaSession({
+    getElement: getVideoElement,
+    meta:
+      source && state.status === 'ready'
+        ? { title: source.title, subtitle: source.subtitle, artwork: source.logo }
+        : null,
+    seekStep,
+    onStop: onClose
+  })
 
   // Global keyboard shortcuts
   useEffect(() => {
@@ -197,12 +220,12 @@ export default function PlayerModal({ source, onClose }: Props) {
         case 'ArrowLeft':
         case 'j':
         case 'J':
-          p?.seekBy(-10)
+          p?.seekBy(-seekStep)
           break
         case 'ArrowRight':
         case 'l':
         case 'L':
-          p?.seekBy(10)
+          p?.seekBy(seekStep)
           break
         case 'r':
         case 'R':
@@ -228,8 +251,7 @@ export default function PlayerModal({ source, onClose }: Props) {
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source, onClose])
+  }, [source, onClose, retry])
 
   // Open detached PiP from main menu (Ctrl+Shift+P) — main-window-floating mini player
   useEffect(() => {
@@ -276,11 +298,15 @@ export default function PlayerModal({ source, onClose }: Props) {
               {source.subtitle && (
                 <p className="text-xs text-ink-300">{source.subtitle}</p>
               )}
+              {/* Renders only when this channel actually has EPG data. */}
+              <div className="mt-1 max-w-xl">
+                <EpgStrip channelKey={source.channelKey ?? null} />
+              </div>
             </div>
             {state.status === 'ready' && (
               <button
                 onClick={retry}
-                title="إعادة التحميل (R)"
+                title={t('player.reloadTitle')}
                 className="w-10 h-10 grid place-items-center rounded-xl text-ink-200 hover:text-white hover:bg-ink-700/40 transition-colors"
               >
                 <RefreshCw className="w-5 h-5" />
@@ -288,14 +314,14 @@ export default function PlayerModal({ source, onClose }: Props) {
             )}
             <button
               onClick={() => playerRef.current?.requestFullscreen()}
-              title="ملء الشاشة (F)"
+              title={t('player.fullscreenTitle')}
               className="w-10 h-10 grid place-items-center rounded-xl text-ink-200 hover:text-white hover:bg-ink-700/40 transition-colors"
             >
               <Maximize2 className="w-5 h-5" />
             </button>
             <button
               onClick={onClose}
-              title="إغلاق (Esc)"
+              title={t('player.closeTitle')}
               className="w-10 h-10 grid place-items-center rounded-xl text-ink-200 hover:text-white hover:bg-ink-700/40 transition-colors"
             >
               <X className="w-5 h-5" />
@@ -306,9 +332,9 @@ export default function PlayerModal({ source, onClose }: Props) {
             {state.status === 'extracting' && (
               <div className="text-center">
                 <Loader2 className="w-12 h-12 text-brand-400 animate-spin mx-auto mb-4" />
-                <p className="font-semibold text-lg">جارٍ استخراج البث…</p>
+                <p className="font-semibold text-lg">{t('player.extracting')}</p>
                 <p className="text-ink-300 text-sm mt-1">
-                  قد يستغرق هذا 5-15 ثانية
+                  {t('player.extractingHint')}
                 </p>
               </div>
             )}
@@ -316,7 +342,7 @@ export default function PlayerModal({ source, onClose }: Props) {
             {state.status === 'failed' && (
               <div className="text-center max-w-md px-6">
                 <AlertCircle className="w-12 h-12 text-rose-400 mx-auto mb-4" />
-                <p className="font-semibold text-lg mb-2">تعذّر استخراج البث</p>
+                <p className="font-semibold text-lg mb-2">{t('player.extractFailed')}</p>
                 <p className="text-ink-300 text-sm mb-6">{state.error}</p>
                 <div className="flex items-center justify-center gap-3">
                   <button
@@ -324,23 +350,28 @@ export default function PlayerModal({ source, onClose }: Props) {
                     className="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors"
                   >
                     <RefreshCw className="w-4 h-4" />
-                    إعادة المحاولة
+                    {t('common.retry')}
                   </button>
-                  <a
-                    href={source.url}
-                    target="_blank"
-                    rel="noreferrer"
+                  <button
+                    onClick={() => {
+                      void window.nashat.openExternal(source.url)
+                    }}
                     className="flex items-center gap-2 bg-ink-700/60 hover:bg-ink-700/80 text-white font-medium px-5 py-2.5 rounded-xl transition-colors"
                   >
                     <ExternalLink className="w-4 h-4" />
-                    فتح في المتصفّح
-                  </a>
+                    {t('player.openInBrowser')}
+                  </button>
                 </div>
               </div>
             )}
 
             {state.status === 'ready' && (
-              <VideoPlayer ref={playerRef} src={state.stream.streamUrl} />
+              <VideoPlayer
+                ref={playerRef}
+                src={state.stream.streamUrl}
+                initialPosition={initialPosition}
+                onProgress={onProgress}
+              />
             )}
             {state.status === 'ready' && (
               <button
@@ -355,16 +386,16 @@ export default function PlayerModal({ source, onClose }: Props) {
                     .then(() => onClose())
                     .catch(() => {})
                 }}
-                title="نافذة عائمة (Ctrl+Shift+P)"
+                title={t('player.pipTitle')}
                 className="absolute top-20 end-4 bg-ink-700/70 hover:bg-brand-500 text-white text-xs font-semibold px-3 py-1.5 rounded-full backdrop-blur-sm transition-colors"
               >
-                نافذة عائمة
+                {t('player.pip')}
               </button>
             )}
           </div>
 
           <footer className="px-4 py-2 text-center text-xs text-ink-400">
-            Space · F · M · J/L · C ترجمة · P نافذة · ←→ ±10s · R إعادة · Esc
+            {t('player.shortcutsHint')}
           </footer>
 
           <RoomSyncOverlay

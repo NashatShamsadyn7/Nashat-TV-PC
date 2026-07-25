@@ -9,10 +9,10 @@ import { cn } from '@/lib/cn'
 
 type Tab = 'watchlist' | 'favorites' | 'progress'
 
-const TABS: { id: Tab; label: string; icon: typeof Heart }[] = [
-  { id: 'watchlist', label: 'قائمتي', icon: Bookmark },
-  { id: 'favorites', label: 'المفضّلة', icon: Heart },
-  { id: 'progress', label: 'تابع المشاهدة', icon: History }
+const TABS: { id: Tab; labelKey: string; icon: typeof Heart }[] = [
+  { id: 'watchlist', labelKey: 'library.watchlist', icon: Bookmark },
+  { id: 'favorites', labelKey: 'library.favorites', icon: Heart },
+  { id: 'progress', labelKey: 'library.progress', icon: History }
 ]
 
 export default function Library() {
@@ -29,7 +29,7 @@ export default function Library() {
 
   return (
     <div>
-      <PageHeader title={t('nav.library')} subtitle="قائمتك، مفضّلتك، وما تتابع مشاهدته" />
+      <PageHeader title={t('nav.library')} subtitle={t('library.subtitle')} />
 
       <div className="px-8 mb-6 flex gap-2 flex-wrap">
         {TABS.map((tt) => (
@@ -44,7 +44,7 @@ export default function Library() {
             )}
           >
             <tt.icon className="w-4 h-4" />
-            {tt.label}
+            {t(tt.labelKey)}
             <span className="text-xs opacity-70 bg-black/20 rounded-full px-2">{counts[tt.id]}</span>
           </button>
         ))}
@@ -54,7 +54,7 @@ export default function Library() {
         {tab === 'watchlist' && (
           <Grid>
             {watchlist.length === 0 ? (
-              <Empty icon={Bookmark} text="قائمتك فارغة — أضف من الأفلام والمسلسلات" />
+              <Empty icon={Bookmark} text={t('library.emptyWatchlist')} />
             ) : (
               watchlist.map((it) => (
                 <Tile
@@ -74,7 +74,7 @@ export default function Library() {
         {tab === 'favorites' && (
           <Grid>
             {favorites.length === 0 ? (
-              <Empty icon={Heart} text="لا توجد عناصر في المفضّلة" />
+              <Empty icon={Heart} text={t('library.emptyFavorites')} />
             ) : (
               favorites.map((it) => (
                 <Tile
@@ -94,13 +94,13 @@ export default function Library() {
         {tab === 'progress' && (
           <Grid>
             {progress.length === 0 ? (
-              <Empty icon={History} text="لا توجد عناصر قيد المشاهدة" />
+              <Empty icon={History} text={t('library.emptyProgress')} />
             ) : (
               progress.map((p) => {
                 const pct = p.duration > 0 ? Math.min(100, (p.position / p.duration) * 100) : 0
                 const yearLabel =
                   p.kind === 'channel'
-                    ? p.channelCategory || 'قناة'
+                    ? p.channelCategory || t('library.channel')
                     : p.season
                       ? `S${p.season}·E${p.episode}`
                       : undefined
@@ -176,6 +176,7 @@ function Tile({
   onPlay: () => void
   onRemove: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="group relative">
       <button onClick={onPlay} className="block w-full text-start">
@@ -201,7 +202,7 @@ function Tile({
       </button>
       <button
         onClick={onRemove}
-        title="إزالة"
+        title={t('common.remove')}
         className="absolute top-2 end-2 w-7 h-7 grid place-items-center rounded-full bg-black/70 opacity-0 group-hover:opacity-100 hover:bg-rose-500 transition"
       >
         <Trash2 className="w-3.5 h-3.5" />

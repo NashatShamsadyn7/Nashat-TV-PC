@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { RouterProvider } from 'react-router-dom'
 import { router } from './router'
 import './i18n'
@@ -5,6 +6,7 @@ import { firebaseConfigError } from '@/services/firebase'
 import './stores/authStore' // side-effect: registers onAuthStateChanged listener
 
 function ConfigErrorScreen({ message }: { message: string }) {
+  const { t } = useTranslation()
   return (
     <div
       dir="rtl"
@@ -29,12 +31,10 @@ function ConfigErrorScreen({ message }: { message: string }) {
         }}
       >
         <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.75rem' }}>
-          تعذّر تشغيل التطبيق
+          {t('fatal.title')}
         </h1>
         <p style={{ color: '#e2e8f0', marginBottom: '1rem', lineHeight: 1.7 }}>
-          حدثت مشكلة في إعدادات التطبيق ولم يتمكّن من التحميل بشكل صحيح. يرجى
-          تحديث التطبيق إلى أحدث إصدار أو إعادة تثبيته. إذا استمرّت المشكلة تواصل
-          مع الدعم.
+          {t('fatal.body')}
         </p>
         <pre
           style={{

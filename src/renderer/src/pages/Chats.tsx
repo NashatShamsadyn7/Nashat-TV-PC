@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import {
   ArrowRight,
@@ -46,6 +47,7 @@ function formatTimestamp(ms?: number): string {
 }
 
 export default function ChatsPage() {
+  const { t } = useTranslation()
   const user = useAuthStore((s) => s.user)
   const inbox = useDMInbox()
   const friends = useFriends()
@@ -67,11 +69,11 @@ export default function ChatsPage() {
   if (!user) {
     return (
       <div>
-        <PageHeader title="المحادثات" />
+        <PageHeader title={t('nav.chats')} />
         <div className="px-8">
           <div className="bg-ink-700/30 rounded-2xl p-6 max-w-xl">
             <MessageCircle className="w-10 h-10 text-brand-400 mb-3" />
-            <p>يجب تسجيل الدخول لاستخدام المحادثات.</p>
+            <p>{t('common.signInRequired', { feature: t('nav.chats') })}</p>
           </div>
         </div>
       </div>
@@ -110,7 +112,7 @@ export default function ChatsPage() {
       const url = await uploadChatImage('dm', user.uid, file)
       await sendDM(activeUid, { image: url })
     } catch (err) {
-      window.alert(`فشل رفع الصورة: ${(err as Error).message}`)
+      window.alert(t('together.uploadFailed', { message: (err as Error).message }))
     } finally {
       setUploading(false)
     }
@@ -118,26 +120,26 @@ export default function ChatsPage() {
 
   return (
     <div>
-      <PageHeader title="المحادثات" subtitle="رسائل مباشرة مع أصدقائك" />
+      <PageHeader title={t('nav.chats')} subtitle={t('chats.subtitle')} />
       <div className="px-8 pb-10">
         <div className="grid md:grid-cols-[320px_1fr] gap-4 h-[calc(100vh-220px)] min-h-[480px]">
           {/* Inbox list */}
           <aside className="bg-ink-700/30 rounded-2xl flex flex-col overflow-hidden">
             <div className="p-3 border-b border-ink-700/50 flex items-center justify-between">
-              <h3 className="font-semibold text-sm">صناديق الوارد</h3>
+              <h3 className="font-semibold text-sm">{t('chats.inboxes')}</h3>
               <button
                 onClick={() => setShowNewChat((v) => !v)}
                 className="text-xs bg-brand-500 hover:bg-brand-600 px-2.5 py-1 rounded-lg font-semibold"
               >
-                + جديد
+                + {t('common.newLabel')}
               </button>
             </div>
 
             {showNewChat && (
               <div className="p-3 border-b border-ink-700/50 bg-ink-800/40 max-h-[240px] overflow-y-auto">
-                <p className="text-[11px] text-ink-400 mb-2">اختر صديقاً لبدء محادثة:</p>
+                <p className="text-[11px] text-ink-400 mb-2">{t('chats.pickFriend')}</p>
                 {friends.length === 0 ? (
-                  <p className="text-xs text-ink-400">لا يوجد أصدقاء. أضف صديقاً من صفحة الأصدقاء.</p>
+                  <p className="text-xs text-ink-400">{t('chats.noFriendsHint')}</p>
                 ) : (
                   <ul className="space-y-1">
                     {friends.map((f) => (
@@ -158,7 +160,7 @@ export default function ChatsPage() {
             <div className="flex-1 overflow-y-auto">
               {inbox.length === 0 && !showNewChat && (
                 <div className="p-6 text-center text-xs text-ink-400">
-                  لا توجد محادثات بعد. ابدأ بصديق من زر "جديد".
+                  {t('chats.noConversations')}
                 </div>
               )}
               <ul>
@@ -211,8 +213,8 @@ export default function ChatsPage() {
               <div className="flex-1 grid place-items-center">
                 <div className="text-center">
                   <MessageCircle className="w-12 h-12 text-ink-500 mx-auto mb-3" />
-                  <p className="text-sm text-ink-300">اختر محادثة من القائمة</p>
-                  <p className="text-xs text-ink-400 mt-1">أو ابدأ محادثة جديدة</p>
+                  <p className="text-sm text-ink-300">{t('chats.pickConversation')}</p>
+                  <p className="text-xs text-ink-400 mt-1">{t('chats.orStartNew')}</p>
                 </div>
               </div>
             )}
@@ -237,7 +239,7 @@ export default function ChatsPage() {
                     <h3 className="font-semibold text-sm truncate">
                       {(activeFriend && 'otherName' in activeFriend && activeFriend.otherName) ||
                         (activeFriend && 'name' in activeFriend && activeFriend.name) ||
-                        'محادثة'}
+                        t('common.chat')}
                     </h3>
                   </div>
                 </header>
@@ -245,7 +247,7 @@ export default function ChatsPage() {
                 <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1.5">
                   {messages.length === 0 && (
                     <p className="text-xs text-ink-400 text-center mt-8">
-                      لا توجد رسائل بعد — اكتب أولاً 👋
+                      {t('chats.noMessages')}
                     </p>
                   )}
                   {messages.map((m, i) => {
@@ -359,7 +361,7 @@ export default function ChatsPage() {
                   <input
                     value={msg}
                     onChange={(e) => setMsg(e.target.value)}
-                    placeholder="اكتب رسالة…"
+                    placeholder={t('chats.messagePlaceholder')}
                     maxLength={2000}
                     className="flex-1 bg-ink-900/80 ring-1 ring-ink-600/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-brand-500"
                   />

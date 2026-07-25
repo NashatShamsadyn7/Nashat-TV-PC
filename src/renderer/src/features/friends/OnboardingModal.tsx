@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import { AtSign, Loader2, Sparkles } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
@@ -12,6 +13,7 @@ import {
 // no username yet. Blocks the rest of the app until they pick a handle —
 // without one, friends can't add them, so the app is effectively half-functional.
 export default function OnboardingModal() {
+  const { t } = useTranslation()
   const user = useAuthStore((s) => s.user)
   const profile = useMyProfile()
   const [input, setInput] = useState('')
@@ -38,7 +40,7 @@ export default function OnboardingModal() {
     setError(null)
     const u = input.toLowerCase().trim().replace(/^@/, '')
     if (!isValidUsername(u)) {
-      setError('3-20 حرف، حروف إنجليزية صغيرة وأرقام و _ فقط')
+      setError(t('friends.usernameRule'))
       return
     }
     setBusy(true)
@@ -68,9 +70,9 @@ export default function OnboardingModal() {
           <div className="w-14 h-14 bg-gradient-to-br from-brand-400 to-brand-600 rounded-2xl grid place-items-center mb-4">
             <Sparkles className="w-7 h-7 text-white" />
           </div>
-          <h2 className="text-xl font-bold mb-1">مرحباً بك في Nashat TV!</h2>
+          <h2 className="text-xl font-bold mb-1">{t('onboarding.title')}</h2>
           <p className="text-sm text-ink-300 mb-5">
-            اختر اسم مستخدم فريد ليتمكن أصدقاؤك من إضافتك ومشاهدة الأفلام معاً.
+            {t('onboarding.intro')}
           </p>
 
           <div className="relative mb-2">
@@ -86,7 +88,7 @@ export default function OnboardingModal() {
             />
           </div>
           <p className="text-[11px] text-ink-400 mb-4">
-            3-20 حرف · إنجليزي/أرقام/_ · يمكن تغييره مرة كل 30 يوماً
+            {t('onboarding.rule')}
           </p>
 
           {error && (
@@ -100,14 +102,14 @@ export default function OnboardingModal() {
             disabled={busy || !input.trim()}
             className="w-full bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2"
           >
-            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : 'متابعة'}
+            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : t('onboarding.continue')}
           </button>
 
           <button
             onClick={() => setDismissed(true)}
             className="w-full text-xs text-ink-400 hover:text-ink-200 mt-3 py-1"
           >
-            تخطي الآن (يمكنك ضبطه لاحقاً من الإعدادات)
+            {t('onboarding.skip')}
           </button>
         </motion.div>
       </motion.div>

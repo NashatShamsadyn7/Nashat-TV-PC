@@ -12,11 +12,15 @@ export default defineConfig(({ mode }) => {
         '@shared': resolve('src/shared')
       }
     },
+    // Main-process secrets are inlined here at build time. They are NOT
+    // prefixed with VITE_, so Vite never exposes them to the renderer bundle.
+    // The previous GOOGLE_OAUTH_* names matched nothing in the codebase — the
+    // OAuth credentials were being read from the renderer instead.
     define: {
       'process.env.TMDB_V3_KEY': JSON.stringify(env.TMDB_V3_KEY ?? ''),
       'process.env.TMDB_V4_TOKEN': JSON.stringify(env.TMDB_V4_TOKEN ?? ''),
-      'process.env.GOOGLE_OAUTH_CLIENT_ID': JSON.stringify(env.GOOGLE_OAUTH_CLIENT_ID ?? ''),
-      'process.env.GOOGLE_OAUTH_CLIENT_SECRET': JSON.stringify(env.GOOGLE_OAUTH_CLIENT_SECRET ?? '')
+      'process.env.GOOGLE_CLIENT_ID': JSON.stringify(env.GOOGLE_CLIENT_ID ?? ''),
+      'process.env.GOOGLE_CLIENT_SECRET': JSON.stringify(env.GOOGLE_CLIENT_SECRET ?? '')
     },
     build: {
       outDir: 'out/main',

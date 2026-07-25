@@ -13,9 +13,9 @@ type ThemeVars = {
   '--brand-600': string
 }
 
-export const THEMES: Record<ThemeId, { label: string; vars: ThemeVars }> = {
+export const THEMES: Record<ThemeId, { labelKey: string; vars: ThemeVars }> = {
   dark: {
-    label: 'داكن',
+    labelKey: 'theme.dark',
     vars: {
       '--ink-900': '10 10 11',
       '--ink-800': '20 20 22',
@@ -30,7 +30,7 @@ export const THEMES: Record<ThemeId, { label: string; vars: ThemeVars }> = {
     }
   },
   midnight: {
-    label: 'منتصف الليل',
+    labelKey: 'theme.midnight',
     vars: {
       '--ink-900': '8 12 24',
       '--ink-800': '15 23 42',
@@ -45,7 +45,7 @@ export const THEMES: Record<ThemeId, { label: string; vars: ThemeVars }> = {
     }
   },
   oled: {
-    label: 'OLED أسود',
+    labelKey: 'theme.oled',
     vars: {
       '--ink-900': '0 0 0',
       '--ink-800': '10 10 10',
@@ -60,7 +60,7 @@ export const THEMES: Record<ThemeId, { label: string; vars: ThemeVars }> = {
     }
   },
   crimson: {
-    label: 'قرمزي',
+    labelKey: 'theme.crimson',
     vars: {
       '--ink-900': '20 8 12',
       '--ink-800': '40 14 22',
@@ -75,7 +75,7 @@ export const THEMES: Record<ThemeId, { label: string; vars: ThemeVars }> = {
     }
   },
   forest: {
-    label: 'غابة',
+    labelKey: 'theme.forest',
     vars: {
       '--ink-900': '6 18 12',
       '--ink-800': '12 30 22',
@@ -90,7 +90,7 @@ export const THEMES: Record<ThemeId, { label: string; vars: ThemeVars }> = {
     }
   },
   sunset: {
-    label: 'غروب',
+    labelKey: 'theme.sunset',
     vars: {
       '--ink-900': '24 12 8',
       '--ink-800': '42 22 14',

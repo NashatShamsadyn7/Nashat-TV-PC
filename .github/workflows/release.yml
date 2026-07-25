@@ -50,6 +50,8 @@ jobs:
           VITE_GOOGLE_CLIENT_SECRET: ${{ secrets.VITE_GOOGLE_CLIENT_SECRET }}
           TMDB_V3_KEY: ${{ secrets.TMDB_V3_KEY }}
           TMDB_V4_TOKEN: ${{ secrets.TMDB_V4_TOKEN }}
+          VITE_GIPHY_API_KEY: ${{ secrets.VITE_GIPHY_API_KEY }}
+          VITE_IMGBB_API_KEY: ${{ secrets.VITE_IMGBB_API_KEY }}
         run: |
           {
             echo "VITE_FIREBASE_API_KEY=$VITE_FIREBASE_API_KEY"
@@ -59,10 +61,17 @@ jobs:
             echo "VITE_FIREBASE_STORAGE_BUCKET=$VITE_FIREBASE_STORAGE_BUCKET"
             echo "VITE_FIREBASE_MESSAGING_SENDER_ID=$VITE_FIREBASE_MESSAGING_SENDER_ID"
             echo "VITE_FIREBASE_APP_ID=$VITE_FIREBASE_APP_ID"
-            echo "VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID"
-            echo "VITE_GOOGLE_CLIENT_SECRET=$VITE_GOOGLE_CLIENT_SECRET"
+            # Written without the VITE_ prefix: these are main-process only and
+            # must never reach the renderer bundle. The GitHub secret names are
+            # left untouched so no repo settings need changing.
+            echo "GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID"
+            echo "GOOGLE_CLIENT_SECRET=$VITE_GOOGLE_CLIENT_SECRET"
             echo "TMDB_V3_KEY=$TMDB_V3_KEY"
             echo "TMDB_V4_TOKEN=$TMDB_V4_TOKEN"
+            # Watch Together chat: GIF picker + image upload. Omitting these
+            # shipped every release with both features silently dead.
+            echo "VITE_GIPHY_API_KEY=$VITE_GIPHY_API_KEY"
+            echo "VITE_IMGBB_API_KEY=$VITE_IMGBB_API_KEY"
           } > .env
 
       - name: Build app bundles (electron-vite)

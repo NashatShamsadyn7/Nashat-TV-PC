@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { tmdbApi } from '@/services/tmdb'
 import { useLibraryStore } from '@/stores/libraryStore'
 import type { TmdbMovie, TmdbTv } from '@shared/tmdb'
 
@@ -75,5 +74,4 @@ export function useRecommendations(language: string) {
   }, [favorites.length, progress.length, language])
 
   return { items, loading }
-  void tmdbApi // ts unused guard
 }

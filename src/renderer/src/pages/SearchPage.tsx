@@ -10,6 +10,8 @@ import { tmdbApi } from '@/services/tmdb'
 import { posterUrl, type TmdbMovie, type TmdbTv } from '@shared/tmdb'
 import type { Channel } from '@shared/types'
 import { usePlayerStore } from '@/stores/playerStore'
+import { useTmdbLanguage } from '@/i18n/tmdbLocale'
+import { filterMediaForKids, useKidsMode } from '@/features/profiles/useKidsMode'
 
 type TmdbResult = (TmdbMovie & { media_type?: 'movie' }) | (TmdbTv & { media_type?: 'tv' })
 
@@ -18,7 +20,7 @@ function isTv(r: TmdbResult): r is TmdbTv & { media_type?: 'tv' } {
 }
 
 export default function SearchPage() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const { channels } = useChannels()
   const [searchParams] = useSearchParams()
   const initialQ = searchParams.get('q') ?? ''
@@ -33,7 +35,8 @@ export default function SearchPage() {
   const [history, setHistory] = useState<string[]>(() => getSearchHistory())
   const [filter, setFilter] = useState<'all' | 'movie' | 'tv' | 'channel'>('all')
   const debounced = useDebounced(query, 300)
-  const lang = i18n.language === 'ku' ? 'ar' : i18n.language
+  const lang = useTmdbLanguage()
+  const kidsMode = useKidsMode()
 
   const channelHits = useFuzzy<Channel>(channels, ['name', 'category'], debounced, 20)
 
@@ -61,7 +64,10 @@ export default function SearchPage() {
         const filtered = (res.results || []).filter(
           (r: any) => r.media_type === 'movie' || r.media_type === 'tv'
         ) as TmdbResult[]
-        setTmdbResults(filtered.slice(0, 24))
+        // Search bypasses the shared useResource wrapper, so kids filtering is
+        // applied explicitly here too — otherwise search would be a hole
+        // straight through the restriction.
+        setTmdbResults(filterMediaForKids(filtered, kidsMode).slice(0, 24))
         setTmdbError(null)
         pushSearchHistory(debounced)
         setHistory(getSearchHistory())
@@ -87,11 +93,11 @@ export default function SearchPage() {
   const showChannels = filter === 'all' || filter === 'channel'
   const showTmdb = filter === 'all' || filter === 'movie' || filter === 'tv'
 
-  const FILTERS: Array<{ id: typeof filter; label: string }> = [
-    { id: 'all', label: 'الكل' },
-    { id: 'movie', label: 'أفلام' },
-    { id: 'tv', label: 'مسلسلات' },
-    { id: 'channel', label: 'قنوات' }
+  const FILTERS: Array<{ id: typeof filter; labelKey: string }> = [
+    { id: 'all', labelKey: 'search.all' },
+    { id: 'movie', labelKey: 'search.movies' },
+    { id: 'tv', labelKey: 'search.series' },
+    { id: 'channel', labelKey: 'search.channels' }
   ]
 
   return (
@@ -106,7 +112,7 @@ export default function SearchPage() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="ابحث في القنوات، الأفلام، المسلسلات…"
+              placeholder={t('search.placeholder')}
               className="w-full bg-ink-700/40 ring-1 ring-ink-600/50 rounded-2xl ps-12 pe-12 py-4 text-lg placeholder:text-ink-300 focus:outline-none focus:ring-brand-500 transition-colors"
             />
             {query ? (
@@ -120,7 +126,7 @@ export default function SearchPage() {
               voice.supported && (
                 <button
                   onClick={() => (voice.listening ? voice.stop() : voice.start())}
-                  title={voice.listening ? 'إيقاف' : 'بحث صوتي'}
+                  title={voice.listening ? t('search.stopVoice') : t('search.voiceSearch')}
                   className={`absolute top-1/2 -translate-y-1/2 end-4 w-9 h-9 grid place-items-center rounded-full transition-colors ${
                     voice.listening
                       ? 'bg-rose-500 text-white animate-pulse'
@@ -145,7 +151,7 @@ export default function SearchPage() {
                       : 'bg-ink-700/40 text-ink-200 hover:bg-ink-700/70'
                   }`}
                 >
-                  {f.label}
+                  {t(f.labelKey)}
                 </button>
               ))}
             </div>
@@ -154,7 +160,7 @@ export default function SearchPage() {
           {showHistory && (
             <div className="mt-6">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold text-ink-200">عمليات بحث سابقة</h3>
+                <h3 className="text-sm font-semibold text-ink-200">{t('search.recentSearches')}</h3>
                 <button
                   onClick={() => {
                     clearSearchHistory()
@@ -162,7 +168,7 @@ export default function SearchPage() {
                   }}
                   className="text-xs text-ink-300 hover:text-rose-400"
                 >
-                  مسح
+                  {t('common.clear')}
                 </button>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -187,7 +193,7 @@ export default function SearchPage() {
               <section>
                 <h2 className="font-semibold mb-3 flex items-center gap-2">
                   <Tv className="w-5 h-5 text-brand-400" />
-                  قنوات ({channelHits.length})
+                  {t('search.channelsCount', { count: channelHits.length })}
                 </h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                   {channelHits.map((c) => (
@@ -198,7 +204,8 @@ export default function SearchPage() {
                           title: c.name,
                           subtitle: c.category,
                           logo: c.logo,
-                          url: c.streamUrl || c.url
+                          url: c.streamUrl || c.url,
+                          channelKey: c.key || c.id
                         })
                       }
                       className="flex items-center gap-3 p-3 bg-ink-700/30 hover:bg-ink-700/60 rounded-xl text-start ring-1 ring-ink-600/40"
@@ -222,11 +229,11 @@ export default function SearchPage() {
             <section>
               <h2 className="font-semibold mb-3 flex items-center gap-2">
                 <Film className="w-5 h-5 text-brand-400" />
-                أفلام ومسلسلات {tmdbLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                {t('search.moviesAndSeries')} {tmdbLoading && <Loader2 className="w-4 h-4 animate-spin" />}
               </h2>
               {tmdbError && <p className="text-rose-400 text-sm">{tmdbError}</p>}
               {!tmdbLoading && visibleTmdb.length === 0 && !tmdbError && (
-                <p className="text-ink-300 text-sm">لا توجد نتائج TMDB</p>
+                <p className="text-ink-300 text-sm">{t('search.noTmdbResults')}</p>
               )}
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3">
                 {visibleTmdb.map((r) => {

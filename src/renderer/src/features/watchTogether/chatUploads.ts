@@ -1,3 +1,4 @@
+import i18n from '@/i18n'
 // imgbb free image host — no Firebase Storage / no credit card required.
 // Get a free API key at https://api.imgbb.com/ and put it in .env as
 // VITE_IMGBB_API_KEY=... Free tier: unlimited uploads, 32 MB per file.
@@ -24,7 +25,7 @@ export async function compressImage(file: File): Promise<Blob> {
   const blob: Blob | null = await new Promise((resolve) =>
     canvas.toBlob(resolve, 'image/jpeg', QUALITY)
   )
-  if (!blob) throw new Error('فشل ضغط الصورة')
+  if (!blob) throw new Error(i18n.t('upload.compressFailed'))
   return blob
 }
 
@@ -52,7 +53,7 @@ export async function uploadChatImage(
 ): Promise<string> {
   if (!IMGBB_KEY) {
     throw new Error(
-      'ضع VITE_IMGBB_API_KEY في ملف .env (احصل عليه مجاناً من api.imgbb.com)'
+      i18n.t('upload.noImgbbKey')
     )
   }
   const blob = await compressImage(file)

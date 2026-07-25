@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { X, Loader2 } from 'lucide-react'
@@ -34,6 +35,7 @@ function GoogleLogo({ className }: { className?: string }) {
 }
 
 export default function AuthModal({ open, onClose }: Props) {
+  const { t } = useTranslation()
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -75,7 +77,7 @@ export default function AuthModal({ open, onClose }: Props) {
             className="w-full max-w-md bg-ink-800 rounded-2xl ring-1 ring-ink-600/50 shadow-2xl overflow-hidden"
           >
             <header className="flex items-center justify-between p-5 border-b border-ink-700/40">
-              <h2 className="text-lg font-bold">تسجيل الدخول</h2>
+              <h2 className="text-lg font-bold">{t('authModal.title')}</h2>
               <button
                 onClick={handleClose}
                 className="w-9 h-9 grid place-items-center rounded-lg text-ink-200 hover:text-white hover:bg-ink-700/40"
@@ -86,8 +88,7 @@ export default function AuthModal({ open, onClose }: Props) {
 
             <div className="p-6 space-y-5">
               <p className="text-ink-200 text-sm leading-relaxed text-center">
-                للوصول لكامل المميزات ومزامنة المفضّلة مع تطبيق الموبايل،
-                سجّل دخولك بحساب <span className="font-bold text-brand-300">Gmail</span> فقط.
+                {t('authModal.intro')}
               </p>
 
               <button
@@ -100,7 +101,7 @@ export default function AuthModal({ open, onClose }: Props) {
                 ) : (
                   <GoogleLogo className="w-5 h-5" />
                 )}
-                <span>{busy ? 'جارٍ التحقّق…' : 'المتابعة بحساب Gmail'}</span>
+                <span>{busy ? t('auth.checking') : t('authModal.continueWithGoogle')}</span>
               </button>
 
               {error && (
@@ -110,10 +111,9 @@ export default function AuthModal({ open, onClose }: Props) {
               )}
 
               <div className="text-xs text-ink-400 leading-relaxed border-t border-ink-700/40 pt-4">
-                <p className="mb-1">🔒 <strong>الحسابات المؤقّتة محظورة</strong></p>
+                <p className="mb-1"><strong>{t('authModal.privacyTitle')}</strong></p>
                 <p>
-                  لن نقبل tempmail، 10minutemail، Yahoo، Outlook، أو أي مزوّد آخر. فقط
-                  حسابات Gmail الرسمية من Google.
+                  {t('authModal.privacyBody')}
                 </p>
               </div>
             </div>

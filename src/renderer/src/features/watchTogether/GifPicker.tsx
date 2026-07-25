@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Loader2, Search } from 'lucide-react'
 
 // Giphy v1 API — free key from https://developers.giphy.com/ (no card).
@@ -41,6 +42,7 @@ async function giphyFetch(path: string): Promise<Gif[]> {
 }
 
 export default function GifPicker({ onPick }: { onPick: (gifUrl: string) => void }) {
+  const { t } = useTranslation()
   const [query, setQuery] = useState('')
   const [gifs, setGifs] = useState<Gif[]>([])
   const [loading, setLoading] = useState(false)
@@ -73,18 +75,15 @@ export default function GifPicker({ onPick }: { onPick: (gifUrl: string) => void
   if (!GIPHY_KEY) {
     return (
       <div className="bg-ink-900/95 backdrop-blur-md ring-1 ring-ink-600/60 rounded-xl p-4 shadow-xl w-[320px] text-xs text-ink-200 space-y-2">
-        <p className="font-semibold text-ink-50">GIFs غير مفعّلة</p>
-        <p>
-          أضف <code className="bg-ink-700/60 px-1 rounded">VITE_GIPHY_API_KEY</code> في
-          ملف <code className="bg-ink-700/60 px-1 rounded">.env</code> ثم أعد التشغيل.
-        </p>
+        <p className="font-semibold text-ink-50">{t('gif.disabledTitle')}</p>
+        <p>{t('gif.disabledBody', { key: 'VITE_GIPHY_API_KEY', file: '.env' })}</p>
         <a
           href="https://developers.giphy.com/dashboard/"
           target="_blank"
           rel="noreferrer"
           className="text-brand-400 hover:underline block"
         >
-          احصل على مفتاح Giphy مجاني ↗
+          {t('gif.getKey')}
         </a>
       </div>
     )
@@ -97,7 +96,7 @@ export default function GifPicker({ onPick }: { onPick: (gifUrl: string) => void
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="ابحث عن GIF…"
+          placeholder={t('gif.searchPlaceholder')}
           className="w-full bg-ink-800 ring-1 ring-ink-600/50 rounded-lg ps-7 pe-2 py-1.5 text-xs focus:outline-none focus:ring-brand-500"
         />
       </div>
@@ -128,7 +127,7 @@ export default function GifPicker({ onPick }: { onPick: (gifUrl: string) => void
           </div>
         )}
         {!loading && !error && gifs.length === 0 && (
-          <p className="text-xs text-ink-400 text-center mt-12">لا توجد نتائج</p>
+          <p className="text-xs text-ink-400 text-center mt-12">{t('common.noResults')}</p>
         )}
       </div>
       <p className="text-[10px] text-ink-500 text-center mt-1">Powered by GIPHY</p>

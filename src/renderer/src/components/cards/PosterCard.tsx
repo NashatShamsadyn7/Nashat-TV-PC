@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { Play, Plus, Check, Heart } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useLibraryStore, libraryActions } from '@/stores/libraryStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { makeLibraryId, type LibraryItem } from '@/features/library/types'
@@ -14,6 +15,7 @@ type Props = {
 }
 
 export default function PosterCard({ title, imageUrl, rating, onClick, libItem }: Props) {
+  const { t } = useTranslation()
   const hoverPeek = useSettingsStore((s) => s.hoverPeek)
   const itemId = libItem
     ? makeLibraryId(libItem.kind, libItem.tmdbId ?? libItem.channelKey ?? title ?? '')
@@ -68,7 +70,7 @@ export default function PosterCard({ title, imageUrl, rating, onClick, libItem }
         <div className="absolute bottom-3 inset-x-3 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition">
           <div className="flex items-center gap-2 text-xs">
             <Play className="w-4 h-4 fill-white" />
-            <span className="font-semibold">تشغيل</span>
+            <span className="font-semibold">{t('common.play')}</span>
           </div>
         </div>
         {rating !== undefined && rating > 0 && (
@@ -80,14 +82,14 @@ export default function PosterCard({ title, imageUrl, rating, onClick, libItem }
           <div className="absolute top-2 start-2 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition">
             <button
               onClick={(e) => toggleList(e, 'watchlist')}
-              title={inWatchlist ? 'إزالة من القائمة' : 'إضافة إلى القائمة'}
+              title={inWatchlist ? t('poster.removeWatchlist') : t('poster.addWatchlist')}
               className="w-7 h-7 grid place-items-center rounded-full bg-black/70 hover:bg-brand-500 backdrop-blur"
             >
               {inWatchlist ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
             </button>
             <button
               onClick={(e) => toggleList(e, 'favorites')}
-              title={isFav ? 'إزالة من المفضّلة' : 'إضافة للمفضّلة'}
+              title={isFav ? t('details.removeFavorite') : t('details.addFavorite')}
               className="w-7 h-7 grid place-items-center rounded-full bg-black/70 hover:bg-rose-500 backdrop-blur"
             >
               <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-rose-400 text-rose-400' : ''}`} />

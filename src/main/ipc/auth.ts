@@ -10,7 +10,17 @@ function generatePKCE(): { verifier: string; challenge: string } {
 
 type AuthTokens = { idToken: string; accessToken: string }
 
-function startCallbackServer(): Promise<{
+/** Escape untrusted text before inlining it into the callback HTML response. */
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function startCallbackServer(expectedState: string): Promise<{
   port: number
   waitForCode: () => Promise<string>
   server: Server
@@ -28,6 +38,7 @@ function startCallbackServer(): Promise<{
       const url = new URL(req.url ?? '/', 'http://localhost')
       const code = url.searchParams.get('code')
       const error = url.searchParams.get('error')
+      const state = url.searchParams.get('state')
 
       // The browser fires extra requests (favicon, devtools, prefetch) at the
       // same origin. Only the request that carries `code` or `error` is the
@@ -39,12 +50,22 @@ function startCallbackServer(): Promise<{
         return
       }
 
+      // CSRF guard. This server listens on loopback, so any local process or
+      // any web page the user has open can hit it with a fabricated `code`.
+      // Only a redirect carrying the exact `state` we generated for this run is
+      // the real one; anything else is discarded without touching the flow.
+      if (state !== expectedState) {
+        res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' })
+        res.end('Invalid state')
+        return
+      }
+
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
       res.end(
         '<html><body dir="rtl" style="font-family:sans-serif;text-align:center;padding:40px">' +
           (code
             ? '<h2>✓ تم تسجيل الدخول بنجاح!</h2><p>يمكنك إغلاق هذه النافذة والعودة إلى Nashat TV.</p>'
-            : `<h2>✗ فشل تسجيل الدخول</h2><p>${error}</p>`) +
+            : `<h2>✗ فشل تسجيل الدخول</h2><p>${escapeHtml(error ?? '')}</p>`) +
           '<script>setTimeout(()=>window.close(),2000)</script>' +
           '</body></html>'
       )
@@ -66,9 +87,20 @@ function startCallbackServer(): Promise<{
 }
 
 export function registerAuthIpc(): void {
-  ipcMain.handle('auth:google', async (_e, clientId: string, clientSecret: string): Promise<AuthTokens> => {
+  // Credentials are read from the main-process environment and never leave it.
+  // They used to be passed in from the renderer, which meant Vite baked the
+  // client secret into the renderer bundle where anyone could read it out of
+  // app.asar. The renderer has no business knowing them.
+  ipcMain.handle('auth:google', async (): Promise<AuthTokens> => {
+    const clientId = process.env.GOOGLE_CLIENT_ID
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET
+    if (!clientId || !clientSecret) {
+      throw new Error('auth_not_configured')
+    }
+
     const { verifier, challenge } = generatePKCE()
-    const { port, waitForCode, server } = await startCallbackServer()
+    const state = randomBytes(16).toString('base64url')
+    const { port, waitForCode, server } = await startCallbackServer(state)
     const redirectUri = `http://localhost:${port}`
 
     const params = new URLSearchParams({
@@ -78,6 +110,7 @@ export function registerAuthIpc(): void {
       scope: 'openid email profile',
       code_challenge: challenge,
       code_challenge_method: 'S256',
+      state,
       access_type: 'offline',
       prompt: 'select_account'
     })

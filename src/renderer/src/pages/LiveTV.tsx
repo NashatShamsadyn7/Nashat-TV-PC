@@ -54,7 +54,8 @@ export default function LiveTV() {
       title: channel.name,
       subtitle: channel.category,
       logo: channel.logo,
-      url: channel.streamUrl || channel.url
+      url: channel.streamUrl || channel.url,
+      channelKey: channel.key || channel.id
     })
   }
 
@@ -63,7 +64,7 @@ export default function LiveTV() {
       <PageHeader
         title={t('nav.livetv')}
         subtitle={
-          loading ? 'جارٍ تحميل القنوات…' : `${channels.length} قناة متاحة`
+          loading ? t('livetv.loadingChannels') : t('livetv.channelsAvailable', { count: channels.length })
         }
       />
 
@@ -74,7 +75,7 @@ export default function LiveTV() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="ابحث عن قناة…"
+            placeholder={t('livetv.searchPlaceholder')}
             className="w-full bg-ink-700/40 border border-ink-600/50 rounded-xl ps-10 pe-3 py-2 text-sm placeholder:text-ink-300 focus:outline-none focus:border-brand-500 transition-colors"
           />
         </div>
@@ -92,7 +93,7 @@ export default function LiveTV() {
                     : 'bg-ink-700/40 text-ink-200 hover:bg-ink-700/70'
                 )}
               >
-                {cat === ALL_CATEGORIES ? 'الكل' : cat}
+                {cat === ALL_CATEGORIES ? t('livetv.allCategories') : cat}
               </button>
             ))}
           </div>
@@ -103,7 +104,7 @@ export default function LiveTV() {
         <div className="mx-8 mb-4 flex items-center gap-3 p-4 bg-rose-500/10 ring-1 ring-rose-500/30 rounded-xl text-rose-200">
           <AlertCircle className="w-5 h-5 shrink-0" />
           <div>
-            <p className="font-semibold">فشل تحميل القنوات</p>
+            <p className="font-semibold">{t('livetv.loadFailed')}</p>
             <p className="text-sm text-rose-300/80">{error}</p>
           </div>
         </div>
@@ -116,8 +117,8 @@ export default function LiveTV() {
           <Tv className="w-12 h-12 mx-auto text-ink-300 mb-3" />
           <p className="text-ink-200">
             {channels.length === 0
-              ? 'لا توجد قنوات متاحة حالياً'
-              : 'لا توجد نتائج مطابقة'}
+              ? t('livetv.noChannels')
+              : t('livetv.noMatches')}
           </p>
         </div>
       )}

@@ -26,12 +26,14 @@ export function useGlobalShortcuts({ onHelp, onSearch }: Options = {}) {
       }
       if (e.key === '/' && !e.ctrlKey) {
         e.preventDefault()
-        onSearch ? onSearch() : navigate('/search')
+        if (onSearch) onSearch()
+        else navigate('/search')
         return
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault()
-        onSearch ? onSearch() : navigate('/search')
+        if (onSearch) onSearch()
+        else navigate('/search')
         return
       }
       // g + letter chord shortcuts

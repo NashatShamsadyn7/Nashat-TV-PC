@@ -15,7 +15,7 @@ export default function Hero({ movie, onPlay }: Props) {
   const title = movie?.title ?? t('app.name')
   const overview =
     movie?.overview ??
-    'منصة شاملة للقنوات المباشرة والأفلام والمسلسلات. ابدأ المشاهدة الآن.'
+    t('hero.tagline')
 
   return (
     <section className="relative h-[58vh] min-h-[420px] overflow-hidden">
@@ -41,7 +41,7 @@ export default function Hero({ movie, onPlay }: Props) {
         className="relative h-full flex flex-col justify-end p-10 max-w-3xl"
       >
         <span className="inline-block text-xs font-bold tracking-widest text-brand-400 uppercase mb-3">
-          {movie ? 'الأكثر رواجاً' : 'Featured'}
+          {movie ? t('hero.trending') : t('hero.featured')}
         </span>
         <h2 className="text-5xl font-extrabold leading-tight mb-4 line-clamp-2">{title}</h2>
         {movie && (

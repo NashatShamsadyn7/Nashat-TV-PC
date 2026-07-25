@@ -1,11 +1,13 @@
 import { Mic, MicOff, Phone, PhoneOff } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useVoiceCall } from './useVoiceCall'
 import { useRoomStore } from '@/stores/roomStore'
 
 // Floating call control. Placed alongside RoomSyncOverlay / RoomChatOverlay
 // so it follows the user into every player view. Hidden when not in a room.
 export default function VoiceCallButton() {
+  const { t } = useTranslation()
   const roomId = useRoomStore((s) => s.activeRoomId)
   const call = useVoiceCall(roomId)
   const [error, setError] = useState<string | null>(null)
@@ -19,7 +21,7 @@ export default function VoiceCallButton() {
     } catch (err) {
       const msg = (err as Error).message
       if (msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('denied')) {
-        setError('السماح بالمايكروفون مطلوب من إعدادات النظام')
+        setError(t('voicecall.micPermission'))
       } else {
         setError(msg)
       }
@@ -36,7 +38,7 @@ export default function VoiceCallButton() {
 
       {call.inCall && call.participants.length > 0 && (
         <div className="bg-black/70 backdrop-blur-md ring-1 ring-white/10 rounded-xl px-3 py-1.5 text-xs text-white">
-          🎙 {call.participants.length + 1} مشارك في المكالمة
+          {t('voicecall.participants', { count: call.participants.length + 1 })}
         </div>
       )}
 
@@ -45,7 +47,7 @@ export default function VoiceCallButton() {
           <button
             onClick={handleJoin}
             className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-full w-14 h-14 grid place-items-center shadow-xl ring-2 ring-ink-900/40"
-            title="انضمام للمكالمة الصوتية"
+            title={t('voicecall.joinCall')}
           >
             <Phone className="w-6 h-6" />
           </button>
@@ -58,14 +60,14 @@ export default function VoiceCallButton() {
                   ? 'bg-rose-500 hover:bg-rose-600'
                   : 'bg-ink-700/80 hover:bg-ink-700'
               } text-white`}
-              title={call.muted ? 'إلغاء كتم المايكروفون' : 'كتم المايكروفون'}
+              title={call.muted ? t('voicecall.unmute') : t('voicecall.mute')}
             >
               {call.muted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
             </button>
             <button
               onClick={() => call.leave()}
               className="bg-rose-500 hover:bg-rose-600 text-white rounded-full w-14 h-14 grid place-items-center shadow-xl ring-2 ring-ink-900/40"
-              title="إنهاء المكالمة"
+              title={t('voicecall.endCall')}
             >
               <PhoneOff className="w-6 h-6" />
             </button>

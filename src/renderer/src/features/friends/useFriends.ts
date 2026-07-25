@@ -12,6 +12,7 @@ import {
 } from 'firebase/database'
 import { db } from '@/services/firebase'
 import { useAuthStore } from '@/stores/authStore'
+import i18n from '@/i18n'
 
 export type Profile = {
   username?: string
@@ -75,9 +76,9 @@ async function readMyProfile(uid: string): Promise<Profile | null> {
 // or if the user changed it less than 30 days ago.
 export async function setUsername(username: string): Promise<void> {
   const user = useAuthStore.getState().user
-  if (!user) throw new Error('غير مسجّل دخول')
+  if (!user) throw new Error(i18n.t('friendsErr.notSignedIn'))
   const u = username.toLowerCase().trim()
-  if (!isValidUsername(u)) throw new Error('اسم المستخدم: 3-20 حرف، إنجليزي/أرقام/_ فقط')
+  if (!isValidUsername(u)) throw new Error(i18n.t('friendsErr.usernameFormat'))
 
   const current = await readMyProfile(user.uid)
   // Enforce 30-day cooldown — but only when ACTUALLY changing to a different
@@ -87,7 +88,7 @@ export async function setUsername(username: string): Promise<void> {
     const elapsed = Date.now() - since
     if (elapsed < USERNAME_CHANGE_COOLDOWN_MS) {
       const daysLeft = Math.ceil((USERNAME_CHANGE_COOLDOWN_MS - elapsed) / (24 * 60 * 60 * 1000))
-      throw new Error(`يمكن تغيير اسم المستخدم مرة واحدة كل 30 يوماً. حاول بعد ${daysLeft} يوم.`)
+      throw new Error(i18n.t('friendsErr.usernameCooldown', { count: daysLeft }))
     }
   }
 
@@ -108,7 +109,7 @@ export async function setUsername(username: string): Promise<void> {
   } catch (err) {
     const msg = (err as Error).message
     if (msg.toLowerCase().includes('permission_denied')) {
-      throw new Error('اسم المستخدم مأخوذ بالفعل')
+      throw new Error(i18n.t('friendsErr.usernameTaken'))
     }
     throw err
   }
@@ -118,10 +119,10 @@ export async function setUsername(username: string): Promise<void> {
 // Unlimited — change as often as you want.
 export async function updateDisplayName(displayName: string): Promise<void> {
   const user = useAuthStore.getState().user
-  if (!user) throw new Error('غير مسجّل دخول')
+  if (!user) throw new Error(i18n.t('friendsErr.notSignedIn'))
   const name = displayName.trim()
   if (name.length < 1 || name.length > 40) {
-    throw new Error('الاسم: 1-40 حرف')
+    throw new Error(i18n.t('friendsErr.nameLength'))
   }
   await update(ref(db, `profiles/${user.uid}`), {
     displayName: name,
@@ -133,7 +134,7 @@ export async function updateDisplayName(displayName: string): Promise<void> {
 // (typically from imgbb via uploadChatImage with role='avatar').
 export async function updatePhotoURL(photoURL: string | null): Promise<void> {
   const user = useAuthStore.getState().user
-  if (!user) throw new Error('غير مسجّل دخول')
+  if (!user) throw new Error(i18n.t('friendsErr.notSignedIn'))
   await update(ref(db, `profiles/${user.uid}`), {
     photoURL: photoURL || null,
     updatedAt: Date.now()
@@ -160,10 +161,10 @@ const readProfile = readMyProfile
 // our own `friendRequests/outgoing`. No-op if already friends.
 export async function sendFriendRequest(targetUsername: string): Promise<void> {
   const user = useAuthStore.getState().user
-  if (!user) throw new Error('غير مسجّل دخول')
+  if (!user) throw new Error(i18n.t('friendsErr.notSignedIn'))
   const targetUid = await lookupByUsername(targetUsername)
-  if (!targetUid) throw new Error('لم يتم العثور على هذا المستخدم')
-  if (targetUid === user.uid) throw new Error('لا يمكن إضافة نفسك')
+  if (!targetUid) throw new Error(i18n.t('friendsErr.userNotFound'))
+  if (targetUid === user.uid) throw new Error(i18n.t('friendsErr.cannotAddSelf'))
 
   const targetProfile = await readProfile(targetUid)
   const myName = user.displayName || 'Guest'
@@ -184,7 +185,7 @@ export async function sendFriendRequest(targetUsername: string): Promise<void> {
 // Accept a request: write both sides of the friendship, clear both requests.
 export async function acceptFriendRequest(fromUid: string): Promise<void> {
   const user = useAuthStore.getState().user
-  if (!user) throw new Error('غير مسجّل دخول')
+  if (!user) throw new Error(i18n.t('friendsErr.notSignedIn'))
   const fromProfile = await readProfile(fromUid)
   const myName = user.displayName || 'Guest'
   const fromName = fromProfile?.displayName || 'Friend'
@@ -224,7 +225,7 @@ export async function inviteToRoom(
   mediaTitle?: string
 ): Promise<void> {
   const user = useAuthStore.getState().user
-  if (!user) throw new Error('غير مسجّل دخول')
+  if (!user) throw new Error(i18n.t('friendsErr.notSignedIn'))
   const inviteId = `${user.uid}-${Date.now()}`
   await set(ref(db, `users/${friendUid}/roomInvites/${inviteId}`), {
     fromUid: user.uid,

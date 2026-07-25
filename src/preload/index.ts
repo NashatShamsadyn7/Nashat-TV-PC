@@ -13,8 +13,8 @@ const api = {
     ipcRenderer.invoke('tmdb:get', payload),
   extractStream: (pageUrl: string): Promise<ExtractedStream> =>
     ipcRenderer.invoke('stream:extract', pageUrl),
-  googleSignIn: (clientId: string, clientSecret: string): Promise<{ idToken: string; accessToken: string }> =>
-    ipcRenderer.invoke('auth:google', clientId, clientSecret),
+  googleSignIn: (): Promise<{ idToken: string; accessToken: string }> =>
+    ipcRenderer.invoke('auth:google'),
   // Auto-updater channel
   onUpdateEvent: (handler: (event: string, data?: unknown) => void): (() => void) => {
     const listener = (_: unknown, event: string, data?: unknown) => handler(event, data)
@@ -28,6 +28,8 @@ const api = {
   closePip: (): Promise<void> => ipcRenderer.invoke('pip:close'),
   // System integration
   getAppVersion: (): Promise<string> => ipcRenderer.invoke('system:get-version'),
+  openExternal: (url: string): Promise<boolean> =>
+    ipcRenderer.invoke('system:open-external', url),
   showTray: (): Promise<void> => ipcRenderer.invoke('system:show-tray'),
   setPresence: (payload: { title?: string; status?: 'playing' | 'paused' | 'idle' }): Promise<void> =>
     ipcRenderer.invoke('system:set-presence', payload),

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import Hls from 'hls.js'
 import {
   Play,
@@ -69,6 +70,7 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer(
   { src, autoPlay = true, onError, onProgress, initialPosition },
   ref
 ) {
+  const { t } = useTranslation()
   const videoRef = useRef<HTMLVideoElement>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -77,6 +79,10 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer(
   const kind = classify(src)
 
   const settings = useSettingsStore()
+  // Read through a ref: the HLS effect must not re-run (and tear down the
+  // stream) just because the user changed the preference mid-playback.
+  const preferredQualityRef = useRef(settings.preferredQuality)
+  preferredQualityRef.current = settings.preferredQuality
 
   const [playing, setPlaying] = useState(false)
   const [muted, setMuted] = useState(false)
@@ -205,6 +211,28 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer(
             label: lvl.height ? `${lvl.height}p` : `Level ${i}`
           }))
         )
+
+        // Apply the user's preferred quality. This setting existed in the
+        // Settings UI and the persisted store but was read nowhere, so the
+        // dropdown silently did nothing — playback was always ABR/auto.
+        const preferred = preferredQualityRef.current
+        if (preferred !== 'auto') {
+          const wanted = Number.parseInt(preferred, 10)
+          // Pick the closest level at or below the requested height so a
+          // stream that only offers 720p still honours a "1080p" preference
+          // instead of falling back to auto.
+          let best = -1
+          let bestHeight = -1
+          hls.levels.forEach((lvl, i) => {
+            const h = lvl.height ?? 0
+            if (h <= wanted && h > bestHeight) {
+              best = i
+              bestHeight = h
+            }
+          })
+          hls.currentLevel = best
+          setCurrentQuality(best)
+        }
       })
       hls.on(Hls.Events.ERROR, (_, data) => {
         if (data.fatal) onError?.(new Error(`HLS fatal: ${data.type}/${data.details}`))
@@ -406,7 +434,7 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer(
         <div className="absolute inset-6 z-10 grid place-items-center rounded-2xl border-2 border-dashed border-brand-400 bg-black/60 backdrop-blur-sm pointer-events-none">
           <div className="text-center">
             <Upload className="w-10 h-10 text-brand-400 mx-auto mb-2" />
-            <p className="text-sm font-semibold">أفلت ملف SRT/VTT لتشغيل الترجمة</p>
+            <p className="text-sm font-semibold">{t('videoplayer.dropSubtitle')}</p>
           </div>
         </div>
       )}
@@ -448,7 +476,7 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer(
               else v.pause()
             }}
             className="hover:scale-110 transition-transform"
-            aria-label={playing ? 'إيقاف' : 'تشغيل'}
+            aria-label={playing ? t('videoplayer.pause') : t('videoplayer.play')}
           >
             {playing ? <Pause className="w-7 h-7 fill-white" /> : <Play className="w-7 h-7 fill-white" />}
           </button>
@@ -505,7 +533,7 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer(
                 setSubtitlesOn(true)
               }
             }}
-            title="ترجمة (C)"
+            title={t('videoplayer.subtitlesTitle')}
             className={`hover:scale-110 transition-transform ${hasSubtitles && subtitlesOn ? 'text-brand-400' : ''}`}
           >
             <Captions className="w-5 h-5" />
@@ -526,7 +554,7 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer(
             <button
               onClick={() => setShowSpeedMenu((v) => !v)}
               className="text-xs hover:bg-white/10 px-2 py-1 rounded font-semibold"
-              title="السرعة"
+              title={t('videoplayer.speed')}
             >
               {speed === 1 ? '1×' : `${speed}×`}
             </button>
@@ -556,7 +584,7 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer(
               >
                 <Gear className="w-4 h-4" />
                 {currentQuality === -1
-                  ? 'تلقائي'
+                  ? t('videoplayer.auto')
                   : (qualities.find((q) => q.index === currentQuality)?.label ?? '?')}
               </button>
               {showQualityMenu && (
@@ -567,7 +595,7 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer(
                       currentQuality === -1 ? 'text-brand-400' : ''
                     }`}
                   >
-                    تلقائي
+                    {t('videoplayer.auto')}
                   </button>
                   {qualities.map((q) => (
                     <button
@@ -605,7 +633,7 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer(
           <button
             onClick={() => containerRef.current?.requestFullscreen().catch(() => {})}
             className="hover:scale-110 transition-transform"
-            aria-label="ملء الشاشة"
+            aria-label={t('videoplayer.fullscreen')}
           >
             <Maximize2 className="w-5 h-5" />
           </button>

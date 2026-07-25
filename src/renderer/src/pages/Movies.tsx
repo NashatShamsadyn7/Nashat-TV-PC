@@ -9,6 +9,7 @@ import { usePopularMovies, useTopRatedMovies, useTrendingMovies } from '@/featur
 import { useDebounced } from '@/features/search/useSearch'
 import { tmdbApi } from '@/services/tmdb'
 import { posterUrl, backdropUrl, type TmdbMovie } from '@shared/tmdb'
+import { useTmdbLanguage } from '@/i18n/tmdbLocale'
 
 function MovieSection({
   title,
@@ -66,9 +67,9 @@ function MovieSection({
 }
 
 export default function Movies() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const navigate = useNavigate()
-  const lang = i18n.language === 'ku' ? 'ar' : i18n.language
+  const lang = useTmdbLanguage()
 
   const trending = useTrendingMovies(lang)
   const popular = usePopularMovies(lang)
@@ -119,7 +120,7 @@ export default function Movies() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="ابحث في الأفلام…"
+            placeholder={t('movies.searchPlaceholder')}
             className="w-full bg-ink-700/40 ring-1 ring-ink-600/50 rounded-xl ps-10 pe-9 py-2 text-sm placeholder:text-ink-300 focus:outline-none focus:ring-brand-500"
           />
           {searching ? (
@@ -138,11 +139,11 @@ export default function Movies() {
       {results !== null ? (
         <section className="px-8">
           <h2 className="text-xl font-bold mb-3">
-            نتائج البحث ({results.length})
+            {t('common.searchResults', { count: results.length })}
           </h2>
           {searchErr && <p className="text-rose-300 text-sm mb-3">{searchErr}</p>}
           {results.length === 0 && !searching && (
-            <p className="text-ink-300">لا توجد نتائج</p>
+            <p className="text-ink-300">{t('common.noResults')}</p>
           )}
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4">
             {results.map((m) => (
@@ -174,7 +175,7 @@ export default function Movies() {
             onOpen={openDetails}
           />
           <MovieSection
-            title="الأكثر شعبية"
+            title={t('common.mostPopular')}
             data={popular.data?.results ?? null}
             loading={popular.loading}
             error={popular.error}

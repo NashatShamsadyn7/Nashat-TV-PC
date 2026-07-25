@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Clock, Tv, Film, BarChart3, Trash2, Flame } from 'lucide-react'
 import PageHeader from '@/components/ui/PageHeader'
 import { useStatsStore, fmtHours } from '@/stores/statsStore'
@@ -15,6 +16,7 @@ function last14Days(): string[] {
 }
 
 export default function Stats() {
+  const { t } = useTranslation()
   const daily = useStatsStore((s) => s.daily)
   const byMedia = useStatsStore((s) => s.byMedia)
   const totalSeconds = useStatsStore((s) => s.totalSeconds)
@@ -41,19 +43,19 @@ export default function Stats() {
 
   return (
     <div>
-      <PageHeader title="إحصائيّاتي" subtitle="نظرة شاملة على عاداتك في المشاهدة" />
+      <PageHeader title={t('nav.stats')} subtitle={t('stats.subtitle')} />
       <div className="px-8 pb-10 space-y-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Stat icon={Clock} label="إجمالي المشاهدة" value={fmtHours(totalSeconds)} tone="brand" />
-          <Stat icon={Flame} label="جلسات" value={String(totalSessions)} tone="orange" />
-          <Stat icon={Tv} label="قنوات مختلفة" value={String(channelCount)} tone="emerald" />
-          <Stat icon={Film} label="أفلام/مسلسلات" value={String(movieCount + tvCount)} tone="sky" />
+          <Stat icon={Clock} label={t('stats.totalWatch')} value={fmtHours(totalSeconds)} tone="brand" />
+          <Stat icon={Flame} label={t('stats.sessions')} value={String(totalSessions)} tone="orange" />
+          <Stat icon={Tv} label={t('stats.channels')} value={String(channelCount)} tone="emerald" />
+          <Stat icon={Film} label={t('stats.moviesSeries')} value={String(movieCount + tvCount)} tone="sky" />
         </div>
 
         <section className="bg-ink-700/30 rounded-2xl p-6">
           <h2 className="font-semibold mb-4 flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-brand-400" />
-            آخر 14 يوم
+            {t('stats.last14Days')}
           </h2>
           <div className="flex items-end gap-2 h-40">
             {days.map((d) => {
@@ -76,9 +78,9 @@ export default function Stats() {
         </section>
 
         <section className="bg-ink-700/30 rounded-2xl p-6">
-          <h2 className="font-semibold mb-4">الأكثر مشاهدة</h2>
+          <h2 className="font-semibold mb-4">{t('stats.mostWatched')}</h2>
           {topMedia.length === 0 ? (
-            <p className="text-ink-300 text-sm">لا توجد بيانات بعد — ابدأ بالمشاهدة</p>
+            <p className="text-ink-300 text-sm">{t('stats.noData')}</p>
           ) : (
             <ol className="space-y-2">
               {topMedia.map((m, i) => (
@@ -87,9 +89,9 @@ export default function Stats() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{m.title}</p>
                     <p className="text-xs text-ink-300">
-                      {m.count} مرّة · {fmtHours(m.seconds)} ·{' '}
+                      {t('stats.timesAndDuration', { count: m.count, duration: fmtHours(m.seconds) })}{' '}
                       <span className="opacity-70">
-                        {m.kind === 'channel' ? 'قناة' : m.kind === 'movie' ? 'فيلم' : 'مسلسل'}
+                        {m.kind === 'channel' ? t('stats.kindChannel') : m.kind === 'movie' ? t('stats.kindMovie') : t('stats.kindTv')}
                       </span>
                     </p>
                   </div>
@@ -101,11 +103,11 @@ export default function Stats() {
 
         <button
           onClick={() => {
-            if (confirm('حذف كل الإحصائيات؟')) reset()
+            if (confirm(t('stats.clearConfirm'))) reset()
           }}
           className="flex items-center gap-2 text-sm text-rose-400 hover:text-rose-300"
         >
-          <Trash2 className="w-4 h-4" /> مسح الإحصائيات
+          <Trash2 className="w-4 h-4" /> {t('stats.clear')}
         </button>
       </div>
     </div>

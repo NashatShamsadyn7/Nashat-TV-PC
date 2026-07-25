@@ -42,7 +42,24 @@ if (firebaseConfigError) {
 // real network/auth failure caused by bad config is handled at call sites (and
 // surfaced to the user via firebaseConfigError before they get there).
 export const firebaseApp: FirebaseApp = initializeApp(config)
-export const auth: Auth = getAuth(firebaseApp)
+
+function initAuth(): Auth {
+  try {
+    return getAuth(firebaseApp)
+  } catch (err) {
+    console.error('[firebase] could not initialize Auth:', err)
+    return new Proxy({} as Auth, {
+      get() {
+        throw new Error(
+          firebaseConfigError ??
+            'Firebase Auth is not initialized (invalid config).'
+        )
+      }
+    })
+  }
+}
+
+export const auth: Auth = initAuth()
 
 // getDatabase throws synchronously when databaseURL is empty/invalid. Guard it
 // so a missing config never crashes module evaluation (which would black-screen

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   Play,
   Film,
@@ -37,6 +37,8 @@ import { useRoomStore } from '@/stores/roomStore'
 import { createRoom } from '@/features/watchTogether/useRoom'
 import { makeLibraryId, type LibraryItem } from '@/features/library/types'
 import { cn } from '@/lib/cn'
+import { useTmdbLanguage } from '@/i18n/tmdbLocale'
+import { formatRuntime } from '@/i18n/format'
 
 type Kind = 'movie' | 'tv'
 
@@ -83,11 +85,12 @@ function TrailerModal({ videoKey, onClose }: { videoKey: string; onClose: () => 
 }
 
 function CastRow({ cast }: { cast: TmdbCastMember[] }) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   if (!cast || cast.length === 0) return null
   return (
     <section className="mt-8">
-      <h2 className="px-8 text-xl font-bold mb-3">طاقم العمل</h2>
+      <h2 className="px-8 text-xl font-bold mb-3">{t('details.cast')}</h2>
       <div
         className="flex gap-4 px-8 overflow-x-auto pb-2"
         style={{ scrollbarWidth: 'none' }}
@@ -136,6 +139,7 @@ function EpisodesPanel({
   initialSeason: number
   language: string
 }) {
+  const { t } = useTranslation()
   const seasons = useMemo(
     () => Array.from({ length: totalSeasons }, (_, i) => i + 1),
     [totalSeasons]
@@ -186,7 +190,7 @@ function EpisodesPanel({
       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
         <h2 className="text-xl font-bold flex items-center gap-2">
           <ListVideo className="w-5 h-5 text-brand-400" />
-          الحلقات
+          {t('details.episodes')}
         </h2>
         {seasons.length > 1 ? (
           <select
@@ -196,19 +200,19 @@ function EpisodesPanel({
           >
             {seasons.map((s) => (
               <option key={s} value={s}>
-                الموسم {s}
+                {t('details.season', { number: s })}
               </option>
             ))}
           </select>
         ) : (
-          <span className="text-xs text-ink-300">الموسم {season}</span>
+          <span className="text-xs text-ink-300">{t('details.season', { number: season })}</span>
         )}
       </div>
 
       {loading && (
         <div className="py-8 text-center text-ink-300 text-sm">
           <Loader2 className="w-6 h-6 mx-auto animate-spin mb-2" />
-          جارٍ تحميل حلقات الموسم {season}…
+          {t('details.loadingEpisodes', { number: season })}
         </div>
       )}
 
@@ -259,10 +263,10 @@ function EpisodesPanel({
 }
 
 export default function Details() {
+  const { t } = useTranslation()
   const { kind, id } = useParams<{ kind: Kind; id: string }>()
   const navigate = useNavigate()
-  const { i18n } = useTranslation()
-  const lang = i18n.language === 'ku' ? 'ar' : i18n.language
+  const lang = useTmdbLanguage()
   const [data, setData] = useState<TmdbMovieDetails | TmdbTvDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -317,14 +321,14 @@ export default function Details() {
   }, [kind, tmdbId, lang])
 
   if (!kind || !tmdbId || (kind !== 'movie' && kind !== 'tv')) {
-    return <div className="p-8 text-rose-300">معطيات غير صحيحة</div>
+    return <div className="p-8 text-rose-300">{t('details.badId')}</div>
   }
 
   if (loading) {
     return (
       <div className="p-16 text-center text-ink-300">
         <Loader2 className="w-10 h-10 mx-auto animate-spin mb-4" />
-        جارٍ تحميل التفاصيل…
+        {t('details.loadingDetails')}
       </div>
     )
   }
@@ -333,7 +337,7 @@ export default function Details() {
     return (
       <div className="p-8 max-w-md mx-auto text-center">
         <AlertCircle className="w-12 h-12 text-rose-400 mx-auto mb-3" />
-        <p className="font-semibold mb-2">تعذّر تحميل التفاصيل</p>
+        <p className="font-semibold mb-2">{t('details.loadFailed')}</p>
         <p className="text-ink-300 text-sm">{error}</p>
       </div>
     )
@@ -373,7 +377,7 @@ export default function Details() {
 
   const watchWithFriends = async () => {
     if (!user) {
-      setRoomError('سجّل دخولك أولاً لإنشاء غرفة')
+      setRoomError(t('details.signInToCreateRoom'))
       return
     }
     setRoomError(null)
@@ -406,7 +410,7 @@ export default function Details() {
       navigate('/together')
     } catch (err) {
       console.error('[details] createRoom failed:', err)
-      setRoomError((err as Error)?.message ?? 'فشل إنشاء الغرفة')
+      setRoomError((err as Error)?.message ?? t('details.createRoomFailed'))
     } finally {
       setCreatingRoom(false)
     }
@@ -467,10 +471,10 @@ export default function Details() {
                 </span>
               )}
               {year && <span>{year}</span>}
-              {runtime && <span>{runtime} د</span>}
+              {runtime && <span>{formatRuntime(runtime)}</span>}
               {tvDetails && (
                 <span>
-                  {tvDetails.number_of_seasons} مواسم · {tvDetails.number_of_episodes} حلقة
+                  {t('details.seasonsEpisodes', { seasons: tvDetails.number_of_seasons, episodes: tvDetails.number_of_episodes })}
                 </span>
               )}
               {data.genres && data.genres.length > 0 && (
@@ -490,7 +494,7 @@ export default function Details() {
                 className="flex items-center gap-2 bg-white text-black hover:bg-ink-100 font-bold px-6 py-2.5 rounded-xl transition"
               >
                 <Play className="w-5 h-5 fill-black" />
-                تشغيل
+                {t('common.play')}
               </button>
               <button
                 onClick={watchWithFriends}
@@ -502,7 +506,7 @@ export default function Details() {
                 ) : (
                   <Users className="w-5 h-5" />
                 )}
-                {creatingRoom ? 'جاري الإنشاء…' : 'مع الأصدقاء'}
+                {creatingRoom ? t('details.creatingRoom') : t('details.watchTogether')}
               </button>
               <button
                 onClick={() => trailer && setTrailerKey(trailer.key)}
@@ -515,11 +519,11 @@ export default function Details() {
                 )}
               >
                 <Film className="w-5 h-5" />
-                {trailer ? 'العرض الدعائي' : 'لا يوجد عرض'}
+                {trailer ? t('details.trailer') : t('details.noTrailer')}
               </button>
               <button
                 onClick={() => libraryActions.toggleFavorite(libItem)}
-                title={isFav ? 'إزالة من المفضّلة' : 'إضافة للمفضّلة'}
+                title={isFav ? t('details.removeFavorite') : t('details.addFavorite')}
                 className={cn(
                   'w-11 h-11 grid place-items-center rounded-full transition ring-1',
                   isFav
@@ -531,7 +535,7 @@ export default function Details() {
               </button>
               <button
                 onClick={() => libraryActions.toggleWatchlist(libItem)}
-                title={inWatchlist ? 'إزالة من القائمة' : 'إضافة إلى قائمتي'}
+                title={inWatchlist ? t('details.removeWatchlist') : t('details.addWatchlist')}
                 className={cn(
                   'w-11 h-11 grid place-items-center rounded-full transition ring-1',
                   inWatchlist
@@ -546,10 +550,10 @@ export default function Details() {
                 disabled={!user}
                 title={
                   !user
-                    ? 'سجّل الدخول للتصويت'
+                    ? t('details.signInToVote')
                     : isDubVoted
-                      ? 'إلغاء التصويت'
-                      : 'هذا العمل له دبلجة عربية'
+                      ? t('details.undoVote')
+                      : t('details.voteDubbed')
                 }
                 className={cn(
                   'h-11 px-3 flex items-center gap-2 rounded-full transition ring-1 text-xs font-semibold',
@@ -559,7 +563,7 @@ export default function Details() {
                 )}
               >
                 <Languages className="w-4 h-4" />
-                <span>{isDubVoted ? 'مدبلج ✓' : 'مدبلج؟'}</span>
+                <span>{isDubVoted ? t('details.dubbed') : t('details.dubbedQuestion')}</span>
                 {dubCount > 0 && (
                   <span className={cn(
                     'rounded-full px-1.5 py-0.5 text-[10px] tabular-nums',
@@ -597,7 +601,7 @@ export default function Details() {
         if (recs.length === 0) return null
         return (
           <section className="mt-10">
-            <h2 className="px-8 text-xl font-bold mb-3">قد يعجبك أيضاً</h2>
+            <h2 className="px-8 text-xl font-bold mb-3">{t('details.alsoLike')}</h2>
             <div
               className="flex gap-4 px-8 overflow-x-auto pb-2"
               style={{ scrollbarWidth: 'none' }}

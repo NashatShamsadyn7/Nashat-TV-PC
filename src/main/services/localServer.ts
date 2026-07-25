@@ -1,6 +1,6 @@
 import { createServer, type Server } from 'node:http'
 import { readFile, stat } from 'node:fs/promises'
-import { extname, join, normalize, resolve } from 'node:path'
+import { extname, join, normalize, resolve, sep } from 'node:path'
 
 const MIME: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -66,8 +66,12 @@ export async function startLocalRendererServer(rootDir: string): Promise<{
       let relPath = normalize(rawPath).replace(/^[/\\]+/, '')
       if (!relPath || relPath.endsWith('/')) relPath += 'index.html'
 
+      // Compare against `root + sep`, not bare `root`. A plain startsWith lets
+      // a sibling directory whose name merely begins with the root name (e.g.
+      // `<root>-backup`) pass the containment check.
       const filePath = join(root, relPath)
-      if (!filePath.startsWith(root)) {
+      const rootPrefix = root.endsWith(sep) ? root : root + sep
+      if (filePath !== root && !filePath.startsWith(rootPrefix)) {
         res.writeHead(403).end('Forbidden')
         return
       }

@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nashat TV — Live TV, Movies &amp; Series for Desktop</title>
+<meta name="description" content="A free desktop app for live TV, movies and series. Watch together with friends in synced rooms, split the screen across four channels, and switch between Arabic, Kurdish and English.">
+<meta name="theme-color" content="#0a0a0b">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Nashat TV — Live TV, Movies &amp; Series for Desktop">
+<meta property="og:description" content="Live TV, movies and series on your desktop. Watch together in synced rooms. Arabic, Kurdish and English.">
+<meta property="og:image" content="/assets/icon-512.png">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+<link rel="apple-touch-icon" href="/assets/icon-192.png">
+<link rel="manifest" href="/site.webmanifest">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* Brand system — taken from the Nashat TV identity sheet.
+   Crimson #e11d48 · Deep Ink #0a0a0b · Charcoal #1f1123 · Slate #475569 · Silver #e2e6f0
+   Cairo for display, Inter for body. */
+:root{
+  --crimson:#e11d48;
+  --crimson-lo:#9f1239;
+  --crimson-hi:#fb7185;
+  --ink:#0a0a0b;
+  --ink-800:#111114;
+  --ink-700:#1a1a1f;
+  --ink-600:#22222a;
+  --slate:#475569;
+  --silver:#e2e6f0;
+  --muted:#9a9aa8;
+  --radius:18px;
+  --maxw:1180px;
+  --display:'Cairo',system-ui,sans-serif;
+  --body:'Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--ink);color:var(--silver);
+  font-family:var(--body);font-size:16px;line-height:1.65;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+/* Arabic and Kurdish read right-to-left and use Cairo throughout — Inter has no
+   Arabic-script coverage, so leaving body text on Inter would fall back to a
+   system font and break the type system. */
+html[dir="rtl"] body{font-family:var(--display)}
+h1,h2,h3,.display{font-family:var(--display);font-weight:900;line-height:1.15;margin:0}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+.eyebrow{
+  font-size:13px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--crimson-hi);font-weight:600;margin-bottom:14px;
+}
+html[dir="rtl"] .eyebrow{letter-spacing:0}
+
+/* ---------- ambient glow ---------- */
+.glow{position:fixed;inset:0;pointer-events:none;z-index:0}
+.glow::before,.glow::after{
+  content:"";position:absolute;border-radius:50%;filter:blur(120px);opacity:.5;
+}
+.glow::before{width:620px;height:620px;background:rgba(225,29,72,.30);top:-220px;left:-140px}
+.glow::after{width:520px;height:520px;background:rgba(159,18,57,.26);top:32%;right:-200px}
+
+/* ---------- nav ---------- */
+header{
+  position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);
+  background:rgba(10,10,11,.78);border-bottom:1px solid rgba(255,255,255,.07);
+}
+.nav{display:flex;align-items:center;gap:18px;height:68px}
+.brand{display:flex;align-items:center;gap:11px;font-family:var(--display);font-weight:700;font-size:18px}
+.brand img{width:34px;height:34px;border-radius:9px}
+.nav-links{display:flex;gap:26px;margin-inline-start:auto;font-size:14.5px;color:var(--muted)}
+.nav-links a:hover{color:var(--silver)}
+.langs{display:flex;gap:4px;background:var(--ink-700);padding:4px;border-radius:11px}
+.langs button{
+  font:inherit;font-size:13px;font-weight:600;color:var(--muted);background:none;
+  border:0;padding:6px 12px;border-radius:8px;cursor:pointer;transition:.18s;
+}
+.langs button:hover{color:var(--silver)}
+.langs button[aria-pressed="true"]{background:var(--crimson);color:#fff}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  padding:13px 26px;border-radius:13px;font-weight:600;font-size:15px;
+  border:1px solid transparent;cursor:pointer;transition:.2s;white-space:nowrap;
+}
+.btn-primary{
+  background:linear-gradient(135deg,var(--crimson),var(--crimson-lo));color:#fff;
+  box-shadow:0 10px 34px -10px rgba(225,29,72,.85);
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 42px -10px rgba(225,29,72,.95)}
+.btn-ghost{border-color:rgba(255,255,255,.16);color:var(--silver);background:rgba(255,255,255,.03)}
+.btn-ghost:hover{border-color:rgba(255,255,255,.34);background:rgba(255,255,255,.07)}
+.btn svg{width:18px;height:18px;flex:none}
+
+/* ---------- hero ---------- */
+.hero{position:relative;z-index:1;padding:82px 0 66px;text-align:center}
+.hero-icon{
+  width:120px;height:120px;margin:0 auto 30px;border-radius:27px;
+  box-shadow:0 0 78px -8px rgba(225,29,72,.75);animation:float 6s ease-in-out infinite;
+}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-11px)}}
+.hero h1{font-size:clamp(2.6rem,6.4vw,4.6rem);letter-spacing:-.02em}
+.hero h1 .accent{
+  background:linear-gradient(120deg,var(--crimson-hi),var(--crimson));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.hero p.lede{
+  max-width:660px;margin:22px auto 0;font-size:clamp(1.02rem,2.1vw,1.22rem);
+  color:var(--muted);line-height:1.72;
+}
+.cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:36px}
+.meta{margin-top:20px;font-size:13.5px;color:var(--slate)}
+.meta b{color:var(--muted);font-weight:600}
+
+/* ---------- app window mockup ---------- */
+.shot{
+  position:relative;z-index:1;max-width:1000px;margin:64px auto 0;
+  border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.1);
+  background:var(--ink-800);box-shadow:0 40px 100px -30px rgba(0,0,0,.95),0 0 90px -40px rgba(225,29,72,.5);
+}
+.shot-bar{
+  display:flex;align-items:center;gap:8px;padding:11px 15px;
+  background:var(--ink-700);border-bottom:1px solid rgba(255,255,255,.07);
+}
+.dot{width:11px;height:11px;border-radius:50%}
+.shot-title{margin-inline-start:12px;font-size:12.5px;color:var(--slate)}
+.shot-body{display:grid;grid-template-columns:196px 1fr;min-height:390px;text-align:start}
+.side{padding:18px 13px;border-inline-end:1px solid rgba(255,255,255,.07);background:rgba(0,0,0,.28)}
+.side-brand{font-family:var(--display);font-weight:700;font-size:15px;padding:0 10px 16px}
+.side-brand small{display:block;font-size:10.5px;color:var(--slate);font-weight:400}
+.side-item{
+  display:flex;align-items:center;gap:10px;padding:8.5px 11px;border-radius:9px;
+  font-size:13px;color:var(--muted);margin-bottom:2px;
+}
+.side-item.on{background:rgba(225,29,72,.14);color:#fff;box-shadow:inset 3px 0 0 var(--crimson)}
+html[dir="rtl"] .side-item.on{box-shadow:inset -3px 0 0 var(--crimson)}
+.side-item i{width:15px;height:15px;border-radius:4px;background:currentColor;opacity:.45;flex:none}
+.main{padding:20px}
+.main h4{margin:0 0 14px;font-family:var(--display);font-size:19px;font-weight:700;color:#fff}
+.row{display:flex;gap:11px;overflow:hidden;margin-bottom:18px}
+.card{
+  flex:none;width:106px;height:158px;border-radius:10px;
+  background:linear-gradient(160deg,var(--ink-600),var(--ink-700));
+  border:1px solid rgba(255,255,255,.07);position:relative;overflow:hidden;
+}
+.card::after{
+  content:"";position:absolute;inset:auto 0 0 0;height:3px;background:var(--crimson);
+  width:var(--p,0%);
+}
+.card.hl{border-color:rgba(225,29,72,.5);box-shadow:0 0 22px -6px rgba(225,29,72,.6)}
+.bar{height:9px;border-radius:5px;background:var(--ink-600);margin-top:9px}
+
+/* ---------- sections ---------- */
+section{position:relative;z-index:1;padding:86px 0}
+.sec-head{text-align:center;max-width:660px;margin:0 auto 52px}
+.sec-head h2{font-size:clamp(1.9rem,4vw,2.7rem)}
+.sec-head p{color:var(--muted);margin:16px 0 0;font-size:1.04rem}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(266px,1fr));gap:20px}
+.feat{
+  background:linear-gradient(165deg,rgba(255,255,255,.05),rgba(255,255,255,.015));
+  border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);padding:28px;
+  transition:.25s;
+}
+.feat:hover{border-color:rgba(225,29,72,.45);transform:translateY(-4px)}
+.feat .ico{
+  width:46px;height:46px;border-radius:13px;display:grid;place-items:center;margin-bottom:17px;
+  background:linear-gradient(135deg,rgba(225,29,72,.24),rgba(225,29,72,.07));
+  border:1px solid rgba(225,29,72,.3);
+}
+.feat .ico svg{width:22px;height:22px;stroke:var(--crimson-hi)}
+.feat h3{font-size:1.14rem;margin-bottom:9px;font-weight:700}
+.feat p{margin:0;color:var(--muted);font-size:14.6px;line-height:1.68}
+
+.split{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+.split h2{font-size:clamp(1.7rem,3.4vw,2.4rem);margin-bottom:18px}
+.split p{color:var(--muted);margin:0 0 20px}
+.ticks{list-style:none;padding:0;margin:0;display:grid;gap:11px}
+.ticks li{display:flex;gap:11px;align-items:flex-start;font-size:15px;color:var(--muted)}
+.ticks svg{width:19px;height:19px;stroke:var(--crimson);flex:none;margin-top:2px}
+.panel{
+  border-radius:var(--radius);border:1px solid rgba(255,255,255,.09);padding:26px;
+  background:linear-gradient(160deg,rgba(225,29,72,.12),rgba(255,255,255,.02));
+}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.tile{
+  aspect-ratio:16/9;border-radius:11px;border:1px solid rgba(255,255,255,.09);
+  background:linear-gradient(150deg,var(--ink-600),var(--ink-800));
+  display:grid;place-items:center;font-size:12px;color:var(--slate);position:relative;
+}
+.tile.live::before{
+  content:"";position:absolute;top:9px;inset-inline-start:9px;width:7px;height:7px;
+  border-radius:50%;background:var(--crimson);box-shadow:0 0 9px var(--crimson);
+  animation:pulse 1.8s infinite;
+}
+@keyframes pulse{50%{opacity:.35}}
+
+.lang-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px}
+.lang-card{
+  border:1px solid rgba(255,255,255,.09);border-radius:var(--radius);padding:26px;text-align:center;
+  background:rgba(255,255,255,.025);
+}
+.lang-card .word{font-family:var(--display);font-size:2rem;font-weight:900;color:#fff;margin-bottom:6px}
+.lang-card small{color:var(--slate);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase}
+
+/* ---------- download ---------- */
+.download{text-align:center}
+.dl-box{
+  max-width:620px;margin:0 auto;padding:44px 34px;border-radius:24px;
+  border:1px solid rgba(225,29,72,.3);
+  background:linear-gradient(165deg,rgba(225,29,72,.14),rgba(10,10,11,.6));
+}
+.specs{
+  display:flex;justify-content:center;gap:30px;flex-wrap:wrap;margin-top:26px;
+  font-size:13.5px;color:var(--slate);
+}
+.specs b{display:block;color:var(--silver);font-weight:600;font-size:15px;font-family:var(--display)}
+.note{
+  margin-top:26px;padding:14px 18px;border-radius:12px;font-size:13.4px;line-height:1.6;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:var(--muted);
+}
+
+footer{
+  border-top:1px solid rgba(255,255,255,.08);padding:42px 0;position:relative;z-index:1;
+  color:var(--slate);font-size:13.6px;
+}
+.foot{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.foot-links{margin-inline-start:auto;display:flex;gap:22px}
+.foot-links a:hover{color:var(--silver)}
+.attrib{margin-top:20px;font-size:12.4px;line-height:1.7;max-width:620px}
+
+@media(max-width:860px){
+  .nav-links{display:none}
+  .split{grid-template-columns:1fr;gap:34px}
+  .shot-body{grid-template-columns:1fr}
+  .side{display:none}
+  section{padding:64px 0}
+}
+</style>
+</head>
+<body>
+<div class="glow"></div>
+
+<header>
+  <div class="wrap nav">
+    <a href="#" class="brand"><img src="/assets/icon-192.png" alt=""><span>Nashat TV</span></a>
+    <nav class="nav-links">
+      <a href="#features" data-i18n="nav.features">Features</a>
+      <a href="#together" data-i18n="nav.together">Watch Together</a>
+      <a href="#languages" data-i18n="nav.languages">Languages</a>
+      <a href="#download" data-i18n="nav.download">Download</a>
+    </nav>
+    <div class="langs" role="group" aria-label="Language">
+      <button data-lang="en" aria-pressed="true">EN</button>
+      <button data-lang="ar" aria-pressed="false">ع</button>
+      <button data-lang="ku" aria-pressed="false">ku</button>
+    </div>
+  </div>
+</header>
+
+<main>
+<section class="hero wrap">
+  <img class="hero-icon" src="/assets/icon-512.png" alt="Nashat TV">
+  <h1><span data-i18n="hero.title1">Everything you watch,</span><br><span class="accent" data-i18n="hero.title2">in one window.</span></h1>
+  <p class="lede" data-i18n="hero.lede">Live TV, movies and series on your desktop. Start a room and watch in sync with friends, split the screen across four channels at once, and use the app in Arabic, Kurdish or English.</p>
+  <div class="cta">
+    <a class="btn btn-primary" id="dl-top" href="https://github.com/NashatShamsadyn7/Nashat-TV-PC/releases/latest">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span data-i18n="hero.download">Download for Windows</span>
+    </a>
+    <a class="btn btn-ghost" href="https://github.com/NashatShamsadyn7/Nashat-TV-PC">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 0-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2 0-.4-.5-1.6.2-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17.3 4.7 18.3 5 18.3 5c.7 1.6.2 2.8.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3"/></svg>
+      <span data-i18n="hero.source">View source</span>
+    </a>
+  </div>
+  <p class="meta"><b id="ver">v1.5.1</b> · <span data-i18n="hero.req">Windows 10/11 · 64-bit · free and open source</span></p>
+</section>
+
+<div class="wrap">
+  <div class="shot">
+    <div class="shot-bar">
+      <span class="dot" style="background:#ff5f57"></span>
+      <span class="dot" style="background:#febc2e"></span>
+      <span class="dot" style="background:#28c840"></span>
+      <span class="shot-title">Nashat TV</span>
+    </div>
+    <div class="shot-body">
+      <aside class="side">
+        <div class="side-brand">Nashat TV<small data-i18n="shot.edition">Desktop edition</small></div>
+        <div class="side-item"><i></i><span data-i18n="shot.home">Home</span></div>
+        <div class="side-item on"><i></i><span data-i18n="shot.live">Live TV</span></div>
+        <div class="side-item"><i></i><span data-i18n="shot.multi">Multi-view</span></div>
+        <div class="side-item"><i></i><span data-i18n="shot.movies">Movies</span></div>
+        <div class="side-item"><i></i><span data-i18n="shot.series">Series</span></div>
+        <div class="side-item"><i></i><span data-i18n="shot.together">Watch Together</span></div>
+        <div class="side-item"><i></i><span data-i18n="shot.library">Library</span></div>
+      </aside>
+      <div class="main">
+        <h4 data-i18n="shot.continue">Continue watching</h4>
+        <div class="row">
+          <div class="card hl" style="--p:64%"></div><div class="card" style="--p:31%"></div>
+          <div class="card" style="--p:88%"></div><div class="card" style="--p:12%"></div>
+          <div class="card" style="--p:47%"></div><div class="card" style="--p:73%"></div>
+        </div>
+        <h4 data-i18n="shot.trending">Trending now</h4>
+        <div class="row">
+          <div class="card"></div><div class="card"></div><div class="card"></div>
+          <div class="card"></div><div class="card"></div><div class="card"></div>
+        </div>
+        <div class="bar" style="width:58%"></div>
+        <div class="bar" style="width:36%"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section id="features">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow" data-i18n="feat.eyebrow">What's inside</p>
+      <h2 data-i18n="feat.title">Built for how people actually watch</h2>
+      <p data-i18n="feat.sub">Not a list of checkboxes — every one of these ships in the app today.</p>
+    </div>
+    <div class="grid">
+      <div class="feat">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg></div>
+        <h3 data-i18n="feat.live.t">Live TV with a real guide</h3>
+        <p data-i18n="feat.live.d">Kurdish and regional channels, sorted by category, with a now-and-next programme guide and a progress bar for whatever is airing.</p>
+      </div>
+      <div class="feat">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 3 16 9-16 9z"/></svg></div>
+        <h3 data-i18n="feat.vod.t">Movies and series</h3>
+        <p data-i18n="feat.vod.d">Browse trending, top rated and now playing, jump by actor, and move to the next episode with one key — season rollover included.</p>
+      </div>
+      <div class="feat">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <h3 data-i18n="feat.together.t">Watch Together</h3>
+        <p data-i18n="feat.together.d">Create a room, share the link, and everyone stays frame-synced. Chat, GIFs, images and a voice channel are built in.</p>
+      </div>
+      <div class="feat">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+        <h3 data-i18n="feat.multi.t">Four channels at once</h3>
+        <p data-i18n="feat.multi.d">Multi-view splits the window across several live streams — a match on one tile, the news on another, audio wherever you want it.</p>
+      </div>
+      <div class="feat">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <h3 data-i18n="feat.kids.t">Profiles and a real kids mode</h3>
+        <p data-i18n="feat.kids.d">Separate profiles behind a PIN. On a kids profile the filtering is enforced on channels and titles alike, with a badge so it never looks broken.</p>
+      </div>
+      <div class="feat">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg></div>
+        <h3 data-i18n="feat.media.t">Works with your headphones</h3>
+        <p data-i18n="feat.media.d">Play, pause and skip from AirPods, Bluetooth headsets or the keyboard's media keys — including live streams, where seeking has to follow the buffer.</p>
+      </div>
+      <div class="feat">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="10"/></svg></div>
+        <h3 data-i18n="feat.sync.t">Picks up where you stopped</h3>
+        <p data-i18n="feat.sync.d">Position is saved while you watch and synced to your account, so an episode you paused on one machine resumes on the next.</p>
+      </div>
+      <div class="feat">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+        <h3 data-i18n="feat.social.t">Friends and messages</h3>
+        <p data-i18n="feat.social.d">Add friends by username, send invites straight into a room, and keep private chats without leaving the app.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="together">
+  <div class="wrap split">
+    <div>
+      <p class="eyebrow" data-i18n="tog.eyebrow">Watch Together</p>
+      <h2 data-i18n="tog.title">Same scene, same second</h2>
+      <p data-i18n="tog.body">The host controls playback and everyone else follows. Pause to argue about a plot point, and the room pauses with you.</p>
+      <ul class="ticks">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="tog.p1">Playback stays in sync for every viewer</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="tog.p2">Chat with GIFs and images over the video</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="tog.p3">Voice channel for the whole room</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="tog.p4">Invite a friend with a single link</span></li>
+      </ul>
+    </div>
+    <div class="panel">
+      <div class="tiles">
+        <div class="tile live">CH 1</div><div class="tile">CH 2</div>
+        <div class="tile">CH 3</div><div class="tile live">CH 4</div>
+      </div>
+      <p style="margin:18px 0 0;font-size:13.6px;color:var(--muted)" data-i18n="tog.cap">Multi-view running four live channels side by side.</p>
+    </div>
+  </div>
+</section>
+
+<section id="languages">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow" data-i18n="lang.eyebrow">Three languages</p>
+      <h2 data-i18n="lang.title">Not translated — built multilingual</h2>
+      <p data-i18n="lang.sub">Every screen, every message and every date. The layout flips to right-to-left, and numbers, runtimes and relative times follow the language you picked.</p>
+    </div>
+    <div class="lang-grid">
+      <div class="lang-card"><div class="word">العربية</div><small>Arabic · RTL</small></div>
+      <div class="lang-card"><div class="word">کوردی</div><small>Kurdish · RTL</small></div>
+      <div class="lang-card"><div class="word">English</div><small>English · LTR</small></div>
+    </div>
+  </div>
+</section>
+
+<section id="download" class="download">
+  <div class="wrap">
+    <div class="dl-box">
+      <p class="eyebrow" data-i18n="dl.eyebrow">Get the app</p>
+      <h2 data-i18n="dl.title">Free. No account needed to watch.</h2>
+      <p style="color:var(--muted);margin:16px 0 30px" data-i18n="dl.sub">Sign in only if you want your library and progress synced across machines.</p>
+      <a class="btn btn-primary" id="dl-main" href="https://github.com/NashatShamsadyn7/Nashat-TV-PC/releases/latest" style="padding:16px 34px;font-size:16px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span data-i18n="dl.btn">Download the installer</span>
+      </a>
+      <div class="specs">
+        <div><b id="spec-ver">1.5.1</b><span data-i18n="dl.version">Version</span></div>
+        <div><b>≈99 MB</b><span data-i18n="dl.size">Installer size</span></div>
+        <div><b>Windows 10/11</b><span data-i18n="dl.os">64-bit</span></div>
+      </div>
+      <p class="note" data-i18n="dl.note">The installer is not code-signed yet, so Windows SmartScreen may warn on first run. Choose <b>More info → Run anyway</b>. The app updates itself after that.</p>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <span>© <span id="yr">2026</span> Nashat Shamsadyne</span>
+      <div class="foot-links">
+        <a href="https://github.com/NashatShamsadyn7/Nashat-TV-PC">GitHub</a>
+        <a href="https://github.com/NashatShamsadyn7/Nashat-TV-PC/releases">
+          <span data-i18n="foot.releases">Releases</span></a>
+        <a href="https://github.com/NashatShamsadyn7/Nashat-TV-PC/issues">
+          <span data-i18n="foot.issues">Report a problem</span></a>
+      </div>
+    </div>
+    <p class="attrib" data-i18n="foot.tmdb">This product uses the TMDB API but is not endorsed or certified by TMDB. Film and series metadata and artwork are provided by The Movie Database.</p>
+  </div>
+</footer>
+
+<script>
+/* Copy for the three shipping languages. Keys match data-i18n attributes.
+   Arabic and Kurdish are written, not machine-translated, and the document
+   direction flips with them. */
+const STRINGS = {
+  en:{dir:'ltr',
+    'nav.features':'Features','nav.together':'Watch Together','nav.languages':'Languages','nav.download':'Download',
+    'hero.title1':'Everything you watch,','hero.title2':'in one window.',
+    'hero.lede':'Live TV, movies and series on your desktop. Start a room and watch in sync with friends, split the screen across four channels at once, and use the app in Arabic, Kurdish or English.',
+    'hero.download':'Download for Windows','hero.source':'View source',
+    'hero.req':'Windows 10/11 · 64-bit · free and open source',
+    'shot.edition':'Desktop edition','shot.home':'Home','shot.live':'Live TV','shot.multi':'Multi-view',
+    'shot.movies':'Movies','shot.series':'Series','shot.together':'Watch Together','shot.library':'Library',
+    'shot.continue':'Continue watching','shot.trending':'Trending now',
+    'feat.eyebrow':"What's inside",'feat.title':'Built for how people actually watch',
+    'feat.sub':'Not a list of checkboxes — every one of these ships in the app today.',
+    'feat.live.t':'Live TV with a real guide','feat.live.d':'Kurdish and regional channels, sorted by category, with a now-and-next programme guide and a progress bar for whatever is airing.',
+    'feat.vod.t':'Movies and series','feat.vod.d':'Browse trending, top rated and now playing, jump by actor, and move to the next episode with one key — season rollover included.',
+    'feat.together.t':'Watch Together','feat.together.d':'Create a room, share the link, and everyone stays frame-synced. Chat, GIFs, images and a voice channel are built in.',
+    'feat.multi.t':'Four channels at once','feat.multi.d':'Multi-view splits the window across several live streams — a match on one tile, the news on another, audio wherever you want it.',
+    'feat.kids.t':'Profiles and a real kids mode','feat.kids.d':'Separate profiles behind a PIN. On a kids profile the filtering is enforced on channels and titles alike, with a badge so it never looks broken.',
+    'feat.media.t':'Works with your headphones','feat.media.d':"Play, pause and skip from AirPods, Bluetooth headsets or the keyboard's media keys — including live streams, where seeking has to follow the buffer.",
+    'feat.sync.t':'Picks up where you stopped','feat.sync.d':'Position is saved while you watch and synced to your account, so an episode you paused on one machine resumes on the next.',
+    'feat.social.t':'Friends and messages','feat.social.d':'Add friends by username, send invites straight into a room, and keep private chats without leaving the app.',
+    'tog.eyebrow':'Watch Together','tog.title':'Same scene, same second',
+    'tog.body':'The host controls playback and everyone else follows. Pause to argue about a plot point, and the room pauses with you.',
+    'tog.p1':'Playback stays in sync for every viewer','tog.p2':'Chat with GIFs and images over the video',
+    'tog.p3':'Voice channel for the whole room','tog.p4':'Invite a friend with a single link',
+    'tog.cap':'Multi-view running four live channels side by side.',
+    'lang.eyebrow':'Three languages','lang.title':'Not translated — built multilingual',
+    'lang.sub':'Every screen, every message and every date. The layout flips to right-to-left, and numbers, runtimes and relative times follow the language you picked.',
+    'dl.eyebrow':'Get the app','dl.title':'Free. No account needed to watch.',
+    'dl.sub':'Sign in only if you want your library and progress synced across machines.',
+    'dl.btn':'Download the installer','dl.version':'Version','dl.size':'Installer size','dl.os':'64-bit',
+    'dl.note':'The installer is not code-signed yet, so Windows SmartScreen may warn on first run. Choose <b>More info → Run anyway</b>. The app updates itself after that.',
+    'foot.releases':'Releases','foot.issues':'Report a problem',
+    'foot.tmdb':'This product uses the TMDB API but is not endorsed or certified by TMDB. Film and series metadata and artwork are provided by The Movie Database.'
+  },
+  ar:{dir:'rtl',
+    'nav.features':'المزايا','nav.together':'المشاهدة المشتركة','nav.languages':'اللغات','nav.download':'التحميل',
+    'hero.title1':'كل ما تشاهده،','hero.title2':'في نافذة واحدة.',
+    'hero.lede':'بثّ مباشر وأفلام ومسلسلات على حاسوبك. افتح غرفة وشاهد بالتزامن مع أصدقائك، أو قسّم الشاشة على أربع قنوات معاً، واستخدم التطبيق بالعربية أو الكردية أو الإنجليزية.',
+    'hero.download':'حمّل لويندوز','hero.source':'الشيفرة المصدرية',
+    'hero.req':'ويندوز ١٠/١١ · ٦٤ بت · مجّاني ومفتوح المصدر',
+    'shot.edition':'نسخة سطح المكتب','shot.home':'الرئيسية','shot.live':'البثّ المباشر','shot.multi':'المشاهدة المتعدّدة',
+    'shot.movies':'الأفلام','shot.series':'المسلسلات','shot.together':'المشاهدة المشتركة','shot.library':'المكتبة',
+    'shot.continue':'أكمل المشاهدة','shot.trending':'الأكثر رواجاً',
+    'feat.eyebrow':'ما بداخله','feat.title':'مبنيّ على طريقة المشاهدة الحقيقية',
+    'feat.sub':'ليست قائمة وعود — كل ميزة هنا موجودة في التطبيق اليوم.',
+    'feat.live.t':'بثّ مباشر بدليل برامج حقيقي','feat.live.d':'قنوات كردية وإقليمية مرتّبة حسب التصنيف، مع دليل يعرض ما يُبثّ الآن وما يليه، وشريط تقدّم للبرنامج الجاري.',
+    'feat.vod.t':'أفلام ومسلسلات','feat.vod.d':'تصفّح الرائج والأعلى تقييماً والمعروض حالياً، وانتقل عبر الممثّلين، وتنقّل للحلقة التالية بضغطة واحدة — مع الانتقال بين المواسم.',
+    'feat.together.t':'المشاهدة المشتركة','feat.together.d':'أنشئ غرفة وشارك الرابط، ويبقى الجميع متزامنين. الدردشة وصور GIF والصور والقناة الصوتية مدمجة.',
+    'feat.multi.t':'أربع قنوات في آن واحد','feat.multi.d':'المشاهدة المتعدّدة تقسّم النافذة على عدّة بثوث مباشرة — مباراة في مربّع والأخبار في آخر، والصوت حيث تريد.',
+    'feat.kids.t':'ملفّات شخصية ووضع أطفال حقيقي','feat.kids.d':'ملفّات منفصلة محميّة برمز. في ملف الأطفال تُطبَّق التصفية على القنوات والأعمال معاً، مع شارة ظاهرة حتى لا يبدو التطبيق معطوباً.',
+    'feat.media.t':'يعمل مع سمّاعاتك','feat.media.d':'شغّل وأوقف وتخطَّ من AirPods أو سمّاعات البلوتوث أو مفاتيح الوسائط — حتى في البثّ المباشر حيث يجب أن يتبع التنقّل حدود التخزين المؤقّت.',
+    'feat.sync.t':'يكمل من حيث توقّفت','feat.sync.d':'يُحفظ موضعك أثناء المشاهدة ويُزامَن مع حسابك، فالحلقة التي أوقفتها على جهاز تُستأنف على الآخر.',
+    'feat.social.t':'الأصدقاء والرسائل','feat.social.d':'أضف أصدقاءك باسم المستخدم، وأرسل دعوات مباشرة إلى الغرفة، وتحدّث بخصوصية دون مغادرة التطبيق.',
+    'tog.eyebrow':'المشاهدة المشتركة','tog.title':'المشهد نفسه، في الثانية نفسها',
+    'tog.body':'المضيف يتحكّم بالتشغيل والبقيّة يتبعون. أوقف المشهد لتناقش حدثاً في الحبكة، فتتوقّف الغرفة معك.',
+    'tog.p1':'التشغيل متزامن لدى كل المشاهدين','tog.p2':'دردشة بصور GIF والصور فوق الفيديو',
+    'tog.p3':'قناة صوتية للغرفة كاملة','tog.p4':'ادعُ صديقاً برابط واحد',
+    'tog.cap':'المشاهدة المتعدّدة تعرض أربع قنوات مباشرة جنباً إلى جنب.',
+    'lang.eyebrow':'ثلاث لغات','lang.title':'ليس مترجَماً — بل مبنيّ متعدّد اللغات',
+    'lang.sub':'كل شاشة وكل رسالة وكل تاريخ. يتحوّل التخطيط إلى اليمين، وتتبع الأرقام والمدد والأوقات النسبية اللغة التي اخترتها.',
+    'dl.eyebrow':'احصل على التطبيق','dl.title':'مجّاني. ولا يحتاج حساباً للمشاهدة.',
+    'dl.sub':'سجّل الدخول فقط إن أردت مزامنة مكتبتك وتقدّمك بين الأجهزة.',
+    'dl.btn':'حمّل المثبِّت','dl.version':'الإصدار','dl.size':'حجم المثبِّت','dl.os':'٦٤ بت',
+    'dl.note':'المثبِّت غير موقَّع رقمياً بعد، لذا قد يحذّر SmartScreen عند أول تشغيل. اختر <b>More info ← Run anyway</b>. ويحدّث التطبيق نفسه تلقائياً بعدها.',
+    'foot.releases':'الإصدارات','foot.issues':'أبلغ عن مشكلة',
+    'foot.tmdb':'يستخدم هذا المنتج واجهة TMDB لكنّه غير معتمَد ولا مصادَق عليه من TMDB. بيانات الأفلام والمسلسلات وصورها مقدَّمة من The Movie Database.'
+  },
+  ku:{dir:'rtl',
+    'nav.features':'تایبەتمەندییەکان','nav.together':'پێکەوە بینین','nav.languages':'زمانەکان','nav.download':'داگرتن',
+    'hero.title1':'هەرچی دەیبینیت،','hero.title2':'لە یەک پەنجەرەدا.',
+    'hero.lede':'کەناڵی ڕاستەوخۆ و فیلم و زنجیرە لەسەر کۆمپیوتەرەکەت. ژوورێک بکەرەوە و بە هاوکاتی لەگەڵ هاوڕێکانت ببینە، یان شاشەکە بەسەر چوار کەناڵدا دابەش بکە، و بە کوردی یان عەرەبی یان ئینگلیزی بەکاریبهێنە.',
+    'hero.download':'داگرتن بۆ ویندۆز','hero.source':'کۆدی سەرچاوە',
+    'hero.req':'ویندۆز ١٠/١١ · ٦٤ بیت · بەخۆڕایی و سەرچاوە کراوە',
+    'shot.edition':'وەشانی دێسکتۆپ','shot.home':'سەرەکی','shot.live':'ڕاستەوخۆ','shot.multi':'بینینی فرە',
+    'shot.movies':'فیلمەکان','shot.series':'زنجیرەکان','shot.together':'پێکەوە بینین','shot.library':'کتێبخانە',
+    'shot.continue':'بەردەوامبوون','shot.trending':'باوترین',
+    'feat.eyebrow':'ناوەڕۆک','feat.title':'دروستکراوە بۆ ئەو شێوازەی خەڵک دەبینێت',
+    'feat.sub':'لیستی بەڵێن نییە — هەموو ئەمانە ئێستا لە بەرنامەکەدا هەن.',
+    'feat.live.t':'ڕاستەوخۆ لەگەڵ ڕێنمای ڕاستەقینە','feat.live.d':'کەناڵی کوردی و ناوچەیی بەپێی پۆل، لەگەڵ ڕێنمایەک کە پیشان دەدات ئێستا چی بڵاودەکرێتەوە و دواتر چی دێت.',
+    'feat.vod.t':'فیلم و زنجیرە','feat.vod.d':'بگەڕێ بەناو باوترین و بەرزترین هەڵسەنگاندن، بەپێی ئەکتەر بگۆڕە، و بە یەک کلیک بڕۆ بۆ ئەڵقەی داهاتوو — گۆڕینی وەرزیش لەگەڵدایە.',
+    'feat.together.t':'پێکەوە بینین','feat.together.d':'ژوورێک دروست بکە و لینکەکە هاوبەش بکە، هەمووان هاوکات دەمێننەوە. چات و GIF و وێنە و کەناڵی دەنگی تێدایە.',
+    'feat.multi.t':'چوار کەناڵ بە یەکەوە','feat.multi.d':'بینینی فرە پەنجەرەکە دابەش دەکات بەسەر چەند بڵاوکردنەوەیەکی ڕاستەوخۆ — یاری لە یەکێک و هەواڵ لە یەکێکی تر.',
+    'feat.kids.t':'پرۆفایل و دۆخی منداڵانی ڕاستەقینە','feat.kids.d':'پرۆفایلی جیا بە کۆدێکی پارێزراو. لە پرۆفایلی منداڵاندا پاڵاوتن بەسەر کەناڵ و بەرهەمەکاندا جێبەجێ دەکرێت.',
+    'feat.media.t':'لەگەڵ هێدفۆنەکانت کار دەکات','feat.media.d':'لە AirPods یان هێدفۆنی بلوتوس یان کلیلەکانی مێدیا لێبدە و بوەستێنە و تێپەڕێنە — تەنانەت لە بڵاوکردنەوەی ڕاستەوخۆشدا.',
+    'feat.sync.t':'لەوێوە دەست پێدەکاتەوە کە وەستایت','feat.sync.d':'شوێنی بینینت پاشەکەوت دەکرێت و لەگەڵ هەژمارەکەت هاوکات دەکرێت، بۆیە ئەڵقەیەک کە لە ئامێرێک وەستاندت لە ئامێرێکی تر بەردەوام دەبێت.',
+    'feat.social.t':'هاوڕێ و نامەکان','feat.social.d':'هاوڕێکانت بە ناوی بەکارهێنەر زیاد بکە، بانگهێشت بنێرە بۆ ژوورەکە، و بە نهێنی گفتوگۆ بکە بەبێ دەرچوون لە بەرنامەکە.',
+    'tog.eyebrow':'پێکەوە بینین','tog.title':'هەمان دیمەن، هەمان چرکە',
+    'tog.body':'خانەخوێ کۆنترۆڵی لێدان دەکات و ئەوانی تر شوێنی دەکەون. بیوەستێنە بۆ گفتوگۆ لەسەر ڕووداوێک، ژوورەکەش لەگەڵت دەوەستێت.',
+    'tog.p1':'لێدان بۆ هەموو بینەرێک هاوکات دەمێنێتەوە','tog.p2':'چات بە GIF و وێنە لەسەر ڤیدیۆکە',
+    'tog.p3':'کەناڵی دەنگی بۆ هەموو ژوورەکە','tog.p4':'بە یەک لینک هاوڕێیەک بانگهێشت بکە',
+    'tog.cap':'بینینی فرە چوار کەناڵی ڕاستەوخۆ پێکەوە پیشان دەدات.',
+    'lang.eyebrow':'سێ زمان','lang.title':'وەرنەگێڕدراوە — بەڵکو فرەزمان دروستکراوە',
+    'lang.sub':'هەموو شاشەیەک و هەموو پەیامێک و هەموو ڕێکەوتێک. ڕووکارەکە بۆ ڕاست دەگۆڕێت، و ژمارە و ماوە و کاتەکان شوێن ئەو زمانە دەکەون کە هەڵتبژاردووە.',
+    'dl.eyebrow':'بەرنامەکە بەدەست بهێنە','dl.title':'بەخۆڕایی. بۆ بینین هەژمار پێویست نییە.',
+    'dl.sub':'تەنها ئەگەر دەتەوێت کتێبخانە و پێشکەوتنت لەنێوان ئامێرەکاندا هاوکات بێت بچۆرە ژوورەوە.',
+    'dl.btn':'دایبگرە','dl.version':'وەشان','dl.size':'قەبارە','dl.os':'٦٤ بیت',
+    'dl.note':'دایمەزرێنەرەکە هێشتا واژۆی دیجیتاڵی نییە، بۆیە لەوانەیە SmartScreen ئاگادارت بکاتەوە. <b>More info ← Run anyway</b> هەڵبژێرە. دواتر بەرنامەکە خۆی نوێ دەکاتەوە.',
+    'foot.releases':'وەشانەکان','foot.issues':'کێشەیەک ڕاپۆرت بکە',
+    'foot.tmdb':'ئەم بەرهەمە API ی TMDB بەکاردەهێنێت بەڵام لەلایەن TMDB پەسەند نەکراوە. زانیاری و وێنەی فیلم و زنجیرەکان لەلایەن The Movie Database دابین کراون.'
+  }
+};
+
+function apply(lang){
+  const t = STRINGS[lang] || STRINGS.en;
+  document.documentElement.lang = lang;
+  document.documentElement.dir = t.dir;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const v = t[el.dataset.i18n];
+    // Some strings carry inline <b>, so assign as HTML. All values are authored
+    // here, never user input, so there is nothing untrusted to inject.
+    if (v !== undefined) el.innerHTML = v;
+  });
+  document.querySelectorAll('.langs button').forEach(b=>{
+    b.setAttribute('aria-pressed', String(b.dataset.lang === lang));
+  });
+  try { localStorage.setItem('ntv-lang', lang); } catch {}
+}
+
+document.querySelectorAll('.langs button').forEach(b=>{
+  b.addEventListener('click', ()=>apply(b.dataset.lang));
+});
+
+// Remembered choice first, then the browser's language, then English.
+let initial = 'en';
+try { initial = localStorage.getItem('ntv-lang') || ''; } catch {}
+if (!STRINGS[initial]) {
+  const nav = (navigator.language || 'en').toLowerCase();
+  initial = nav.startsWith('ar') ? 'ar' : (nav.startsWith('ku') || nav.startsWith('ckb')) ? 'ku' : 'en';
+}
+apply(initial);
+
+document.getElementById('yr').textContent = new Date().getFullYear();
+
+// Show the real latest version and point both buttons at the actual asset.
+// Falls back silently to the /releases/latest links already in the markup.
+fetch('https://api.github.com/repos/NashatShamsadyn7/Nashat-TV-PC/releases/latest')
+  .then(r => r.ok ? r.json() : Promise.reject(r.status))
+  .then(rel => {
+    const tag = rel.tag_name || '';
+    if (tag) {
+      document.getElementById('ver').textContent = tag;
+      document.getElementById('spec-ver').textContent = tag.replace(/^v/,'');
+    }
+    const exe = (rel.assets || []).find(a => a.name.endsWith('.exe'));
+    if (exe) {
+      document.getElementById('dl-top').href = exe.browser_download_url;
+      document.getElementById('dl-main').href = exe.browser_download_url;
+    }
+  })
+  .catch(()=>{});
+</script>
+</body>
+</html>

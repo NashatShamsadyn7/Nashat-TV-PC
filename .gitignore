@@ -51,3 +51,6 @@ coverage/
 # RTDB exports / data dumps (large, shouldn't be tracked)
 *-rtdb-export.json
 *-rtdb-export.json.gz
+
+# Firebase CLI deploy cache
+.firebase/

@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { TmdbInvokePayload } from '@shared/tmdb'
-import type { ExtractedStream } from '@shared/stream'
+import type { ExtractedStream, ServerProbe } from '@shared/stream'
 
 const api = {
   platform: process.platform,
@@ -13,6 +13,8 @@ const api = {
     ipcRenderer.invoke('tmdb:get', payload),
   extractStream: (pageUrl: string): Promise<ExtractedStream> =>
     ipcRenderer.invoke('stream:extract', pageUrl),
+  probeStreamServer: (url: string): Promise<ServerProbe> =>
+    ipcRenderer.invoke('stream:probe', url),
   googleSignIn: (): Promise<{ idToken: string; accessToken: string }> =>
     ipcRenderer.invoke('auth:google'),
   // Auto-updater channel

@@ -20,7 +20,10 @@ win:
   target:
     - target: nsis
       arch: [x64]
-  artifactName: ${productName}-Setup-${version}.${ext}
+  # Spelled out rather than ${productName}: that expands to "Nashat TV", and the
+  # space becomes %20 in the download URL while breaking continuity with the
+  # Nashat-TV-Setup-*.exe names every published release already uses.
+  artifactName: Nashat-TV-Setup-${version}.${ext}
 
 nsis:
   oneClick: false

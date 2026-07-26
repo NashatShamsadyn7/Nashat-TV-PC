@@ -5,6 +5,7 @@ import PageHeader from '@/components/ui/PageHeader'
 import { Skeleton } from '@/components/ui/Skeleton'
 import ChannelCard from '@/components/cards/ChannelCard'
 import { useChannels } from '@/features/livetv/useChannels'
+import { categoryLabel } from '@/features/livetv/categories'
 import { usePlayerStore } from '@/stores/playerStore'
 import { cn } from '@/lib/cn'
 import type { Channel } from '@shared/types'
@@ -33,11 +34,16 @@ export default function LiveTV() {
   const [query, setQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState<string>(ALL_CATEGORIES)
 
+  // Sorted by the translated label, not the raw English value — otherwise the
+  // pills come out in English alphabetical order in every language.
   const categories = useMemo(() => {
     const set = new Set<string>()
     for (const c of channels) set.add(c.category)
-    return [ALL_CATEGORIES, ...Array.from(set).sort()]
-  }, [channels])
+    const sorted = Array.from(set).sort((a, b) =>
+      categoryLabel(t, a).localeCompare(categoryLabel(t, b))
+    )
+    return [ALL_CATEGORIES, ...sorted]
+  }, [channels, t])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -52,7 +58,7 @@ export default function LiveTV() {
   const handlePlay = (channel: Channel) => {
     openPlayer({
       title: channel.name,
-      subtitle: channel.category,
+      subtitle: categoryLabel(t, channel.category),
       logo: channel.logo,
       url: channel.streamUrl || channel.url,
       channelKey: channel.key || channel.id
@@ -93,7 +99,7 @@ export default function LiveTV() {
                     : 'bg-ink-700/40 text-ink-200 hover:bg-ink-700/70'
                 )}
               >
-                {cat === ALL_CATEGORIES ? t('livetv.allCategories') : cat}
+                {cat === ALL_CATEGORIES ? t('livetv.allCategories') : categoryLabel(t, cat)}
               </button>
             ))}
           </div>

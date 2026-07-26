@@ -17,7 +17,8 @@
     "together": "Watch Together",
     "friends": "Friends",
     "chats": "Chats",
-    "settings": "Settings"
+    "settings": "Settings",
+    "about": "About"
   },
   "home": {
     "trending": "Trending Now",
@@ -334,7 +335,15 @@
     "allCategories": "All",
     "loadFailed": "Could not load the channels",
     "noChannels": "No channels available right now",
-    "noMatches": "No matching results"
+    "noMatches": "No matching results",
+    "categories": {
+      "kids": "Kids",
+      "kurdish": "Kurdish",
+      "music": "Music",
+      "religious": "Religious",
+      "sports": "Sports",
+      "uncategorized": "Uncategorized"
+    }
   },
   "library": {
     "watchlist": "My List",
@@ -425,7 +434,8 @@
     "subtitlesTitle": "Subtitles (C)",
     "speed": "Speed",
     "auto": "Auto",
-    "fullscreen": "Fullscreen"
+    "fullscreen": "Fullscreen",
+    "reconnecting": "Reconnecting…"
   },
   "notifier": {
     "checkFailed": "Could not check for updates",
@@ -529,5 +539,42 @@
     "schedule": "Schedule",
     "upNext": "Up next:",
     "onNow": "NOW"
+  },
+  "about": {
+    "title": "About",
+    "tagline": "Everything you watch, in one window.",
+    "lede": "Live TV, movies and series on your desktop. Start a room and watch in sync with friends, split the screen across four channels at once, and use the app in Arabic, Kurdish or English.",
+    "eyebrow": "What's inside",
+    "heading": "Built for how people actually watch",
+    "sub": "Not a list of checkboxes — every one of these ships in the app today.",
+    "langTitle": "Not translated — built multilingual",
+    "langSub": "Every screen, every message and every date. The layout flips to right-to-left, and numbers, runtimes and relative times follow the language you picked.",
+    "langs": "العربية · کوردی · English",
+    "liveT": "Live TV with a real guide",
+    "liveD": "Kurdish and regional channels, sorted by category, with a now-and-next programme guide and a progress bar for whatever is airing.",
+    "vodT": "Movies and series",
+    "vodD": "Browse trending, top rated and now playing, jump by actor, and move to the next episode with one key — season rollover included.",
+    "togetherT": "Watch Together",
+    "togetherD": "Create a room, share the link, and everyone stays frame-synced. Chat, GIFs, images and a voice channel are built in.",
+    "multiT": "Four channels at once",
+    "multiD": "Multi-view splits the window across several live streams — a match on one tile, the news on another, audio wherever you want it.",
+    "kidsT": "Profiles and a real kids mode",
+    "kidsD": "Separate profiles behind a PIN. On a kids profile the filtering is enforced on channels and titles alike, with a badge so it never looks broken.",
+    "mediaT": "Works with your headphones",
+    "mediaD": "Play, pause and skip from AirPods, Bluetooth headsets or the keyboard's media keys — including live streams, where seeking has to follow the buffer.",
+    "syncT": "Picks up where you stopped",
+    "syncD": "Position is saved while you watch and synced to your account, so an episode you paused on one machine resumes on the next.",
+    "socialT": "Friends and messages",
+    "socialD": "Add friends by username, send invites straight into a room, and keep private chats without leaving the app.",
+    "version": "Version",
+    "checkUpdate": "Check for updates",
+    "website": "Website",
+    "source": "Source code",
+    "share": "Share the app",
+    "copied": "Link copied",
+    "licence": "MIT licence — free and open source",
+    "tmdb": "This product uses the TMDB API but is not endorsed or certified by TMDB.",
+    "developer": "Developer",
+    "contact": "Contact"
   }
 }

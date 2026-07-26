@@ -48,7 +48,10 @@ export function registerSystemIpc(getMainWindow: () => BrowserWindow | null) {
     } catch {
       return false
     }
-    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false
+    // `mailto:` is allowed alongside http(s) so the About page's contact link
+    // opens the user's mail client instead of being silently dropped here.
+    const ALLOWED = ['http:', 'https:', 'mailto:']
+    if (!ALLOWED.includes(parsed.protocol)) return false
     if (shouldBlockUrl(rawUrl)) return false
     await shell.openExternal(rawUrl)
     return true

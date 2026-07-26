@@ -1,5 +1,21 @@
 import type { Config } from 'tailwindcss'
 
+/**
+ * Reads a theme variable set by `applyTheme`, falling back to the default
+ * (crimson) palette when no theme has been applied yet — during the first paint
+ * before React mounts, for instance.
+ *
+ * These MUST be variables rather than literal hex: `applyTheme` writes
+ * `--brand-500` & co. onto <html>, and until the colours were routed through
+ * them the whole six-theme switcher wrote variables nothing ever read, so
+ * changing the theme did nothing at all.
+ *
+ * The variables hold space-separated RGB channels ("225 29 72") so that
+ * `<alpha-value>` keeps working — `bg-brand-500/12` and friends still compose.
+ */
+const themed = (name: string, fallback: string): string =>
+  `rgb(var(${name}, ${fallback}) / <alpha-value>)`
+
 export default {
   content: ['./src/renderer/index.html', './src/renderer/src/**/*.{ts,tsx}'],
   darkMode: 'class',
@@ -10,24 +26,24 @@ export default {
           50: '#fff1f2',
           100: '#ffe4e6',
           200: '#fecdd3',
-          300: '#fda4af',
-          400: '#fb7185',
-          500: '#e11d48',
-          600: '#be123c',
+          300: themed('--brand-300', '253 164 175'),
+          400: themed('--brand-400', '251 113 133'),
+          500: themed('--brand-500', '225 29 72'),
+          600: themed('--brand-600', '190 18 60'),
           700: '#9f1239',
           800: '#881337',
-          900: '#4c0519'
+          900: themed('--brand-900', '76 5 25')
         },
         ink: {
-          900: '#0a0a0b',
-          800: '#111114',
-          700: '#1a1a1f',
-          600: '#22222a',
-          500: '#2d2d36',
-          400: '#3a3a45',
-          300: '#5a5a68',
-          200: '#9a9aa8',
-          100: '#d1d1d8'
+          900: themed('--ink-900', '10 10 11'),
+          800: themed('--ink-800', '17 17 20'),
+          700: themed('--ink-700', '26 26 31'),
+          600: themed('--ink-600', '34 34 42'),
+          500: themed('--ink-500', '45 45 54'),
+          400: themed('--ink-400', '58 58 69'),
+          300: themed('--ink-300', '90 90 104'),
+          200: themed('--ink-200', '154 154 168'),
+          100: themed('--ink-100', '209 209 216')
         }
       },
       fontFamily: {

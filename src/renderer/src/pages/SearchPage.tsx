@@ -12,6 +12,7 @@ import type { Channel } from '@shared/types'
 import { usePlayerStore } from '@/stores/playerStore'
 import { useTmdbLanguage } from '@/i18n/tmdbLocale'
 import { filterMediaForKids, useKidsMode } from '@/features/profiles/useKidsMode'
+import { categoryLabel } from '@/features/livetv/categories'
 
 type TmdbResult = (TmdbMovie & { media_type?: 'movie' }) | (TmdbTv & { media_type?: 'tv' })
 
@@ -202,7 +203,7 @@ export default function SearchPage() {
                       onClick={() =>
                         open({
                           title: c.name,
-                          subtitle: c.category,
+                          subtitle: categoryLabel(t, c.category),
                           logo: c.logo,
                           url: c.streamUrl || c.url,
                           channelKey: c.key || c.id
@@ -217,7 +218,7 @@ export default function SearchPage() {
                       )}
                       <div className="min-w-0">
                         <p className="font-semibold text-sm truncate">{c.name}</p>
-                        <p className="text-xs text-ink-300 truncate">{c.category}</p>
+                        <p className="text-xs text-ink-300 truncate">{categoryLabel(t, c.category)}</p>
                       </div>
                     </button>
                   ))}

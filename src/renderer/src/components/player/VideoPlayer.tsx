@@ -66,6 +66,16 @@ function srtToVtt(srt: string): string {
   )
 }
 
+// How hard to try before admitting a stream is really gone. Network errors get
+// more attempts than media errors: a flaky CDN recovers, a broken decode rarely
+// does.
+const MAX_NETWORK_RECOVERIES = 5
+const MAX_MEDIA_RECOVERIES = 2
+const RECOVERY_BACKOFF_MS = 1200
+// A live stream whose clock has not moved for this long while playing is stalled
+// even though hls.js reported no error at all.
+const STALL_TIMEOUT_MS = 15_000
+
 const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer(
   { src, autoPlay = true, onError, onProgress, initialPosition },
   ref
@@ -76,6 +86,9 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer(
   const containerRef = useRef<HTMLDivElement>(null)
   const hlsRef = useRef<Hls | null>(null)
   const subtitleUrlRef = useRef<string | null>(null)
+  // Budget for automatic recovery from fatal HLS errors, per playback session.
+  const recoveryRef = useRef({ network: 0, media: 0 })
+  const recoveryTimerRef = useRef<number | null>(null)
   const kind = classify(src)
 
   const settings = useSettingsStore()
@@ -100,6 +113,9 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer(
   const [subtitlesOn, setSubtitlesOn] = useState(true)
   const [hasSubtitles, setHasSubtitles] = useState(false)
   const [dragOver, setDragOver] = useState(false)
+  // True while a fatal error is being recovered from, so the overlay can say
+  // "reconnecting" rather than leaving the viewer staring at a frozen frame.
+  const [recovering, setRecovering] = useState(false)
   const hideControlsTimer = useRef<number | null>(null)
 
   const loadSubtitleFile = useCallback(async (file: File) => {
@@ -199,11 +215,30 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer(
     }
 
     if (Hls.isSupported()) {
-      const hls = new Hls({ enableWorker: true, lowLatencyMode: true })
+      const hls = new Hls({
+        enableWorker: true,
+        // Low-latency mode chases the live edge, which on ordinary IPTV
+        // streams (no LL-HLS parts) mostly buys buffer starvation and stalls.
+        lowLatencyMode: false,
+        // A live playlist has no end; without this hls.js can decide the
+        // stream is over and stop when the window rolls.
+        liveDurationInfinity: true,
+        // Ride out brief CDN hiccups instead of escalating straight to a
+        // fatal error.
+        fragLoadPolicy: {
+          default: {
+            maxTimeToFirstByteMs: 10_000,
+            maxLoadTimeMs: 60_000,
+            timeoutRetry: { maxNumRetry: 4, retryDelayMs: 500, maxRetryDelayMs: 4000 },
+            errorRetry: { maxNumRetry: 6, retryDelayMs: 800, maxRetryDelayMs: 8000 }
+          }
+        }
+      })
       hlsRef.current = hls
       hls.loadSource(src)
       hls.attachMedia(video)
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        recoveryRef.current = { network: 0, media: 0 }
         setLive(hls.levels.some((l) => l.details?.live))
         setQualities(
           hls.levels.map((lvl, i) => ({
@@ -234,10 +269,83 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer(
           setCurrentQuality(best)
         }
       })
-      hls.on(Hls.Events.ERROR, (_, data) => {
-        if (data.fatal) onError?.(new Error(`HLS fatal: ${data.type}/${data.details}`))
+      // A healthy fragment means whatever went wrong is behind us, so the
+      // recovery budget resets and a later hiccup gets a full set of retries.
+      hls.on(Hls.Events.FRAG_BUFFERED, () => {
+        recoveryRef.current = { network: 0, media: 0 }
+        setRecovering(false)
       })
+
+      // Live channels routinely emit fatal errors — a segment 404s as the
+      // live window rolls, the CDN drops a connection. Previously any fatal
+      // error ended playback on the spot, which is exactly the "channel just
+      // stops" symptom. hls.js can recover from both network and media
+      // errors; only give up once a bounded number of attempts has failed.
+      hls.on(Hls.Events.ERROR, (_, data) => {
+        if (!data.fatal) return
+        const budget = recoveryRef.current
+
+        if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+          if (budget.network < MAX_NETWORK_RECOVERIES) {
+            budget.network += 1
+            setRecovering(true)
+            // Back off so a server that is genuinely down is not hammered.
+            recoveryTimerRef.current = window.setTimeout(
+              () => hls.startLoad(),
+              RECOVERY_BACKOFF_MS * budget.network
+            )
+            return
+          }
+        } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+          if (budget.media < MAX_MEDIA_RECOVERIES) {
+            budget.media += 1
+            setRecovering(true)
+            // The second attempt needs the harsher remedy: swapping the audio
+            // codec clears the class of decode errors a plain recover misses.
+            if (budget.media > 1) hls.swapAudioCodec()
+            hls.recoverMediaError()
+            return
+          }
+        }
+
+        setRecovering(false)
+        onError?.(new Error(`HLS fatal: ${data.type}/${data.details}`))
+      })
+
+      // Watchdog for the silent freeze: the element claims to be playing, no
+      // error is ever raised, but currentTime stops advancing because the
+      // source went away. hls.js has nothing to report here, so nothing in the
+      // old code noticed — the channel simply sat there. Nudging the loader
+      // back to the live edge is what a viewer would achieve by reopening the
+      // channel, minus the reopening.
+      let lastTime = -1
+      let stalledFor = 0
+      const watchdog = window.setInterval(() => {
+        if (video.paused || video.ended || video.readyState === 0) {
+          stalledFor = 0
+          lastTime = video.currentTime
+          return
+        }
+        if (video.currentTime === lastTime) {
+          stalledFor += 1000
+          if (stalledFor >= STALL_TIMEOUT_MS) {
+            stalledFor = 0
+            setRecovering(true)
+            hls.stopLoad()
+            hls.startLoad(-1)
+            void video.play().catch(() => {})
+          }
+        } else {
+          stalledFor = 0
+          lastTime = video.currentTime
+        }
+      }, 1000)
+
       return () => {
+        window.clearInterval(watchdog)
+        if (recoveryTimerRef.current) window.clearTimeout(recoveryTimerRef.current)
+        recoveryTimerRef.current = null
+        setRecovering(false)
         hls.destroy()
         hlsRef.current = null
       }
@@ -429,6 +537,14 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer(
         }}
         onError={() => onError?.(new Error('Video element error'))}
       />
+
+      {recovering && (
+        <div className="absolute top-4 start-4 z-20 flex items-center gap-2 px-3 py-1.5 rounded-full
+                        bg-black/70 backdrop-blur-sm ring-1 ring-white/10 pointer-events-none">
+          <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+          <span className="text-xs font-semibold text-white">{t('videoplayer.reconnecting')}</span>
+        </div>
+      )}
 
       {dragOver && (
         <div className="absolute inset-6 z-10 grid place-items-center rounded-2xl border-2 border-dashed border-brand-400 bg-black/60 backdrop-blur-sm pointer-events-none">

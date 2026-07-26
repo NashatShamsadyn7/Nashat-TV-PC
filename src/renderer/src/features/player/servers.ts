@@ -26,6 +26,40 @@ export const STREAM_SERVERS: StreamServer[] = [
         : `https://vidlink.pro/tv/${tmdbId}/${season ?? 1}/${episode ?? 1}`
   },
   {
+    // VidFast — largest, most complete embed payload of everything probed.
+    id: 'vidfast',
+    label: 'VidFast',
+    build: ({ kind, tmdbId, season, episode }) =>
+      kind === 'movie'
+        ? `https://vidfast.pro/movie/${tmdbId}`
+        : `https://vidfast.pro/tv/${tmdbId}/${season ?? 1}/${episode ?? 1}`
+  },
+  {
+    id: '111movies',
+    label: '111Movies',
+    build: ({ kind, tmdbId, season, episode }) =>
+      kind === 'movie'
+        ? `https://111movies.com/movie/${tmdbId}`
+        : `https://111movies.com/tv/${tmdbId}/${season ?? 1}/${episode ?? 1}`
+  },
+  {
+    id: 'videasy',
+    label: 'Videasy',
+    build: ({ kind, tmdbId, season, episode }) =>
+      kind === 'movie'
+        ? `https://player.videasy.net/movie/${tmdbId}`
+        : `https://player.videasy.net/tv/${tmdbId}/${season ?? 1}/${episode ?? 1}`
+  },
+  {
+    // vidsrc.me — the surviving VidSrc host. vidsrc.xyz no longer resolves at all.
+    id: 'vidsrc-me',
+    label: 'VidSrc',
+    build: ({ kind, tmdbId, season, episode }) =>
+      kind === 'movie'
+        ? `https://vidsrc.me/embed/movie?tmdb=${tmdbId}`
+        : `https://vidsrc.me/embed/tv?tmdb=${tmdbId}&season=${season ?? 1}&episode=${episode ?? 1}`
+  },
+  {
     // Newer 2Embed (distinct host from 2embed.cc). Reported clean iframe, HD.
     id: '2embed-stream',
     label: '2Embed Stream',
@@ -51,24 +85,6 @@ export const STREAM_SERVERS: StreamServer[] = [
       kind === 'movie'
         ? `https://vidapi.xyz/embed/movie/${tmdbId}`
         : `https://vidapi.xyz/embed/tv/${tmdbId}/${season ?? 1}/${episode ?? 1}`
-  },
-  {
-    // VikingEmbed — single /play/<id> endpoint; episodes use suffix _sN_eN.
-    id: 'vembed',
-    label: 'VikingEmbed',
-    build: ({ kind, tmdbId, season, episode }) =>
-      kind === 'movie'
-        ? `https://vembed.click/play/${tmdbId}`
-        : `https://vembed.click/play/${tmdbId}_s${season ?? 1}_e${episode ?? 1}`
-  },
-  {
-    // Let's Embed — claims DUB content; newer next-gen API.
-    id: 'letsembed',
-    label: "Let's Embed",
-    build: ({ kind, tmdbId, season, episode }) =>
-      kind === 'movie'
-        ? `https://letsembed.cc/embed/movie/?id=${tmdbId}`
-        : `https://letsembed.cc/embed/tv/?id=${tmdbId}/${season ?? 1}/${episode ?? 1}`
   },
   {
     // GoDrivePlayer — VidSrc alternative, mostly 1080p, uses TMDB id.
@@ -99,21 +115,14 @@ export const STREAM_SERVERS: StreamServer[] = [
   //    refuses to embed ("Sandbox not allowed"). Kept so a user can still try
   //    them manually; auto-pick will only reach them if nothing reliable works.
   {
+    // vidsrc.to now serves an ad shell (~2.5 KB of popunder scripts) rather
+    // than a player. Kept as a last resort only.
     id: 'vidsrc',
-    label: 'VidSrc',
+    label: 'VidSrc (legacy)',
     reliable: false,
     build: ({ kind, tmdbId, season, episode }) =>
       kind === 'movie'
         ? `https://vidsrc.to/embed/movie/${tmdbId}`
         : `https://vidsrc.to/embed/tv/${tmdbId}/${season ?? 1}/${episode ?? 1}`
-  },
-  {
-    id: 'vidsrc-xyz',
-    label: 'VidSrc XYZ',
-    reliable: false,
-    build: ({ kind, tmdbId, season, episode }) =>
-      kind === 'movie'
-        ? `https://vidsrc.xyz/embed/movie?tmdb=${tmdbId}`
-        : `https://vidsrc.xyz/embed/tv?tmdb=${tmdbId}&season=${season ?? 1}&episode=${episode ?? 1}`
   }
 ]

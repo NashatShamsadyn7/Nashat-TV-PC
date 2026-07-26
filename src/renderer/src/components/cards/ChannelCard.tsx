@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { Tv, Play } from 'lucide-react'
+import { categoryLabel } from '@/features/livetv/categories'
 import type { Channel } from '@shared/types'
 
 type Props = {
@@ -9,6 +11,7 @@ type Props = {
 }
 
 export default function ChannelCard({ channel, onClick }: Props) {
+  const { t } = useTranslation()
   const [imgError, setImgError] = useState(false)
 
   return (
@@ -36,7 +39,7 @@ export default function ChannelCard({ channel, onClick }: Props) {
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-sm truncate">{channel.name}</p>
-        <p className="text-xs text-ink-300 truncate">{channel.category}</p>
+        <p className="text-xs text-ink-300 truncate">{categoryLabel(t, channel.category)}</p>
       </div>
     </motion.button>
   )

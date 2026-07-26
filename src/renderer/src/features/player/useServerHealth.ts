@@ -9,6 +9,8 @@ export type ServerHealth = {
   status: ServerStatus
   latencyMs?: number
   reliable: boolean
+  /** Present when the probe failed; explains why (offline, parked, …). */
+  reason?: string
 }
 
 type Args = {
@@ -18,28 +20,23 @@ type Args = {
   episode?: number
 }
 
-const CHECK_TIMEOUT_MS = 6000
-
-async function pingServer(url: string): Promise<{ ok: boolean; latencyMs: number }> {
+/**
+ * Asks the main process to probe the server for real.
+ *
+ * This used to be a `no-cors` fetch right here in the renderer, which was
+ * worse than useless: such a promise resolves for *any* response, so a 404, a
+ * 403, or an expired domain sitting on a parking page all reported as healthy
+ * — letsembed.cc showed a green dot for months while serving nothing but a
+ * "this domain may be for sale" page. The main process is not bound by CORS
+ * and can read the status code and the body.
+ */
+async function pingServer(url: string): Promise<{ ok: boolean; latencyMs: number; reason?: string }> {
   const started = performance.now()
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), CHECK_TIMEOUT_MS)
   try {
-    // Embed servers usually block CORS, so a no-cors request is the best we can do.
-    // We get an opaque response — but if the fetch resolves without throwing the
-    // server at least responded, which is the signal we want.
-    await fetch(url, {
-      method: 'GET',
-      mode: 'no-cors',
-      cache: 'no-store',
-      signal: controller.signal,
-      referrerPolicy: 'no-referrer'
-    })
-    return { ok: true, latencyMs: Math.round(performance.now() - started) }
+    const probe = await window.nashat.probeStreamServer(url)
+    return { ok: probe.ok, latencyMs: probe.latencyMs, reason: probe.reason }
   } catch {
-    return { ok: false, latencyMs: Math.round(performance.now() - started) }
-  } finally {
-    clearTimeout(timer)
+    return { ok: false, latencyMs: Math.round(performance.now() - started), reason: 'offline' }
   }
 }
 
@@ -73,12 +70,12 @@ export function useServerHealth(args: Args | null): ServerHealth[] {
 
     let cancelled = false
     targets.forEach((t) => {
-      pingServer(t.url).then(({ ok, latencyMs }) => {
+      pingServer(t.url).then(({ ok, latencyMs, reason }) => {
         if (cancelled) return
         setResults((prev) =>
           prev.map((r) =>
             r.id === t.id
-              ? { ...r, url: t.url, status: ok ? 'ok' : 'fail', latencyMs }
+              ? { ...r, url: t.url, status: ok ? 'ok' : 'fail', latencyMs, reason }
               : r
           )
         )

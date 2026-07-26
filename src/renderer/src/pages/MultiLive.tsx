@@ -4,6 +4,7 @@ import Hls from 'hls.js'
 import { Plus, X, Volume2, VolumeX, Search as SearchIcon } from 'lucide-react'
 import PageHeader from '@/components/ui/PageHeader'
 import { useChannels } from '@/features/livetv/useChannels'
+import { categoryLabel } from '@/features/livetv/categories'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { cn } from '@/lib/cn'
 import type { Channel } from '@shared/types'
@@ -157,7 +158,7 @@ function ChannelPicker({
               {c.logo && <img src={c.logo} alt="" className="w-8 h-8 rounded object-contain bg-ink-800 p-0.5" />}
               <div className="min-w-0">
                 <p className="text-xs font-semibold truncate">{c.name}</p>
-                <p className="text-[10px] text-ink-300 truncate">{c.category}</p>
+                <p className="text-[10px] text-ink-300 truncate">{categoryLabel(t, c.category)}</p>
               </div>
             </button>
           ))}

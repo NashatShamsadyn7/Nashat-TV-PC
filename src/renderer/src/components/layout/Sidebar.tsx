@@ -15,11 +15,13 @@ import {
   UserPlus,
   MessageCircle,
   Languages,
+  Info,
   type LucideIcon
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/cn'
 import { useProfilesStore } from '@/stores/profilesStore'
+import mark from '@/assets/mark.png'
 
 type NavEntry = {
   to: string
@@ -51,12 +53,20 @@ export default function Sidebar() {
 
   return (
     <aside className="w-60 shrink-0 h-full bg-ink-900/80 backdrop-blur-md border-e border-ink-700/50 flex flex-col">
-      <div className="px-6 py-5">
-        <h1 className="text-2xl font-extrabold bg-gradient-to-r from-brand-400 to-brand-600 bg-clip-text text-transparent">
-          {t('app.name')}
-        </h1>
-        <p className="text-xs text-ink-300 mt-1">{t('app.tagline')}</p>
-      </div>
+      {/* Logo lockup matching the landing page: mark + wordmark, not wordmark alone. */}
+      <NavLink to="/about" className="px-6 py-5 flex items-center gap-3 group">
+        <img
+          src={mark}
+          alt=""
+          className="w-9 h-9 rounded-lg shrink-0 transition-transform group-hover:scale-105"
+        />
+        <div className="min-w-0">
+          <h1 className="text-xl font-extrabold bg-gradient-to-r from-brand-400 to-brand-600 bg-clip-text text-transparent leading-tight">
+            {t('app.name')}
+          </h1>
+          <p className="text-[11px] text-ink-300 truncate">{t('app.tagline')}</p>
+        </div>
+      </NavLink>
       {active && (
         <NavLink
           to="/profiles"
@@ -102,20 +112,28 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      <NavLink
-        to="/settings"
-        className={({ isActive }) =>
-          cn(
-            'mx-3 mb-4 flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors',
-            isActive
-              ? 'text-white bg-ink-700/60'
-              : 'text-ink-200 hover:text-white hover:bg-ink-700/30'
-          )
-        }
-      >
-        <Settings className="w-5 h-5" />
-        <span>{t('nav.settings')}</span>
-      </NavLink>
+      <div className="mx-3 mb-4 space-y-1">
+        {[
+          { to: '/about', icon: Info, labelKey: 'nav.about' },
+          { to: '/settings', icon: Settings, labelKey: 'nav.settings' }
+        ].map(({ to, icon: Icon, labelKey }) => (
+          <NavLink
+            key={to}
+            to={to}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors',
+                isActive
+                  ? 'text-white bg-ink-700/60'
+                  : 'text-ink-200 hover:text-white hover:bg-ink-700/30'
+              )
+            }
+          >
+            <Icon className="w-5 h-5" />
+            <span>{t(labelKey)}</span>
+          </NavLink>
+        ))}
+      </div>
     </aside>
   )
 }

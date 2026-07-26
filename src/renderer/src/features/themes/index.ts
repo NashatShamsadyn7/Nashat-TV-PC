@@ -5,12 +5,16 @@ type ThemeVars = {
   '--ink-800': string
   '--ink-700': string
   '--ink-600': string
+  '--ink-500': string
+  '--ink-400': string
   '--ink-300': string
   '--ink-200': string
   '--ink-100': string
+  '--brand-300': string
   '--brand-400': string
   '--brand-500': string
   '--brand-600': string
+  '--brand-900': string
 }
 
 export const THEMES: Record<ThemeId, { labelKey: string; vars: ThemeVars }> = {
@@ -21,12 +25,16 @@ export const THEMES: Record<ThemeId, { labelKey: string; vars: ThemeVars }> = {
       '--ink-800': '20 20 22',
       '--ink-700': '32 32 36',
       '--ink-600': '52 52 58',
+      '--ink-500': '42 42 48',
+      '--ink-400': '96 96 110',
       '--ink-300': '154 154 168',
       '--ink-200': '208 208 220',
       '--ink-100': '236 236 244',
-      '--brand-400': '249 115 22',
-      '--brand-500': '234 88 12',
-      '--brand-600': '194 65 12'
+      '--brand-300': '253 164 175',
+      '--brand-400': '251 113 133',
+      '--brand-500': '225 29 72',
+      '--brand-600': '190 18 60',
+      '--brand-900': '76 5 25'
     }
   },
   midnight: {
@@ -36,12 +44,16 @@ export const THEMES: Record<ThemeId, { labelKey: string; vars: ThemeVars }> = {
       '--ink-800': '15 23 42',
       '--ink-700': '30 41 59',
       '--ink-600': '51 65 85',
+      '--ink-500': '41 53 72',
+      '--ink-400': '100 116 139',
       '--ink-300': '148 163 184',
       '--ink-200': '203 213 225',
       '--ink-100': '241 245 249',
+      '--brand-300': '147 197 253',
       '--brand-400': '96 165 250',
       '--brand-500': '59 130 246',
-      '--brand-600': '37 99 235'
+      '--brand-600': '37 99 235',
+      '--brand-900': '23 37 84'
     }
   },
   oled: {
@@ -51,12 +63,16 @@ export const THEMES: Record<ThemeId, { labelKey: string; vars: ThemeVars }> = {
       '--ink-800': '10 10 10',
       '--ink-700': '20 20 20',
       '--ink-600': '40 40 40',
+      '--ink-500': '30 30 30',
+      '--ink-400': '96 96 96',
       '--ink-300': '156 156 156',
       '--ink-200': '212 212 212',
       '--ink-100': '245 245 245',
-      '--brand-400': '249 115 22',
-      '--brand-500': '234 88 12',
-      '--brand-600': '194 65 12'
+      '--brand-300': '253 164 175',
+      '--brand-400': '251 113 133',
+      '--brand-500': '225 29 72',
+      '--brand-600': '190 18 60',
+      '--brand-900': '76 5 25'
     }
   },
   crimson: {
@@ -66,12 +82,16 @@ export const THEMES: Record<ThemeId, { labelKey: string; vars: ThemeVars }> = {
       '--ink-800': '40 14 22',
       '--ink-700': '60 22 32',
       '--ink-600': '80 32 44',
+      '--ink-500': '70 27 38',
+      '--ink-400': '140 90 105',
       '--ink-300': '200 150 160',
       '--ink-200': '230 200 210',
       '--ink-100': '245 230 235',
+      '--brand-300': '253 164 175',
       '--brand-400': '244 63 94',
       '--brand-500': '225 29 72',
-      '--brand-600': '190 18 60'
+      '--brand-600': '190 18 60',
+      '--brand-900': '76 5 25'
     }
   },
   forest: {
@@ -81,12 +101,16 @@ export const THEMES: Record<ThemeId, { labelKey: string; vars: ThemeVars }> = {
       '--ink-800': '12 30 22',
       '--ink-700': '22 50 36',
       '--ink-600': '40 80 56',
+      '--ink-500': '31 65 46',
+      '--ink-400': '82 124 100',
       '--ink-300': '148 184 168',
       '--ink-200': '198 224 210',
       '--ink-100': '230 244 234',
+      '--brand-300': '134 239 172',
       '--brand-400': '74 222 128',
       '--brand-500': '34 197 94',
-      '--brand-600': '22 163 74'
+      '--brand-600': '22 163 74',
+      '--brand-900': '5 46 22'
     }
   },
   sunset: {
@@ -96,12 +120,16 @@ export const THEMES: Record<ThemeId, { labelKey: string; vars: ThemeVars }> = {
       '--ink-800': '42 22 14',
       '--ink-700': '62 34 22',
       '--ink-600': '88 52 34',
+      '--ink-500': '75 43 28',
+      '--ink-400': '140 96 68',
       '--ink-300': '212 168 138',
       '--ink-200': '234 204 178',
       '--ink-100': '248 232 218',
+      '--brand-300': '253 224 71',
       '--brand-400': '251 191 36',
       '--brand-500': '245 158 11',
-      '--brand-600': '217 119 6'
+      '--brand-600': '217 119 6',
+      '--brand-900': '69 26 3'
     }
   }
 }

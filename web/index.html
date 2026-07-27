@@ -2,259 +2,388 @@
 <html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Nashat TV — Live TV, Movies &amp; Series for Desktop</title>
-<meta name="description" content="A free desktop app for live TV, movies and series. Watch together with friends in synced rooms, split the screen across four channels, and switch between Arabic, Kurdish and English.">
-<meta name="theme-color" content="#0a0a0b">
-
-<meta property="og:type" content="website">
-<meta property="og:title" content="Nashat TV — Live TV, Movies &amp; Series for Desktop">
-<meta property="og:description" content="Live TV, movies and series on your desktop. Watch together in synced rooms. Arabic, Kurdish and English.">
-<meta property="og:image" content="/assets/icon-512.png">
-<meta name="twitter:card" content="summary_large_image">
-
-<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nashat TV — Kurdish television in one app</title>
+<meta name="description" content="38 verified Kurdish live channels, plus films and series, on Android and Windows. Free, no account needed. Kurdish, Arabic and English throughout.">
+<meta name="theme-color" content="#0B0B0B">
+<link rel="icon" href="/assets/favicon-32.png" sizes="32x32">
 <link rel="apple-touch-icon" href="/assets/icon-192.png">
 <link rel="manifest" href="/site.webmanifest">
 
+<meta property="og:type" content="website">
+<meta property="og:title" content="Nashat TV — Kurdish television in one app">
+<meta property="og:description" content="38 verified Kurdish live channels, films and series. Android and Windows. Free.">
+<meta property="og:image" content="/assets/icon-512.png">
+<meta property="og:url" content="https://nashat-tv.web.app/">
+<meta name="twitter:card" content="summary_large_image">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@400;600;700&family=Space+Grotesk:wght@500;700&family=Cairo:wght@600;700;900&display=swap" rel="stylesheet">
 
 <style>
-/* Brand system — taken from the Nashat TV identity sheet.
-   Crimson #e11d48 · Deep Ink #0a0a0b · Charcoal #1f1123 · Slate #475569 · Silver #e2e6f0
-   Cairo for display, Inter for body. */
+/* ══════════════════════════════════════════════════════════════════
+   NASHAT TV — NEO-BRUTALIST
+
+   Rules this sheet follows, without exception:
+
+     1. NO border-radius.        Every corner is square.
+     2. NO blur.                 Shadows are hard offsets, never soft.
+     3. NO gradient WASH.        Fills are flat. The only linear-gradient
+                                 in this sheet draws hard 1px grid rules.
+     4. Borders are STRUCTURE.   3px ink, load-bearing, always visible.
+     5. Type does the shouting.  Scale, not decoration, creates hierarchy.
+
+   The previous design leaned on soft shadows, glass panels and gradient
+   washes — the house style of every generated landing page — which is
+   exactly why it read as machine-made. Brutalism is the opposite bet:
+   nothing is hidden, nothing is softened, and the grid is shown rather
+   than smoothed away.
+   ══════════════════════════════════════════════════════════════════ */
+
 :root{
-  --crimson:#e11d48;
-  --crimson-lo:#9f1239;
-  --crimson-hi:#fb7185;
-  --ink:#0a0a0b;
-  --ink-800:#111114;
-  --ink-700:#1a1a1f;
-  --ink-600:#22222a;
-  --slate:#475569;
-  --silver:#e2e6f0;
-  --muted:#9a9aa8;
-  --radius:18px;
-  --maxw:1180px;
+  /* Ink & paper */
+  --ink:#0B0B0B;
+  --paper:#F4F1E8;
+  --paper-2:#FFFFFF;
+
+  /* Brand — carried over from the app so the two read as one product */
+  --lime:#C8F04C;
+  --coral:#FF6B57;
+  --beige:#E4D9C3;
+
+  --border:3px;
+  --shadow:8px 8px 0 var(--ink);
+  --shadow-sm:5px 5px 0 var(--ink);
+  --shadow-lime:8px 8px 0 var(--lime);
+  --shadow-coral:8px 8px 0 var(--coral);
+
+  --mono:'IBM Plex Mono',ui-monospace,'Courier New',monospace;
+  --display:'Archivo Black','Space Grotesk',system-ui,sans-serif;
+  --body:'Space Grotesk',system-ui,-apple-system,sans-serif;
+}
+
+/* Arabic and Kurdish get Cairo throughout. Archivo Black has no Arabic
+   coverage at all, and falling back mid-page would render the headline in
+   whatever the OS picked — the single most visible way a multilingual site
+   betrays that only one language was actually designed for. */
+html[dir="rtl"]{
   --display:'Cairo',system-ui,sans-serif;
-  --body:'Inter',system-ui,sans-serif;
+  --body:'Cairo',system-ui,sans-serif;
+  --mono:'Cairo',ui-monospace,monospace;
 }
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+
 body{
-  margin:0;background:var(--ink);color:var(--silver);
-  font-family:var(--body);font-size:16px;line-height:1.65;
-  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--body);
+  font-size:17px;
+  line-height:1.55;
+  overflow-x:hidden;
 }
-/* Arabic and Kurdish read right-to-left and use Cairo throughout — Inter has no
-   Arabic-script coverage, so leaving body text on Inter would fall back to a
-   system font and break the type system. */
-html[dir="rtl"] body{font-family:var(--display)}
-h1,h2,h3,.display{font-family:var(--display);font-weight:900;line-height:1.15;margin:0}
-a{color:inherit;text-decoration:none}
+
+/* Paper grain: a 2px grid, drawn not blurred. Gives the flat fill a
+   surface without introducing a gradient. */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(var(--ink) 1px,transparent 1px),
+    linear-gradient(90deg,var(--ink) 1px,transparent 1px);
+  background-size:64px 64px;
+  opacity:.035;
+}
+
 img{max-width:100%;display:block}
-.wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+a{color:inherit}
+
+.wrap{max-width:1200px;margin:0 auto;padding:0 20px;position:relative;z-index:1}
+
+/* ── Type scale ─────────────────────────────────────────────────── */
+
 .eyebrow{
-  font-size:13px;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--crimson-hi);font-weight:600;margin-bottom:14px;
+  font-family:var(--mono);
+  font-size:12px;font-weight:700;
+  letter-spacing:.18em;text-transform:uppercase;
+  display:inline-block;
+  background:var(--ink);color:var(--paper);
+  padding:6px 12px;
+  margin-bottom:20px;
 }
 html[dir="rtl"] .eyebrow{letter-spacing:0}
 
-/* ---------- ambient glow ---------- */
-.glow{position:fixed;inset:0;pointer-events:none;z-index:0}
-.glow::before,.glow::after{
-  content:"";position:absolute;border-radius:50%;filter:blur(120px);opacity:.5;
-}
-.glow::before{width:620px;height:620px;background:rgba(225,29,72,.30);top:-220px;left:-140px}
-.glow::after{width:520px;height:520px;background:rgba(159,18,57,.26);top:32%;right:-200px}
+h1,h2,h3{font-family:var(--display);font-weight:900;line-height:1.02;letter-spacing:-.02em}
+html[dir="rtl"] h1,html[dir="rtl"] h2,html[dir="rtl"] h3{letter-spacing:0;line-height:1.25}
 
-/* ---------- nav ---------- */
+h1{font-size:clamp(44px,8.5vw,104px);text-transform:uppercase}
+html[dir="rtl"] h1{text-transform:none}
+h2{font-size:clamp(30px,4.6vw,58px);text-transform:uppercase}
+html[dir="rtl"] h2{text-transform:none}
+h3{font-size:22px}
+
+.lede{font-size:clamp(17px,2vw,21px);max-width:62ch;line-height:1.55}
+
+/* ── Header ─────────────────────────────────────────────────────── */
+
 header{
-  position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);
-  background:rgba(10,10,11,.78);border-bottom:1px solid rgba(255,255,255,.07);
+  position:sticky;top:0;z-index:100;
+  background:var(--paper);
+  border-bottom:var(--border) solid var(--ink);
 }
-.nav{display:flex;align-items:center;gap:18px;height:68px}
-.brand{display:flex;align-items:center;gap:11px;font-family:var(--display);font-weight:700;font-size:18px}
-.brand img{width:34px;height:34px;border-radius:9px}
-.nav-links{display:flex;gap:26px;margin-inline-start:auto;font-size:14.5px;color:var(--muted)}
-.nav-links a:hover{color:var(--silver)}
-.langs{display:flex;gap:4px;background:var(--ink-700);padding:4px;border-radius:11px}
+.hdr{display:flex;align-items:center;gap:16px;height:68px}
+
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-family:var(--display);font-size:19px;letter-spacing:-.02em}
+.brand img{width:34px;height:34px;border:2px solid var(--ink)}
+
+nav.main{display:flex;gap:2px;margin-inline-start:auto}
+nav.main a{
+  font-family:var(--mono);font-size:12px;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;text-decoration:none;
+  padding:9px 12px;border:2px solid transparent;
+}
+nav.main a:hover{border-color:var(--ink);background:var(--lime)}
+html[dir="rtl"] nav.main a{letter-spacing:0;text-transform:none;font-size:14px}
+
+.langs{display:flex;border:2px solid var(--ink)}
 .langs button{
-  font:inherit;font-size:13px;font-weight:600;color:var(--muted);background:none;
-  border:0;padding:6px 12px;border-radius:8px;cursor:pointer;transition:.18s;
+  font-family:var(--mono);font-size:12px;font-weight:700;
+  background:var(--paper);border:0;cursor:pointer;
+  padding:8px 11px;color:var(--ink);
+  border-inline-end:2px solid var(--ink);
 }
-.langs button:hover{color:var(--silver)}
-.langs button[aria-pressed="true"]{background:var(--crimson);color:#fff}
+.langs button:last-child{border-inline-end:0}
+.langs button[aria-pressed="true"]{background:var(--ink);color:var(--lime)}
+
+.menu-btn{display:none;border:2px solid var(--ink);background:var(--paper);
+  font-family:var(--mono);font-weight:700;font-size:12px;padding:9px 12px;cursor:pointer}
+
+/* ── Buttons ────────────────────────────────────────────────────── */
 
 .btn{
-  display:inline-flex;align-items:center;justify-content:center;gap:10px;
-  padding:13px 26px;border-radius:13px;font-weight:600;font-size:15px;
-  border:1px solid transparent;cursor:pointer;transition:.2s;white-space:nowrap;
+  display:inline-flex;align-items:center;gap:10px;
+  font-family:var(--mono);font-size:14px;font-weight:700;
+  letter-spacing:.04em;text-transform:uppercase;text-decoration:none;
+  padding:15px 24px;
+  border:var(--border) solid var(--ink);
+  background:var(--paper-2);color:var(--ink);
+  box-shadow:var(--shadow-sm);
+  transition:transform .08s linear,box-shadow .08s linear;
+  cursor:pointer;
 }
-.btn-primary{
-  background:linear-gradient(135deg,var(--crimson),var(--crimson-lo));color:#fff;
-  box-shadow:0 10px 34px -10px rgba(225,29,72,.85);
-}
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 42px -10px rgba(225,29,72,.95)}
-.btn-ghost{border-color:rgba(255,255,255,.16);color:var(--silver);background:rgba(255,255,255,.03)}
-.btn-ghost:hover{border-color:rgba(255,255,255,.34);background:rgba(255,255,255,.07)}
-.btn svg{width:18px;height:18px;flex:none}
+html[dir="rtl"] .btn{letter-spacing:0;text-transform:none;font-size:16px}
 
-/* ---------- hero ---------- */
-.hero{position:relative;z-index:1;padding:82px 0 66px;text-align:center}
-.hero-icon{
-  width:120px;height:120px;margin:0 auto 30px;border-radius:27px;
-  box-shadow:0 0 78px -8px rgba(225,29,72,.75);animation:float 6s ease-in-out infinite;
-}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-11px)}}
-.hero h1{font-size:clamp(2.6rem,6.4vw,4.6rem);letter-spacing:-.02em}
-.hero h1 .accent{
-  background:linear-gradient(120deg,var(--crimson-hi),var(--crimson));
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-}
-.hero p.lede{
-  max-width:660px;margin:22px auto 0;font-size:clamp(1.02rem,2.1vw,1.22rem);
-  color:var(--muted);line-height:1.72;
-}
-.cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:36px}
-.meta{margin-top:20px;font-size:13.5px;color:var(--slate)}
-.meta b{color:var(--muted);font-weight:600}
+/* Press = the button physically moves into its own shadow. No easing, no
+   fade — brutalism reads as mechanical, so the feedback is mechanical. */
+.btn:hover{transform:translate(2px,2px);box-shadow:3px 3px 0 var(--ink)}
+.btn:active{transform:translate(5px,5px);box-shadow:0 0 0 var(--ink)}
+.btn-lime{background:var(--lime)}
+.btn-coral{background:var(--coral)}
+.btn-ink{background:var(--ink);color:var(--paper);box-shadow:5px 5px 0 var(--lime)}
+.btn-ink:hover{box-shadow:3px 3px 0 var(--lime)}
 
-/* ---------- app window mockup ---------- */
-.shot{
-  position:relative;z-index:1;max-width:1000px;margin:64px auto 0;
-  border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.1);
-  background:var(--ink-800);box-shadow:0 40px 100px -30px rgba(0,0,0,.95),0 0 90px -40px rgba(225,29,72,.5);
-}
-.shot-bar{
-  display:flex;align-items:center;gap:8px;padding:11px 15px;
-  background:var(--ink-700);border-bottom:1px solid rgba(255,255,255,.07);
-}
-.dot{width:11px;height:11px;border-radius:50%}
-.shot-title{margin-inline-start:12px;font-size:12.5px;color:var(--slate)}
-.shot-body{display:grid;grid-template-columns:196px 1fr;min-height:390px;text-align:start}
-.side{padding:18px 13px;border-inline-end:1px solid rgba(255,255,255,.07);background:rgba(0,0,0,.28)}
-.side-brand{font-family:var(--display);font-weight:700;font-size:15px;padding:0 10px 16px}
-.side-brand small{display:block;font-size:10.5px;color:var(--slate);font-weight:400}
-.side-item{
-  display:flex;align-items:center;gap:10px;padding:8.5px 11px;border-radius:9px;
-  font-size:13px;color:var(--muted);margin-bottom:2px;
-}
-.side-item.on{background:rgba(225,29,72,.14);color:#fff;box-shadow:inset 3px 0 0 var(--crimson)}
-html[dir="rtl"] .side-item.on{box-shadow:inset -3px 0 0 var(--crimson)}
-.side-item i{width:15px;height:15px;border-radius:4px;background:currentColor;opacity:.45;flex:none}
-.main{padding:20px}
-.main h4{margin:0 0 14px;font-family:var(--display);font-size:19px;font-weight:700;color:#fff}
-.row{display:flex;gap:11px;overflow:hidden;margin-bottom:18px}
-.card{
-  flex:none;width:106px;height:158px;border-radius:10px;
-  background:linear-gradient(160deg,var(--ink-600),var(--ink-700));
-  border:1px solid rgba(255,255,255,.07);position:relative;overflow:hidden;
-}
-.card::after{
-  content:"";position:absolute;inset:auto 0 0 0;height:3px;background:var(--crimson);
-  width:var(--p,0%);
-}
-.card.hl{border-color:rgba(225,29,72,.5);box-shadow:0 0 22px -6px rgba(225,29,72,.6)}
-.bar{height:9px;border-radius:5px;background:var(--ink-600);margin-top:9px}
+/* ── Hero ───────────────────────────────────────────────────────── */
 
-/* ---------- sections ---------- */
-section{position:relative;z-index:1;padding:86px 0}
-.sec-head{text-align:center;max-width:660px;margin:0 auto 52px}
-.sec-head h2{font-size:clamp(1.9rem,4vw,2.7rem)}
-.sec-head p{color:var(--muted);margin:16px 0 0;font-size:1.04rem}
+.hero{padding:72px 0 0;border-bottom:var(--border) solid var(--ink)}
+.hero-badge{
+  display:inline-block;font-family:var(--mono);font-size:13px;font-weight:700;
+  background:var(--coral);color:var(--ink);
+  border:var(--border) solid var(--ink);
+  padding:8px 14px;margin-bottom:26px;box-shadow:var(--shadow-sm);
+}
+.hero h1{margin-bottom:6px}
+.hero h1 .l2{
+  /* Second line boxed in lime: makes the headline two objects rather than
+     one long sentence, which is what stops a 104px line reading as a wall. */
+  background:var(--lime);
+  border:var(--border) solid var(--ink);
+  padding:0 12px;display:inline-block;
+  box-shadow:var(--shadow);
+}
+.hero .lede{margin:32px 0 30px;font-weight:500}
+.hero-cta{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+.hero-meta{font-family:var(--mono);font-size:13px;margin-top:18px;opacity:.75}
 
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(266px,1fr));gap:20px}
+/* Stats: a hard 4-up strip with dividing rules, edge to edge. */
+.stats{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  margin-top:64px;
+  border-top:var(--border) solid var(--ink);
+}
+.stat{padding:26px 18px;border-inline-end:var(--border) solid var(--ink)}
+.stat:last-child{border-inline-end:0}
+.stat b{display:block;font-family:var(--display);font-size:clamp(34px,4.4vw,54px);line-height:1}
+.stat span{font-family:var(--mono);font-size:12px;line-height:1.4;display:block;margin-top:8px}
+html[dir="rtl"] .stat span{font-size:14px}
+.stat:nth-child(1) b{color:var(--coral)}
+.stat:nth-child(2) b{color:var(--ink)}
+.stat:nth-child(3) b{color:var(--ink)}
+.stat:nth-child(4) b{color:var(--coral)}
+
+/* ── Channel wall ───────────────────────────────────────────────── */
+
+section{padding:86px 0;border-bottom:var(--border) solid var(--ink)}
+.sec-head{margin-bottom:44px;max-width:70ch}
+.sec-head p{margin-top:18px;font-size:18px}
+
+.cats{display:flex;flex-wrap:wrap;gap:0;margin-bottom:32px;border:var(--border) solid var(--ink);width:fit-content;max-width:100%}
+.cats button{
+  font-family:var(--mono);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+  background:var(--paper-2);border:0;border-inline-end:var(--border) solid var(--ink);
+  padding:12px 18px;cursor:pointer;color:var(--ink);
+}
+html[dir="rtl"] .cats button{text-transform:none;letter-spacing:0;font-size:15px}
+.cats button:last-child{border-inline-end:0}
+.cats button[aria-pressed="true"]{background:var(--ink);color:var(--lime)}
+
+.wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:0;
+  border:var(--border) solid var(--ink);border-width:var(--border) 0 0 var(--border)}
+.ch{
+  border:0 var(--border) var(--border) 0;border-style:solid;border-color:var(--ink);
+  border-right-width:var(--border);border-bottom-width:var(--border);
+  background:var(--paper-2);
+  padding:18px 12px;text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  position:relative;
+}
+.ch:hover{background:var(--lime)}
+/* Broadcaster logos are baked for white. A tinted plate behind them keeps
+   the wall consistent without any of them disappearing. */
+.ch .logo{width:56px;height:56px;background:#fff;border:2px solid var(--ink);
+  display:grid;place-items:center;overflow:hidden}
+.ch .logo img{width:100%;height:100%;object-fit:contain;padding:5px}
+.ch .logo.blank{background:var(--beige);font-family:var(--display);font-size:19px}
+.ch b{font-family:var(--mono);font-size:11px;font-weight:600;line-height:1.3;word-break:break-word}
+.ch .hd{position:absolute;top:5px;inset-inline-end:5px;background:var(--coral);
+  border:2px solid var(--ink);font-family:var(--mono);font-size:9px;font-weight:700;padding:1px 4px}
+
+.wall-note{font-family:var(--mono);font-size:12px;margin-top:18px;opacity:.7}
+
+/* ── Feature cards ──────────────────────────────────────────────── */
+
+.feats{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:26px}
 .feat{
-  background:linear-gradient(165deg,rgba(255,255,255,.05),rgba(255,255,255,.015));
-  border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);padding:28px;
-  transition:.25s;
+  background:var(--paper-2);
+  border:var(--border) solid var(--ink);
+  box-shadow:var(--shadow);
+  padding:28px;
+  position:relative;
 }
-.feat:hover{border-color:rgba(225,29,72,.45);transform:translateY(-4px)}
-.feat .ico{
-  width:46px;height:46px;border-radius:13px;display:grid;place-items:center;margin-bottom:17px;
-  background:linear-gradient(135deg,rgba(225,29,72,.24),rgba(225,29,72,.07));
-  border:1px solid rgba(225,29,72,.3);
+/* Numbered, and the number is a real object bolted to the card. Exposing
+   the count is the brutalist move — the structure is the ornament. */
+.feat .n{
+  position:absolute;top:-3px;inset-inline-start:-3px;
+  font-family:var(--mono);font-size:13px;font-weight:700;
+  background:var(--ink);color:var(--lime);
+  padding:5px 10px;
 }
-.feat .ico svg{width:22px;height:22px;stroke:var(--crimson-hi)}
-.feat h3{font-size:1.14rem;margin-bottom:9px;font-weight:700}
-.feat p{margin:0;color:var(--muted);font-size:14.6px;line-height:1.68}
+.feat h3{margin:22px 0 12px;line-height:1.2}
+.feat p{font-size:16px;line-height:1.6}
+.feat:nth-child(3n+1){box-shadow:var(--shadow-lime)}
+.feat:nth-child(3n+2){box-shadow:var(--shadow-coral)}
 
-.split{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
-.split h2{font-size:clamp(1.7rem,3.4vw,2.4rem);margin-bottom:18px}
-.split p{color:var(--muted);margin:0 0 20px}
-.ticks{list-style:none;padding:0;margin:0;display:grid;gap:11px}
-.ticks li{display:flex;gap:11px;align-items:flex-start;font-size:15px;color:var(--muted)}
-.ticks svg{width:19px;height:19px;stroke:var(--crimson);flex:none;margin-top:2px}
-.panel{
-  border-radius:var(--radius);border:1px solid rgba(255,255,255,.09);padding:26px;
-  background:linear-gradient(160deg,rgba(225,29,72,.12),rgba(255,255,255,.02));
-}
-.tiles{display:grid;grid-template-columns:1fr 1fr;gap:11px}
-.tile{
-  aspect-ratio:16/9;border-radius:11px;border:1px solid rgba(255,255,255,.09);
-  background:linear-gradient(150deg,var(--ink-600),var(--ink-800));
-  display:grid;place-items:center;font-size:12px;color:var(--slate);position:relative;
-}
-.tile.live::before{
-  content:"";position:absolute;top:9px;inset-inline-start:9px;width:7px;height:7px;
-  border-radius:50%;background:var(--crimson);box-shadow:0 0 9px var(--crimson);
-  animation:pulse 1.8s infinite;
-}
-@keyframes pulse{50%{opacity:.35}}
+/* ── Watch Together ─────────────────────────────────────────────── */
 
-.lang-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px}
-.lang-card{
-  border:1px solid rgba(255,255,255,.09);border-radius:var(--radius);padding:26px;text-align:center;
-  background:rgba(255,255,255,.025);
+.tog{display:grid;grid-template-columns:1fr 1fr;gap:52px;align-items:center}
+.tog ul{list-style:none;margin-top:28px}
+.tog li{
+  font-family:var(--mono);font-size:14px;
+  padding:14px 0;border-bottom:2px solid var(--ink);
+  display:flex;gap:12px;align-items:flex-start;
 }
-.lang-card .word{font-family:var(--display);font-size:2rem;font-weight:900;color:#fff;margin-bottom:6px}
-.lang-card small{color:var(--slate);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase}
+html[dir="rtl"] .tog li{font-size:16px}
+.tog li::before{content:'→';font-weight:700;color:var(--coral)}
+html[dir="rtl"] .tog li::before{content:'←'}
+.tog-art{border:var(--border) solid var(--ink);box-shadow:var(--shadow);background:var(--ink)}
+.tog-art img{width:100%}
+.tog-cap{font-family:var(--mono);font-size:12px;margin-top:14px;opacity:.75}
 
-/* ---------- download ---------- */
-.download{text-align:center}
-.dl-box{
-  max-width:620px;margin:0 auto;padding:44px 34px;border-radius:24px;
-  border:1px solid rgba(225,29,72,.3);
-  background:linear-gradient(165deg,rgba(225,29,72,.14),rgba(10,10,11,.6));
+/* ── Languages ──────────────────────────────────────────────────── */
+
+.langgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:var(--border) solid var(--ink)}
+.lg{padding:38px 26px;border-inline-end:var(--border) solid var(--ink);background:var(--paper-2)}
+.lg:last-child{border-inline-end:0}
+.lg .native{font-family:var(--display);font-size:clamp(30px,3.6vw,46px);line-height:1.15}
+.lg .tag{font-family:var(--mono);font-size:12px;margin-top:12px;
+  background:var(--ink);color:var(--paper);display:inline-block;padding:4px 9px}
+.lg:nth-child(1){background:var(--lime)}
+.lg:nth-child(3){background:var(--beige)}
+
+/* ── Download ───────────────────────────────────────────────────── */
+
+.dls{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+.dl{
+  background:var(--paper-2);border:var(--border) solid var(--ink);
+  box-shadow:var(--shadow);padding:32px;display:flex;flex-direction:column;
 }
-.specs{
-  display:flex;justify-content:center;gap:30px;flex-wrap:wrap;margin-top:26px;
-  font-size:13.5px;color:var(--slate);
-}
-.specs b{display:block;color:var(--silver);font-weight:600;font-size:15px;font-family:var(--display)}
+.dl-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.dl h3{font-size:30px;text-transform:uppercase}
+html[dir="rtl"] .dl h3{text-transform:none}
+.ver{font-family:var(--mono);font-size:12px;font-weight:700;
+  background:var(--lime);border:2px solid var(--ink);padding:5px 10px}
+.dl p{font-size:16px;margin-bottom:22px;flex:1}
+.dl .req{font-family:var(--mono);font-size:12px;margin-top:14px;opacity:.75}
 .note{
-  margin-top:26px;padding:14px 18px;border-radius:12px;font-size:13.4px;line-height:1.6;
-  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:var(--muted);
+  border:var(--border) solid var(--ink);background:var(--beige);
+  padding:18px 20px;margin-top:26px;font-size:15px;
+  border-inline-start:12px solid var(--coral);
 }
+.note b{font-family:var(--mono);font-size:13px}
 
-footer{
-  border-top:1px solid rgba(255,255,255,.08);padding:42px 0;position:relative;z-index:1;
-  color:var(--slate);font-size:13.6px;
+/* ── Footer ─────────────────────────────────────────────────────── */
+
+footer{padding:56px 0 44px;background:var(--ink);color:var(--paper);border-bottom:0}
+footer a{font-family:var(--mono);font-size:13px;text-decoration:none;border-bottom:2px solid var(--lime)}
+footer a:hover{background:var(--lime);color:var(--ink)}
+.foot-top{display:flex;flex-wrap:wrap;gap:22px;align-items:center;justify-content:space-between;
+  padding-bottom:26px;border-bottom:2px solid var(--paper)}
+.foot-brand{display:flex;align-items:center;gap:12px;font-family:var(--display);font-size:20px}
+.foot-brand img{width:36px;height:36px;border:2px solid var(--paper)}
+.foot-links{display:flex;gap:20px;flex-wrap:wrap}
+.legal{font-size:13px;line-height:1.6;margin-top:24px;opacity:.8;max-width:90ch}
+.copy{font-family:var(--mono);font-size:12px;margin-top:18px;opacity:.6}
+
+/* ── Responsive ─────────────────────────────────────────────────── */
+
+@media (max-width:960px){
+  .tog,.dls{grid-template-columns:1fr}
+  .stats{grid-template-columns:1fr 1fr}
+  .stat:nth-child(2){border-inline-end:0}
+  .stat:nth-child(1),.stat:nth-child(2){border-bottom:var(--border) solid var(--ink)}
+  .langgrid{grid-template-columns:1fr}
+  .lg{border-inline-end:0;border-bottom:var(--border) solid var(--ink)}
+  .lg:last-child{border-bottom:0}
 }
-.foot{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
-.foot-links{margin-inline-start:auto;display:flex;gap:22px}
-.foot-links a:hover{color:var(--silver)}
-.attrib{margin-top:20px;font-size:12.4px;line-height:1.7;max-width:620px}
-
-@media(max-width:860px){
-  .nav-links{display:none}
-  .split{grid-template-columns:1fr;gap:34px}
-  .shot-body{grid-template-columns:1fr}
-  .side{display:none}
-  section{padding:64px 0}
+@media (max-width:780px){
+  nav.main{display:none;position:absolute;top:68px;inset-inline:0;background:var(--paper);
+    flex-direction:column;border-bottom:var(--border) solid var(--ink);padding:8px}
+  nav.main.open{display:flex}
+  nav.main a{border:2px solid var(--ink);margin-bottom:4px}
+  .menu-btn{display:block;margin-inline-start:auto}
+  .langs{margin-inline-start:0}
+  section{padding:60px 0}
+  .hero{padding-top:48px}
+  .feat{padding:24px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;scroll-behavior:auto!important}
 }
 </style>
 </head>
 <body>
-<div class="glow"></div>
 
 <header>
-  <div class="wrap nav">
-    <a href="#" class="brand"><img src="/assets/icon-192.png" alt=""><span>Nashat TV</span></a>
-    <nav class="nav-links">
+  <div class="wrap hdr">
+    <a class="brand" href="#top">
+      <img src="/assets/icon-192.png" alt="">
+      <span>NASHAT&nbsp;TV</span>
+    </a>
+    <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="mainNav">MENU</button>
+    <nav class="main" id="mainNav">
+      <a href="#channels" data-i18n="nav.channels">Channels</a>
       <a href="#features" data-i18n="nav.features">Features</a>
       <a href="#together" data-i18n="nav.together">Watch Together</a>
       <a href="#languages" data-i18n="nav.languages">Languages</a>
@@ -263,217 +392,234 @@ footer{
     <div class="langs" role="group" aria-label="Language">
       <button data-lang="en" aria-pressed="true">EN</button>
       <button data-lang="ar" aria-pressed="false">ع</button>
-      <button data-lang="ku" aria-pressed="false">ku</button>
+      <button data-lang="ku" aria-pressed="false">KU</button>
     </div>
   </div>
 </header>
 
-<main>
-<section class="hero wrap">
-  <img class="hero-icon" src="/assets/icon-512.png" alt="Nashat TV">
-  <h1><span data-i18n="hero.title1">Everything you watch,</span><br><span class="accent" data-i18n="hero.title2">in one window.</span></h1>
-  <p class="lede" data-i18n="hero.lede">Live TV, movies and series on your desktop. Start a room and watch in sync with friends, split the screen across four channels at once, and use the app in Arabic, Kurdish or English.</p>
-  <div class="cta">
-    <a class="btn btn-primary" id="dl-top" href="https://github.com/NashatShamsadyn7/Nashat-TV-PC/releases/latest">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      <span data-i18n="hero.download">Download for Windows</span>
-    </a>
-    <a class="btn btn-ghost" href="https://github.com/NashatShamsadyn7/Nashat-TV-PC">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 0-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2 0-.4-.5-1.6.2-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17.3 4.7 18.3 5 18.3 5c.7 1.6.2 2.8.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3"/></svg>
-      <span data-i18n="hero.source">View source</span>
-    </a>
-  </div>
-  <p class="meta"><b id="ver">v1.5.1</b> · <span data-i18n="hero.req">Windows 10/11 · 64-bit · free and open source</span></p>
-</section>
+<main id="top">
 
-<div class="wrap">
-  <div class="shot">
-    <div class="shot-bar">
-      <span class="dot" style="background:#ff5f57"></span>
-      <span class="dot" style="background:#febc2e"></span>
-      <span class="dot" style="background:#28c840"></span>
-      <span class="shot-title">Nashat TV</span>
+  <!-- ═══ HERO ═══ -->
+  <div class="hero">
+    <div class="wrap">
+      <span class="hero-badge" data-i18n="hero.badge">38 Kurdish channels · every stream verified</span>
+      <h1>
+        <span data-i18n="hero.title1">Kurdish television,</span><br>
+        <span class="l2" data-i18n="hero.title2">finally in one app.</span>
+      </h1>
+      <p class="lede" data-i18n="hero.lede">Live channels, movies and series on Android and Windows. Every stream in the app was tested before release — open a channel and it plays. Arabic, Kurdish and English throughout.</p>
+      <div class="hero-cta">
+        <a class="btn btn-lime" href="#download" data-i18n="hero.dl.android">Download for Android</a>
+        <a class="btn" href="#download" data-i18n="hero.dl.win">Download for Windows</a>
+      </div>
+      <p class="hero-meta"><span data-i18n="hero.meta">· Android 6.0+ · 15 MB · free, no account needed</span></p>
     </div>
-    <div class="shot-body">
-      <aside class="side">
-        <div class="side-brand">Nashat TV<small data-i18n="shot.edition">Desktop edition</small></div>
-        <div class="side-item"><i></i><span data-i18n="shot.home">Home</span></div>
-        <div class="side-item on"><i></i><span data-i18n="shot.live">Live TV</span></div>
-        <div class="side-item"><i></i><span data-i18n="shot.multi">Multi-view</span></div>
-        <div class="side-item"><i></i><span data-i18n="shot.movies">Movies</span></div>
-        <div class="side-item"><i></i><span data-i18n="shot.series">Series</span></div>
-        <div class="side-item"><i></i><span data-i18n="shot.together">Watch Together</span></div>
-        <div class="side-item"><i></i><span data-i18n="shot.library">Library</span></div>
-      </aside>
-      <div class="main">
-        <h4 data-i18n="shot.continue">Continue watching</h4>
-        <div class="row">
-          <div class="card hl" style="--p:64%"></div><div class="card" style="--p:31%"></div>
-          <div class="card" style="--p:88%"></div><div class="card" style="--p:12%"></div>
-          <div class="card" style="--p:47%"></div><div class="card" style="--p:73%"></div>
+    <div class="wrap">
+      <div class="stats">
+        <div class="stat"><b>38</b><span data-i18n="stat.channels">Kurdish channels, all verified</span></div>
+        <div class="stat"><b>12</b><span data-i18n="stat.servers">film &amp; series servers</span></div>
+        <div class="stat"><b>2</b><span data-i18n="stat.platforms">platforms — Android &amp; Windows</span></div>
+        <div class="stat"><b>3</b><span data-i18n="stat.langs">languages, fully translated</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CHANNELS ═══ -->
+  <section id="channels">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow" data-i18n="line.eyebrow">The line-up</span>
+        <h2 data-i18n="line.title">Every Kurdish channel, and nothing else</h2>
+        <p data-i18n="line.sub">This is the complete list that ships in the app — news, general, music, kids and religious. Every stream was opened and confirmed before release.</p>
+      </div>
+      <div class="cats" id="cats" role="group" aria-label="Category"></div>
+      <div class="wall" id="wall"></div>
+      <p class="wall-note" data-i18n="wall.label">Channels included</p>
+    </div>
+  </section>
+
+  <!-- ═══ FEATURES ═══ -->
+  <section id="features">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow" data-i18n="feat.eyebrow">What's inside</span>
+        <h2 data-i18n="feat.title">Built for how people actually watch</h2>
+        <p data-i18n="feat.sub">Not a list of checkboxes — every one of these ships in the app today.</p>
+      </div>
+      <div class="feats">
+        <article class="feat"><span class="n">01</span><h3 data-i18n="feat.live.t">Channels that actually open</h3><p data-i18n="feat.live.d"></p></article>
+        <article class="feat"><span class="n">02</span><h3 data-i18n="feat.vod.t">Movies and series</h3><p data-i18n="feat.vod.d"></p></article>
+        <article class="feat"><span class="n">03</span><h3 data-i18n="feat.together.t">Watch Together</h3><p data-i18n="feat.together.d"></p></article>
+        <article class="feat"><span class="n">04</span><h3 data-i18n="feat.multi.t">Four channels at once</h3><p data-i18n="feat.multi.d"></p></article>
+        <article class="feat"><span class="n">05</span><h3 data-i18n="feat.kids.t">Profiles and a real kids mode</h3><p data-i18n="feat.kids.d"></p></article>
+        <article class="feat"><span class="n">06</span><h3 data-i18n="feat.cast.t">Cast to the big screen</h3><p data-i18n="feat.cast.d"></p></article>
+        <article class="feat"><span class="n">07</span><h3 data-i18n="feat.sync.t">Picks up where you stopped</h3><p data-i18n="feat.sync.d"></p></article>
+        <article class="feat"><span class="n">08</span><h3 data-i18n="feat.social.t">Friends and messages</h3><p data-i18n="feat.social.d"></p></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ WATCH TOGETHER ═══ -->
+  <section id="together">
+    <div class="wrap tog">
+      <div>
+        <span class="eyebrow" data-i18n="tog.eyebrow">Watch Together</span>
+        <h2 data-i18n="tog.title">Same scene, same second</h2>
+        <p class="lede" style="margin-top:20px" data-i18n="tog.body"></p>
+        <ul>
+          <li data-i18n="tog.p1"></li>
+          <li data-i18n="tog.p2"></li>
+          <li data-i18n="tog.p3"></li>
+          <li data-i18n="tog.p4"></li>
+        </ul>
+      </div>
+      <div>
+        <div class="tog-art"><img src="/assets/brand-banner.png" alt="" loading="lazy"></div>
+        <p class="tog-cap" data-i18n="tog.cap"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ LANGUAGES ═══ -->
+  <section id="languages">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow" data-i18n="lang.eyebrow">Three languages</span>
+        <h2 data-i18n="lang.title">Not translated — built multilingual</h2>
+        <p data-i18n="lang.sub"></p>
+      </div>
+      <div class="langgrid">
+        <div class="lg"><div class="native" lang="ckb" dir="rtl">کوردی</div><span class="tag">SORANÎ · RTL</span></div>
+        <div class="lg"><div class="native" lang="ar" dir="rtl">العربية</div><span class="tag">ARABIC · RTL</span></div>
+        <div class="lg"><div class="native" lang="en">English</div><span class="tag">ENGLISH · LTR</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ DOWNLOAD ═══ -->
+  <section id="download">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow" data-i18n="dl.eyebrow">Get the app</span>
+        <h2 data-i18n="dl.title">Free. No account needed to watch.</h2>
+        <p data-i18n="dl.sub"></p>
+      </div>
+      <div class="dls">
+        <div class="dl">
+          <div class="dl-top">
+            <h3 data-i18n="dl.android.t">Android</h3>
+            <span class="ver">v1.6</span>
+          </div>
+          <p data-i18n="dl.android.d"></p>
+          <a class="btn btn-ink" href="https://github.com/NashatShamsadyn7/nashat-tv/releases/latest" data-i18n="dl.android.btn">Download the APK</a>
+          <p class="req" data-i18n="dl.android.req">Android 6.0 and newer</p>
         </div>
-        <h4 data-i18n="shot.trending">Trending now</h4>
-        <div class="row">
-          <div class="card"></div><div class="card"></div><div class="card"></div>
-          <div class="card"></div><div class="card"></div><div class="card"></div>
+        <div class="dl">
+          <div class="dl-top">
+            <h3 data-i18n="dl.win.t">Windows</h3>
+            <span class="ver">v1.5.3</span>
+          </div>
+          <p data-i18n="dl.win.d"></p>
+          <a class="btn btn-ink" href="https://github.com/NashatShamsadyn7/Nashat-TV-PC/releases/download/v1.5.3/Nashat-TV-Setup-1.5.3.exe" data-i18n="dl.btn">Download the installer</a>
+          <p class="req" data-i18n="dl.win.req">Windows 10/11 · 64-bit</p>
         </div>
-        <div class="bar" style="width:58%"></div>
-        <div class="bar" style="width:36%"></div>
       </div>
+      <p class="note" data-i18n="dl.android.note"></p>
+      <p class="note" data-i18n="dl.note"></p>
     </div>
-  </div>
-</div>
+  </section>
 
-<section id="features">
-  <div class="wrap">
-    <div class="sec-head">
-      <p class="eyebrow" data-i18n="feat.eyebrow">What's inside</p>
-      <h2 data-i18n="feat.title">Built for how people actually watch</h2>
-      <p data-i18n="feat.sub">Not a list of checkboxes — every one of these ships in the app today.</p>
-    </div>
-    <div class="grid">
-      <div class="feat">
-        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg></div>
-        <h3 data-i18n="feat.live.t">Live TV with a real guide</h3>
-        <p data-i18n="feat.live.d">Kurdish and regional channels, sorted by category, with a now-and-next programme guide and a progress bar for whatever is airing.</p>
-      </div>
-      <div class="feat">
-        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 3 16 9-16 9z"/></svg></div>
-        <h3 data-i18n="feat.vod.t">Movies and series</h3>
-        <p data-i18n="feat.vod.d">Browse trending, top rated and now playing, jump by actor, and move to the next episode with one key — season rollover included.</p>
-      </div>
-      <div class="feat">
-        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-        <h3 data-i18n="feat.together.t">Watch Together</h3>
-        <p data-i18n="feat.together.d">Create a room, share the link, and everyone stays frame-synced. Chat, GIFs, images and a voice channel are built in.</p>
-      </div>
-      <div class="feat">
-        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
-        <h3 data-i18n="feat.multi.t">Four channels at once</h3>
-        <p data-i18n="feat.multi.d">Multi-view splits the window across several live streams — a match on one tile, the news on another, audio wherever you want it.</p>
-      </div>
-      <div class="feat">
-        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
-        <h3 data-i18n="feat.kids.t">Profiles and a real kids mode</h3>
-        <p data-i18n="feat.kids.d">Separate profiles behind a PIN. On a kids profile the filtering is enforced on channels and titles alike, with a badge so it never looks broken.</p>
-      </div>
-      <div class="feat">
-        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg></div>
-        <h3 data-i18n="feat.media.t">Works with your headphones</h3>
-        <p data-i18n="feat.media.d">Play, pause and skip from AirPods, Bluetooth headsets or the keyboard's media keys — including live streams, where seeking has to follow the buffer.</p>
-      </div>
-      <div class="feat">
-        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="10"/></svg></div>
-        <h3 data-i18n="feat.sync.t">Picks up where you stopped</h3>
-        <p data-i18n="feat.sync.d">Position is saved while you watch and synced to your account, so an episode you paused on one machine resumes on the next.</p>
-      </div>
-      <div class="feat">
-        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
-        <h3 data-i18n="feat.social.t">Friends and messages</h3>
-        <p data-i18n="feat.social.d">Add friends by username, send invites straight into a room, and keep private chats without leaving the app.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="together">
-  <div class="wrap split">
-    <div>
-      <p class="eyebrow" data-i18n="tog.eyebrow">Watch Together</p>
-      <h2 data-i18n="tog.title">Same scene, same second</h2>
-      <p data-i18n="tog.body">The host controls playback and everyone else follows. Pause to argue about a plot point, and the room pauses with you.</p>
-      <ul class="ticks">
-        <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="tog.p1">Playback stays in sync for every viewer</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="tog.p2">Chat with GIFs and images over the video</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="tog.p3">Voice channel for the whole room</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="tog.p4">Invite a friend with a single link</span></li>
-      </ul>
-    </div>
-    <div class="panel">
-      <div class="tiles">
-        <div class="tile live">CH 1</div><div class="tile">CH 2</div>
-        <div class="tile">CH 3</div><div class="tile live">CH 4</div>
-      </div>
-      <p style="margin:18px 0 0;font-size:13.6px;color:var(--muted)" data-i18n="tog.cap">Multi-view running four live channels side by side.</p>
-    </div>
-  </div>
-</section>
-
-<section id="languages">
-  <div class="wrap">
-    <div class="sec-head">
-      <p class="eyebrow" data-i18n="lang.eyebrow">Three languages</p>
-      <h2 data-i18n="lang.title">Not translated — built multilingual</h2>
-      <p data-i18n="lang.sub">Every screen, every message and every date. The layout flips to right-to-left, and numbers, runtimes and relative times follow the language you picked.</p>
-    </div>
-    <div class="lang-grid">
-      <div class="lang-card"><div class="word">العربية</div><small>Arabic · RTL</small></div>
-      <div class="lang-card"><div class="word">کوردی</div><small>Kurdish · RTL</small></div>
-      <div class="lang-card"><div class="word">English</div><small>English · LTR</small></div>
-    </div>
-  </div>
-</section>
-
-<section id="download" class="download">
-  <div class="wrap">
-    <div class="dl-box">
-      <p class="eyebrow" data-i18n="dl.eyebrow">Get the app</p>
-      <h2 data-i18n="dl.title">Free. No account needed to watch.</h2>
-      <p style="color:var(--muted);margin:16px 0 30px" data-i18n="dl.sub">Sign in only if you want your library and progress synced across machines.</p>
-      <a class="btn btn-primary" id="dl-main" href="https://github.com/NashatShamsadyn7/Nashat-TV-PC/releases/latest" style="padding:16px 34px;font-size:16px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        <span data-i18n="dl.btn">Download the installer</span>
-      </a>
-      <div class="specs">
-        <div><b id="spec-ver">1.5.1</b><span data-i18n="dl.version">Version</span></div>
-        <div><b>≈99 MB</b><span data-i18n="dl.size">Installer size</span></div>
-        <div><b>Windows 10/11</b><span data-i18n="dl.os">64-bit</span></div>
-      </div>
-      <p class="note" data-i18n="dl.note">The installer is not code-signed yet, so Windows SmartScreen may warn on first run. Choose <b>More info → Run anyway</b>. The app updates itself after that.</p>
-    </div>
-  </div>
-</section>
 </main>
 
 <footer>
   <div class="wrap">
-    <div class="foot">
-      <span>© <span id="yr">2026</span> Nashat Shamsadyne</span>
+    <div class="foot-top">
+      <div class="foot-brand">
+        <img src="/assets/icon-192.png" alt="">
+        <span>NASHAT&nbsp;TV</span>
+      </div>
       <div class="foot-links">
-        <a href="https://github.com/NashatShamsadyn7/Nashat-TV-PC">GitHub</a>
-        <a href="https://github.com/NashatShamsadyn7/Nashat-TV-PC/releases">
-          <span data-i18n="foot.releases">Releases</span></a>
-        <a href="https://github.com/NashatShamsadyn7/Nashat-TV-PC/issues">
-          <span data-i18n="foot.issues">Report a problem</span></a>
+        <a href="https://github.com/NashatShamsadyn7/nashat-tv/releases" data-i18n="foot.releases">Releases</a>
+        <a href="https://github.com/NashatShamsadyn7/nashat-tv/issues" data-i18n="foot.issues">Report a problem</a>
       </div>
     </div>
-    <p class="attrib" data-i18n="foot.tmdb">This product uses the TMDB API but is not endorsed or certified by TMDB. Film and series metadata and artwork are provided by The Movie Database.</p>
+    <p class="legal" data-i18n="foot.tmdb"></p>
+    <p class="copy">© 2026 Nashat TV</p>
   </div>
 </footer>
 
 <script>
-/* Copy for the three shipping languages. Keys match data-i18n attributes.
-   Arabic and Kurdish are written, not machine-translated, and the document
-   direction flips with them. */
+const CHANNELS = [
+  ["/assets/ch/kurdistan-24.png","Kurdistan 24","News",0],
+  ["/assets/ch/kurdsat-news.png","Kurdsat News","News",0],
+  ["/assets/ch/rudaw-tv.png","Rudaw TV","News",0],
+  ["/assets/ch/al-iraqia-kurdish.png","Al Iraqia Kurdish","General",0],
+  ["/assets/ch/atrak.png","Atrak","General",0],
+  ["/assets/ch/ava-media-tv.png","Ava Media TV","General",1],
+  ["/assets/ch/avar-tv.jpeg","Avar TV","General",1],
+  ["/assets/ch/azerbaijan-gharbi.png","Azerbaijan Gharbi","General",0],
+  ["/assets/ch/channel-8-kurdish.png","Channel 8 Kurdish","General",1],
+  ["/assets/ch/cira-tv.png","Cira TV","General",0],
+  ["/assets/ch/eman-tv.png","Eman TV","General",0],
+  ["","Gali Kurdistan","General",0],
+  ["/assets/ch/ilke-tv.png","Ilke TV","General",0],
+  ["/assets/ch/jin-tv.png","Jin TV","General",0],
+  ["/assets/ch/khak-tv.png","Khak TV","General",1],
+  ["/assets/ch/kirkuk-satellite-tv.png","Kirkuk Satellite TV","General",0],
+  ["/assets/ch/komala-tv.png","Komala TV","General",0],
+  ["/assets/ch/kurd-channel.png","Kurd Channel","General",0],
+  ["/assets/ch/kurdistan-tv.png","Kurdistan TV","General",0],
+  ["/assets/ch/kurdsat.png","Kurdsat","General",0],
+  ["/assets/ch/rojava-tv.png","Rojava TV","General",0],
+  ["/assets/ch/ronahi-tv.png","Ronahi TV","General",0],
+  ["/assets/ch/sada-tv.png","SADA TV","General",0],
+  ["/assets/ch/sercem-tv.jpg","Sercem TV","General",1],
+  ["/assets/ch/sterk-tv.png","Sterk TV","General",0],
+  ["/assets/ch/trt-kurdi.png","TRT Kurdi","General",0],
+  ["/assets/ch/waar-tv.png","Waar TV","General",0],
+  ["","Zagros TV","General",0],
+  ["/assets/ch/zoom-tv-kurdish.jpg","Zoom TV Kurdish","General",1],
+  ["/assets/ch/4-kurd.png","4 Kurd","Music",1],
+  ["/assets/ch/med-muzik.png","Med Muzik","Music",0],
+  ["/assets/ch/mix-kurdy.png","Mix Kurdy","Music",1],
+  ["/assets/ch/afarin-baxcha.png","Afarin Baxcha","Kids",0],
+  ["/assets/ch/afarin-tv.png","Afarin TV","Kids",1],
+  ["/assets/ch/zarok-tv.png","Zarok TV","Kids",0],
+  ["/assets/ch/amozhgary-tv.png","Amozhgary TV","Religious",0],
+  ["/assets/ch/farmoda-tv.png","Farmoda TV","Religious",1],
+  ["/assets/ch/payam-tv.png","Payam TV","Religious",0]
+];
 const STRINGS = {
   en:{dir:'ltr',
-    'nav.features':'Features','nav.together':'Watch Together','nav.languages':'Languages','nav.download':'Download',
-    'hero.title1':'Everything you watch,','hero.title2':'in one window.',
-    'hero.lede':'Live TV, movies and series on your desktop. Start a room and watch in sync with friends, split the screen across four channels at once, and use the app in Arabic, Kurdish or English.',
-    'hero.download':'Download for Windows','hero.source':'View source',
-    'hero.req':'Windows 10/11 · 64-bit · free and open source',
+    'nav.channels':'Channels',
+    'line.eyebrow':'The line-up',
+    'line.title':'Every Kurdish channel, and nothing else',
+    'line.sub':'This is the complete list that ships in the app — news, general, music, kids and religious. Every stream was opened and confirmed before release.',
+    'cat.all':'All','cat.news':'News','cat.general':'General',
+    'cat.music':'Music','cat.kids':'Kids','cat.religious':'Religious',
+    'nav.features':'Features','nav.together':'Watch Together','nav.languages':'Languages',
+    'nav.download':'Download','nav.get':'Get the app',
+    'hero.badge':'38 Kurdish channels · every stream verified',
+    'hero.title1':'Kurdish television,','hero.title2':'finally in one app.',
+    'hero.lede':'Live channels, movies and series on Android and Windows. Every stream in the app was tested before release — open a channel and it plays. Arabic, Kurdish and English throughout.',
+    'hero.dl.android':'Download for Android','hero.dl.win':'Download for Windows',
+    'hero.meta':'· Android 6.0+ · 15 MB · free, no account needed',
+    'wall.label':'Channels included',
+    'stat.channels':'Kurdish channels, all verified','stat.servers':'film &amp; series servers',
+    'stat.platforms':'platforms — Android &amp; Windows','stat.langs':'languages, fully translated',
     'shot.edition':'Desktop edition','shot.home':'Home','shot.live':'Live TV','shot.multi':'Multi-view',
     'shot.movies':'Movies','shot.series':'Series','shot.together':'Watch Together','shot.library':'Library',
-    'shot.continue':'Continue watching','shot.trending':'Trending now',
+    'shot.continue':'Continue watching','shot.multiview':'Multi-view',
+    'phone.title':'Live TV','phone.sub':'Kurdish · 38 channels',
     'feat.eyebrow':"What's inside",'feat.title':'Built for how people actually watch',
     'feat.sub':'Not a list of checkboxes — every one of these ships in the app today.',
-    'feat.live.t':'Live TV with a real guide','feat.live.d':'Kurdish and regional channels, sorted by category, with a now-and-next programme guide and a progress bar for whatever is airing.',
-    'feat.vod.t':'Movies and series','feat.vod.d':'Browse trending, top rated and now playing, jump by actor, and move to the next episode with one key — season rollover included.',
+    'feat.live.t':'Channels that actually open','feat.live.d':'Every stream in the line-up is probed before a release ships, and the list is bundled inside the app — so the grid fills instantly, even on a slow connection.',
+    'feat.vod.t':'Movies and series','feat.vod.d':'Browse trending, top rated and now playing, jump by actor, and move to the next episode with one tap — season rollover included.',
     'feat.together.t':'Watch Together','feat.together.d':'Create a room, share the link, and everyone stays frame-synced. Chat, GIFs, images and a voice channel are built in.',
     'feat.multi.t':'Four channels at once','feat.multi.d':'Multi-view splits the window across several live streams — a match on one tile, the news on another, audio wherever you want it.',
     'feat.kids.t':'Profiles and a real kids mode','feat.kids.d':'Separate profiles behind a PIN. On a kids profile the filtering is enforced on channels and titles alike, with a badge so it never looks broken.',
-    'feat.media.t':'Works with your headphones','feat.media.d':"Play, pause and skip from AirPods, Bluetooth headsets or the keyboard's media keys — including live streams, where seeking has to follow the buffer.",
-    'feat.sync.t':'Picks up where you stopped','feat.sync.d':'Position is saved while you watch and synced to your account, so an episode you paused on one machine resumes on the next.',
+    'feat.cast.t':'Cast to the big screen','feat.cast.d':'Send whatever is playing to a Chromecast or Android TV, or shrink it into picture-in-picture and keep it running while you use the phone.',
+    'feat.sync.t':'Picks up where you stopped','feat.sync.d':'Position is saved while you watch and synced to your account, so an episode you paused on one device resumes on the next.',
     'feat.social.t':'Friends and messages','feat.social.d':'Add friends by username, send invites straight into a room, and keep private chats without leaving the app.',
     'tog.eyebrow':'Watch Together','tog.title':'Same scene, same second',
     'tog.body':'The host controls playback and everyone else follows. Pause to argue about a plot point, and the room pauses with you.',
@@ -483,128 +629,253 @@ const STRINGS = {
     'lang.eyebrow':'Three languages','lang.title':'Not translated — built multilingual',
     'lang.sub':'Every screen, every message and every date. The layout flips to right-to-left, and numbers, runtimes and relative times follow the language you picked.',
     'dl.eyebrow':'Get the app','dl.title':'Free. No account needed to watch.',
-    'dl.sub':'Sign in only if you want your library and progress synced across machines.',
-    'dl.btn':'Download the installer','dl.version':'Version','dl.size':'Installer size','dl.os':'64-bit',
-    'dl.note':'The installer is not code-signed yet, so Windows SmartScreen may warn on first run. Choose <b>More info → Run anyway</b>. The app updates itself after that.',
+    'dl.sub':'Sign in only if you want your library and progress synced across devices.',
+    'dl.newest':'Newest release','dl.desktop':'Desktop edition',
+    'dl.android.t':'Android','dl.android.d':'Live channels, movies and series on your phone, tablet or Android TV, with picture-in-picture and Chromecast.',
+    'dl.android.btn':'Download the APK','dl.android.req':'Android 6.0 and newer',
+    'dl.android.note':'On Android, allow <b>Install unknown apps</b> for your browser the first time you open the APK — it is signed, just not distributed through the Play Store.',
+    'dl.win.t':'Windows','dl.win.d':'The full desktop app: multi-view, watch-together rooms and the programme guide.',
+    'dl.btn':'Download the installer','dl.win.req':'Windows 10/11 · 64-bit',
+    'dl.note':'The Windows installer is not code-signed yet, so SmartScreen may warn on first run. Choose <b>More info → Run anyway</b>. The app updates itself after that.',
     'foot.releases':'Releases','foot.issues':'Report a problem',
-    'foot.tmdb':'This product uses the TMDB API but is not endorsed or certified by TMDB. Film and series metadata and artwork are provided by The Movie Database.'
+    'foot.tmdb':'This product uses the TMDB API but is not endorsed or certified by TMDB. Film and series metadata and artwork are provided by The Movie Database. Channel names and logos belong to their respective broadcasters.'
   },
   ar:{dir:'rtl',
-    'nav.features':'المزايا','nav.together':'المشاهدة المشتركة','nav.languages':'اللغات','nav.download':'التحميل',
-    'hero.title1':'كل ما تشاهده،','hero.title2':'في نافذة واحدة.',
-    'hero.lede':'بثّ مباشر وأفلام ومسلسلات على حاسوبك. افتح غرفة وشاهد بالتزامن مع أصدقائك، أو قسّم الشاشة على أربع قنوات معاً، واستخدم التطبيق بالعربية أو الكردية أو الإنجليزية.',
-    'hero.download':'حمّل لويندوز','hero.source':'الشيفرة المصدرية',
-    'hero.req':'ويندوز ١٠/١١ · ٦٤ بت · مجّاني ومفتوح المصدر',
-    'shot.edition':'نسخة سطح المكتب','shot.home':'الرئيسية','shot.live':'البثّ المباشر','shot.multi':'المشاهدة المتعدّدة',
-    'shot.movies':'الأفلام','shot.series':'المسلسلات','shot.together':'المشاهدة المشتركة','shot.library':'المكتبة',
-    'shot.continue':'أكمل المشاهدة','shot.trending':'الأكثر رواجاً',
-    'feat.eyebrow':'ما بداخله','feat.title':'مبنيّ على طريقة المشاهدة الحقيقية',
+    'nav.channels':'القنوات',
+    'line.eyebrow':'قائمة القنوات',
+    'line.title':'كل القنوات الكردية، ولا شيء غيرها',
+    'line.sub':'هذه هي القائمة الكاملة التي يضمّها التطبيق — أخبار وعامة وموسيقى وأطفال ودينية. كل بثّ فُتح وجرى التأكد منه قبل الإصدار.',
+    'cat.all':'الكل','cat.news':'أخبار','cat.general':'عامة',
+    'cat.music':'موسيقى','cat.kids':'أطفال','cat.religious':'دينية',
+    'nav.features':'المزايا','nav.together':'المشاهدة المشتركة','nav.languages':'اللغات',
+    'nav.download':'التحميل','nav.get':'حمّل التطبيق',
+    'hero.badge':'٣٨ قناة كردية · كل بثّ مُتحقَّق منه',
+    'hero.title1':'التلفزيون الكردي،','hero.title2':'أخيراً في تطبيق واحد.',
+    'hero.lede':'قنوات مباشرة وأفلام ومسلسلات على أندرويد وويندوز. كل بثّ في التطبيق مُختبَر قبل الإصدار — تفتح القناة فتعمل. بالعربية والكردية والإنجليزية بالكامل.',
+    'hero.dl.android':'حمّل لأندرويد','hero.dl.win':'حمّل لويندوز',
+    'hero.meta':'· أندرويد ٦٫٠ فأحدث · ١٥ ميغابايت · مجاني، بلا حساب',
+    'wall.label':'من القنوات المتوفّرة',
+    'stat.channels':'قناة كردية، جميعها مُتحقَّق منها','stat.servers':'سيرفراً للأفلام والمسلسلات',
+    'stat.platforms':'منصّتان — أندرويد وويندوز','stat.langs':'لغات مترجمة بالكامل',
+    'shot.edition':'نسخة سطح المكتب','shot.home':'الرئيسية','shot.live':'البث المباشر','shot.multi':'العرض المتعدد',
+    'shot.movies':'الأفلام','shot.series':'المسلسلات','shot.together':'مشاهدة مشتركة','shot.library':'مكتبتي',
+    'shot.continue':'أكمل المشاهدة','shot.multiview':'العرض المتعدد',
+    'phone.title':'البث المباشر','phone.sub':'كردية · ٣٨ قناة',
+    'feat.eyebrow':'ما بالداخل','feat.title':'مصمَّم لطريقة المشاهدة الحقيقية',
     'feat.sub':'ليست قائمة وعود — كل ميزة هنا موجودة في التطبيق اليوم.',
-    'feat.live.t':'بثّ مباشر بدليل برامج حقيقي','feat.live.d':'قنوات كردية وإقليمية مرتّبة حسب التصنيف، مع دليل يعرض ما يُبثّ الآن وما يليه، وشريط تقدّم للبرنامج الجاري.',
-    'feat.vod.t':'أفلام ومسلسلات','feat.vod.d':'تصفّح الرائج والأعلى تقييماً والمعروض حالياً، وانتقل عبر الممثّلين، وتنقّل للحلقة التالية بضغطة واحدة — مع الانتقال بين المواسم.',
-    'feat.together.t':'المشاهدة المشتركة','feat.together.d':'أنشئ غرفة وشارك الرابط، ويبقى الجميع متزامنين. الدردشة وصور GIF والصور والقناة الصوتية مدمجة.',
-    'feat.multi.t':'أربع قنوات في آن واحد','feat.multi.d':'المشاهدة المتعدّدة تقسّم النافذة على عدّة بثوث مباشرة — مباراة في مربّع والأخبار في آخر، والصوت حيث تريد.',
-    'feat.kids.t':'ملفّات شخصية ووضع أطفال حقيقي','feat.kids.d':'ملفّات منفصلة محميّة برمز. في ملف الأطفال تُطبَّق التصفية على القنوات والأعمال معاً، مع شارة ظاهرة حتى لا يبدو التطبيق معطوباً.',
-    'feat.media.t':'يعمل مع سمّاعاتك','feat.media.d':'شغّل وأوقف وتخطَّ من AirPods أو سمّاعات البلوتوث أو مفاتيح الوسائط — حتى في البثّ المباشر حيث يجب أن يتبع التنقّل حدود التخزين المؤقّت.',
-    'feat.sync.t':'يكمل من حيث توقّفت','feat.sync.d':'يُحفظ موضعك أثناء المشاهدة ويُزامَن مع حسابك، فالحلقة التي أوقفتها على جهاز تُستأنف على الآخر.',
+    'feat.live.t':'قنوات تفتح فعلاً','feat.live.d':'كل بثّ في القائمة يُفحص قبل إطلاق أي إصدار، والقائمة مُضمَّنة داخل التطبيق — فتمتلئ الشاشة فوراً حتى مع إنترنت بطيء.',
+    'feat.vod.t':'أفلام ومسلسلات','feat.vod.d':'تصفّح الرائج والأعلى تقييماً وما يُعرض الآن، وانتقل حسب الممثل، وتابع الحلقة التالية بلمسة واحدة — مع الانتقال بين المواسم.',
+    'feat.together.t':'المشاهدة المشتركة','feat.together.d':'أنشئ غرفة وشارك الرابط، ويبقى الجميع متزامنين تماماً. الدردشة والصور والمحادثة الصوتية مدمجة.',
+    'feat.multi.t':'أربع قنوات معاً','feat.multi.d':'العرض المتعدد يقسّم الشاشة على عدة بثوث مباشرة — مباراة في مربّع وأخبار في آخر، والصوت حيث تشاء.',
+    'feat.kids.t':'ملفات شخصية ووضع أطفال حقيقي','feat.kids.d':'ملفات منفصلة محمية برمز. في ملف الأطفال تُطبَّق التصفية على القنوات والعناوين معاً، مع شارة توضّح ذلك.',
+    'feat.cast.t':'اعرضه على الشاشة الكبيرة','feat.cast.d':'أرسل ما تشاهده إلى Chromecast أو تلفاز أندرويد، أو صغّره في نافذة عائمة وتابع استخدام الهاتف.',
+    'feat.sync.t':'يكمل من حيث توقّفت','feat.sync.d':'يُحفظ موضع المشاهدة ويُزامَن مع حسابك، فتُكمل على جهاز آخر من النقطة نفسها.',
     'feat.social.t':'الأصدقاء والرسائل','feat.social.d':'أضف أصدقاءك باسم المستخدم، وأرسل دعوات مباشرة إلى الغرفة، وتحدّث بخصوصية دون مغادرة التطبيق.',
     'tog.eyebrow':'المشاهدة المشتركة','tog.title':'المشهد نفسه، في الثانية نفسها',
-    'tog.body':'المضيف يتحكّم بالتشغيل والبقيّة يتبعون. أوقف المشهد لتناقش حدثاً في الحبكة، فتتوقّف الغرفة معك.',
-    'tog.p1':'التشغيل متزامن لدى كل المشاهدين','tog.p2':'دردشة بصور GIF والصور فوق الفيديو',
-    'tog.p3':'قناة صوتية للغرفة كاملة','tog.p4':'ادعُ صديقاً برابط واحد',
-    'tog.cap':'المشاهدة المتعدّدة تعرض أربع قنوات مباشرة جنباً إلى جنب.',
-    'lang.eyebrow':'ثلاث لغات','lang.title':'ليس مترجَماً — بل مبنيّ متعدّد اللغات',
-    'lang.sub':'كل شاشة وكل رسالة وكل تاريخ. يتحوّل التخطيط إلى اليمين، وتتبع الأرقام والمدد والأوقات النسبية اللغة التي اخترتها.',
-    'dl.eyebrow':'احصل على التطبيق','dl.title':'مجّاني. ولا يحتاج حساباً للمشاهدة.',
-    'dl.sub':'سجّل الدخول فقط إن أردت مزامنة مكتبتك وتقدّمك بين الأجهزة.',
-    'dl.btn':'حمّل المثبِّت','dl.version':'الإصدار','dl.size':'حجم المثبِّت','dl.os':'٦٤ بت',
-    'dl.note':'المثبِّت غير موقَّع رقمياً بعد، لذا قد يحذّر SmartScreen عند أول تشغيل. اختر <b>More info ← Run anyway</b>. ويحدّث التطبيق نفسه تلقائياً بعدها.',
+    'tog.body':'المضيف يتحكّم بالتشغيل والبقية يتبعونه. أوقف المشهد لتناقش تفصيلة، فتتوقّف الغرفة معك.',
+    'tog.p1':'التشغيل يبقى متزامناً لكل المشاهدين','tog.p2':'دردشة بالصور والصور المتحركة فوق الفيديو',
+    'tog.p3':'قناة صوتية للغرفة كلها','tog.p4':'ادعُ صديقاً برابط واحد',
+    'tog.cap':'العرض المتعدد يشغّل أربع قنوات مباشرة جنباً إلى جنب.',
+    'lang.eyebrow':'ثلاث لغات','lang.title':'ليست ترجمة — بل بُني متعدد اللغات',
+    'lang.sub':'كل شاشة وكل رسالة وكل تاريخ. تنقلب الواجهة من اليمين إلى اليسار، وتتبع الأرقام والمدد والأوقات اللغة التي اخترتها.',
+    'dl.eyebrow':'احصل على التطبيق','dl.title':'مجاني. ولا يحتاج حساباً للمشاهدة.',
+    'dl.sub':'سجّل الدخول فقط إن أردت مزامنة مكتبتك وتقدّمك بين أجهزتك.',
+    'dl.newest':'أحدث إصدار','dl.desktop':'نسخة سطح المكتب',
+    'dl.android.t':'أندرويد','dl.android.d':'قنوات مباشرة وأفلام ومسلسلات على هاتفك أو جهازك اللوحي أو تلفاز أندرويد، مع نافذة عائمة وChromecast.',
+    'dl.android.btn':'حمّل ملف APK','dl.android.req':'أندرويد ٦٫٠ فأحدث',
+    'dl.android.note':'على أندرويد، فعّل <b>تثبيت التطبيقات غير المعروفة</b> لمتصفّحك عند فتح ملف APK لأول مرة — الملف موقَّع، لكنه غير موزَّع عبر متجر Play.',
+    'dl.win.t':'ويندوز','dl.win.d':'تطبيق سطح المكتب الكامل: العرض المتعدد وغرف المشاهدة المشتركة ودليل البرامج.',
+    'dl.btn':'حمّل المثبِّت','dl.win.req':'ويندوز ١٠/١١ · ٦٤‑بت',
+    'dl.note':'مثبِّت ويندوز غير موقَّع رقمياً بعد، لذا قد يحذّرك SmartScreen عند أول تشغيل. اختر <b>مزيد من المعلومات ← تشغيل على أي حال</b>. بعدها يحدّث التطبيق نفسه.',
     'foot.releases':'الإصدارات','foot.issues':'أبلغ عن مشكلة',
-    'foot.tmdb':'يستخدم هذا المنتج واجهة TMDB لكنّه غير معتمَد ولا مصادَق عليه من TMDB. بيانات الأفلام والمسلسلات وصورها مقدَّمة من The Movie Database.'
+    'foot.tmdb':'يستخدم هذا المنتج واجهة TMDB لكنه غير معتمَد ولا مصدَّق منها. بيانات الأفلام والمسلسلات وصورها مقدَّمة من The Movie Database. أسماء القنوات وشعاراتها ملك لأصحابها.'
   },
   ku:{dir:'rtl',
-    'nav.features':'تایبەتمەندییەکان','nav.together':'پێکەوە بینین','nav.languages':'زمانەکان','nav.download':'داگرتن',
-    'hero.title1':'هەرچی دەیبینیت،','hero.title2':'لە یەک پەنجەرەدا.',
-    'hero.lede':'کەناڵی ڕاستەوخۆ و فیلم و زنجیرە لەسەر کۆمپیوتەرەکەت. ژوورێک بکەرەوە و بە هاوکاتی لەگەڵ هاوڕێکانت ببینە، یان شاشەکە بەسەر چوار کەناڵدا دابەش بکە، و بە کوردی یان عەرەبی یان ئینگلیزی بەکاریبهێنە.',
-    'hero.download':'داگرتن بۆ ویندۆز','hero.source':'کۆدی سەرچاوە',
-    'hero.req':'ویندۆز ١٠/١١ · ٦٤ بیت · بەخۆڕایی و سەرچاوە کراوە',
+    'nav.channels':'کەناڵەکان',
+    'line.eyebrow':'لیستی کەناڵەکان',
+    'line.title':'هەموو کەناڵە کوردییەکان، و هیچی تر',
+    'line.sub':'ئەمە لیستی تەواوە کە لە ئەپەکەدایە — هەواڵ و گشتی و مۆسیقا و منداڵان و ئایینی. هەموو بەشێک پێش بڵاوکردنەوە کرایەوە و دڵنیایی لێکرا.',
+    'cat.all':'هەموو','cat.news':'هەواڵ','cat.general':'گشتی',
+    'cat.music':'مۆسیقا','cat.kids':'منداڵان','cat.religious':'ئایینی',
+    'nav.features':'تایبەتمەندییەکان','nav.together':'پێکەوە بینین','nav.languages':'زمانەکان',
+    'nav.download':'داگرتن','nav.get':'ئەپەکە وەربگرە',
+    'hero.badge':'٣٨ کەناڵی کوردی · هەموویان پشکنراون',
+    'hero.title1':'تەلەڤزیۆنی کوردی،','hero.title2':'لە کۆتاییدا لە یەک ئەپدا.',
+    'hero.lede':'کەناڵی ڕاستەوخۆ و فیلم و زنجیرە لەسەر ئەندرۆید و ویندۆز. هەموو بەشێک پێش بڵاوکردنەوە تاقی کراوەتەوە — کەناڵ دەکەیتەوە و کاردەکات. بە کوردی و عەرەبی و ئینگلیزی.',
+    'hero.dl.android':'داگرتن بۆ ئەندرۆید','hero.dl.win':'داگرتن بۆ ویندۆز',
+    'hero.meta':'· ئەندرۆید ٦٫٠ و نوێتر · ١٥ مێگابایت · بەخۆڕایی، بێ هەژمار',
+    'wall.label':'هەندێک لە کەناڵەکان',
+    'stat.channels':'کەناڵی کوردی، هەموویان پشکنراو','stat.servers':'سێرڤەر بۆ فیلم و زنجیرە',
+    'stat.platforms':'دوو پلاتفۆرم — ئەندرۆید و ویندۆز','stat.langs':'زمان، بە تەواوی وەرگێڕدراو',
     'shot.edition':'وەشانی دێسکتۆپ','shot.home':'سەرەکی','shot.live':'ڕاستەوخۆ','shot.multi':'بینینی فرە',
     'shot.movies':'فیلمەکان','shot.series':'زنجیرەکان','shot.together':'پێکەوە بینین','shot.library':'کتێبخانە',
-    'shot.continue':'بەردەوامبوون','shot.trending':'باوترین',
-    'feat.eyebrow':'ناوەڕۆک','feat.title':'دروستکراوە بۆ ئەو شێوازەی خەڵک دەبینێت',
-    'feat.sub':'لیستی بەڵێن نییە — هەموو ئەمانە ئێستا لە بەرنامەکەدا هەن.',
-    'feat.live.t':'ڕاستەوخۆ لەگەڵ ڕێنمای ڕاستەقینە','feat.live.d':'کەناڵی کوردی و ناوچەیی بەپێی پۆل، لەگەڵ ڕێنمایەک کە پیشان دەدات ئێستا چی بڵاودەکرێتەوە و دواتر چی دێت.',
-    'feat.vod.t':'فیلم و زنجیرە','feat.vod.d':'بگەڕێ بەناو باوترین و بەرزترین هەڵسەنگاندن، بەپێی ئەکتەر بگۆڕە، و بە یەک کلیک بڕۆ بۆ ئەڵقەی داهاتوو — گۆڕینی وەرزیش لەگەڵدایە.',
-    'feat.together.t':'پێکەوە بینین','feat.together.d':'ژوورێک دروست بکە و لینکەکە هاوبەش بکە، هەمووان هاوکات دەمێننەوە. چات و GIF و وێنە و کەناڵی دەنگی تێدایە.',
-    'feat.multi.t':'چوار کەناڵ بە یەکەوە','feat.multi.d':'بینینی فرە پەنجەرەکە دابەش دەکات بەسەر چەند بڵاوکردنەوەیەکی ڕاستەوخۆ — یاری لە یەکێک و هەواڵ لە یەکێکی تر.',
-    'feat.kids.t':'پرۆفایل و دۆخی منداڵانی ڕاستەقینە','feat.kids.d':'پرۆفایلی جیا بە کۆدێکی پارێزراو. لە پرۆفایلی منداڵاندا پاڵاوتن بەسەر کەناڵ و بەرهەمەکاندا جێبەجێ دەکرێت.',
-    'feat.media.t':'لەگەڵ هێدفۆنەکانت کار دەکات','feat.media.d':'لە AirPods یان هێدفۆنی بلوتوس یان کلیلەکانی مێدیا لێبدە و بوەستێنە و تێپەڕێنە — تەنانەت لە بڵاوکردنەوەی ڕاستەوخۆشدا.',
-    'feat.sync.t':'لەوێوە دەست پێدەکاتەوە کە وەستایت','feat.sync.d':'شوێنی بینینت پاشەکەوت دەکرێت و لەگەڵ هەژمارەکەت هاوکات دەکرێت، بۆیە ئەڵقەیەک کە لە ئامێرێک وەستاندت لە ئامێرێکی تر بەردەوام دەبێت.',
-    'feat.social.t':'هاوڕێ و نامەکان','feat.social.d':'هاوڕێکانت بە ناوی بەکارهێنەر زیاد بکە، بانگهێشت بنێرە بۆ ژوورەکە، و بە نهێنی گفتوگۆ بکە بەبێ دەرچوون لە بەرنامەکە.',
+    'shot.continue':'بەردەوامبوون','shot.multiview':'بینینی فرە',
+    'phone.title':'ڕاستەوخۆ','phone.sub':'کوردی · ٣٨ کەناڵ',
+    'feat.eyebrow':'ناوەوەی چییە','feat.title':'دروستکراوە بۆ شێوازی ڕاستەقینەی بینین',
+    'feat.sub':'لیستی بەڵێن نییە — هەموویان ئەمڕۆ لە ئەپەکەدان.',
+    'feat.live.t':'کەناڵی بەڕاستی دەکرێنەوە','feat.live.d':'هەموو بەشێک پێش هەر بڵاوکردنەوەیەک تاقی دەکرێتەوە، و لیستەکە لەناو ئەپەکەدا هەڵگیراوە — بۆیە خێرا پڕ دەبێت، تەنانەت بە ئینتەرنێتی خاویش.',
+    'feat.vod.t':'فیلم و زنجیرە','feat.vod.d':'بەدواداچوونی بەناوبانگ و باشترین هەڵسەنگاندن، گەڕان بەپێی ئەکتەر، و ئەڵقەی داهاتوو بە یەک دەست — گۆڕینی وەرزیش لەگەڵدایە.',
+    'feat.together.t':'پێکەوە بینین','feat.together.d':'ژوورێک دروست بکە و بەستەرەکە بنێرە، هەمووان هاوکات دەمێننەوە. چات و وێنە و گفتوگۆی دەنگی تێدایە.',
+    'feat.multi.t':'چوار کەناڵ پێکەوە','feat.multi.d':'بینینی فرە پەنجەرەکە دابەش دەکات بەسەر چەند بەشێکی ڕاستەوخۆ — یاری لە یەکێک و هەواڵ لە یەکێکی تر.',
+    'feat.kids.t':'پرۆفایل و دۆخی منداڵانی ڕاستەقینە','feat.kids.d':'پرۆفایلی جیا بە PIN. لە پرۆفایلی منداڵدا فلتەرکردن بەسەر کەناڵ و ناونیشانەکاندا جێبەجێ دەکرێت.',
+    'feat.cast.t':'بینین لەسەر شاشەی گەورە','feat.cast.d':'ئەوەی دەیبینیت بنێرە بۆ Chromecast یان تەلەڤزیۆنی ئەندرۆید، یان بیکە پەنجەرەیەکی بچووک و مۆبایلەکە بەکاربهێنە.',
+    'feat.sync.t':'لەوێوە دەستپێدەکاتەوە کە وەستایت','feat.sync.d':'شوێنی بینین هەڵدەگیرێت و لەگەڵ هەژمارەکەت هاوکات دەکرێت، بۆیە لە ئامێرێکی تر بەردەوام دەبیت.',
+    'feat.social.t':'هاوڕێ و نامەکان','feat.social.d':'هاوڕێ بە ناوی بەکارهێنەر زیاد بکە، بانگهێشت ڕاستەوخۆ بۆ ژوور بنێرە، و بە تایبەتی گفتوگۆ بکە.',
     'tog.eyebrow':'پێکەوە بینین','tog.title':'هەمان دیمەن، هەمان چرکە',
-    'tog.body':'خانەخوێ کۆنترۆڵی لێدان دەکات و ئەوانی تر شوێنی دەکەون. بیوەستێنە بۆ گفتوگۆ لەسەر ڕووداوێک، ژوورەکەش لەگەڵت دەوەستێت.',
-    'tog.p1':'لێدان بۆ هەموو بینەرێک هاوکات دەمێنێتەوە','tog.p2':'چات بە GIF و وێنە لەسەر ڤیدیۆکە',
-    'tog.p3':'کەناڵی دەنگی بۆ هەموو ژوورەکە','tog.p4':'بە یەک لینک هاوڕێیەک بانگهێشت بکە',
-    'tog.cap':'بینینی فرە چوار کەناڵی ڕاستەوخۆ پێکەوە پیشان دەدات.',
-    'lang.eyebrow':'سێ زمان','lang.title':'وەرنەگێڕدراوە — بەڵکو فرەزمان دروستکراوە',
-    'lang.sub':'هەموو شاشەیەک و هەموو پەیامێک و هەموو ڕێکەوتێک. ڕووکارەکە بۆ ڕاست دەگۆڕێت، و ژمارە و ماوە و کاتەکان شوێن ئەو زمانە دەکەون کە هەڵتبژاردووە.',
-    'dl.eyebrow':'بەرنامەکە بەدەست بهێنە','dl.title':'بەخۆڕایی. بۆ بینین هەژمار پێویست نییە.',
-    'dl.sub':'تەنها ئەگەر دەتەوێت کتێبخانە و پێشکەوتنت لەنێوان ئامێرەکاندا هاوکات بێت بچۆرە ژوورەوە.',
-    'dl.btn':'دایبگرە','dl.version':'وەشان','dl.size':'قەبارە','dl.os':'٦٤ بیت',
-    'dl.note':'دایمەزرێنەرەکە هێشتا واژۆی دیجیتاڵی نییە، بۆیە لەوانەیە SmartScreen ئاگادارت بکاتەوە. <b>More info ← Run anyway</b> هەڵبژێرە. دواتر بەرنامەکە خۆی نوێ دەکاتەوە.',
-    'foot.releases':'وەشانەکان','foot.issues':'کێشەیەک ڕاپۆرت بکە',
-    'foot.tmdb':'ئەم بەرهەمە API ی TMDB بەکاردەهێنێت بەڵام لەلایەن TMDB پەسەند نەکراوە. زانیاری و وێنەی فیلم و زنجیرەکان لەلایەن The Movie Database دابین کراون.'
+    'tog.body':'خاوەن ژوور کۆنتڕۆڵی لێدان دەکات و ئەوانی تر شوێنی دەکەون. ڕایبگرە بۆ گفتوگۆ، ژوورەکە لەگەڵت ڕادەوەستێت.',
+    'tog.p1':'لێدان بۆ هەموو بینەرێک هاوکات دەمێنێتەوە','tog.p2':'چات بە وێنە و GIF لەسەر ڤیدیۆکە',
+    'tog.p3':'کەناڵی دەنگی بۆ هەموو ژوورەکە','tog.p4':'هاوڕێیەک بە یەک بەستەر بانگهێشت بکە',
+    'tog.cap':'بینینی فرە چوار کەناڵی ڕاستەوخۆ پێکەوە کاردەکات.',
+    'lang.eyebrow':'سێ زمان','lang.title':'وەرگێڕدراو نییە — بە فرەزمانی دروستکراوە',
+    'lang.sub':'هەموو شاشەیەک و هەموو پەیامێک و هەموو ڕێکەوتێک. ڕووکارەکە دەگۆڕێت بۆ ڕاست بۆ چەپ، و ژمارە و کاتەکان شوێن ئەو زمانە دەکەون کە هەڵتبژاردووە.',
+    'dl.eyebrow':'ئەپەکە وەربگرە','dl.title':'بەخۆڕایی. بۆ بینین پێویستت بە هەژمار نییە.',
+    'dl.sub':'تەنها ئەگەر دەتەوێت کتێبخانە و پێشکەوتنت هاوکات بکرێت بچۆرە ژوورەوە.',
+    'dl.newest':'نوێترین وەشان','dl.desktop':'وەشانی دێسکتۆپ',
+    'dl.android.t':'ئەندرۆید','dl.android.d':'کەناڵی ڕاستەوخۆ و فیلم و زنجیرە لەسەر مۆبایل و تابلێت و تەلەڤزیۆنی ئەندرۆید، لەگەڵ پەنجەرەی بچووک و Chromecast.',
+    'dl.android.btn':'داگرتنی APK','dl.android.req':'ئەندرۆید ٦٫٠ و نوێتر',
+    'dl.android.note':'لە ئەندرۆیددا، یەکەم جار کە APK دەکەیتەوە <b>دامەزراندنی ئەپی نەناسراو</b> بۆ وێبگەڕەکەت چالاک بکە — واژۆکراوە، بەڵام لە Play Store دابەش نەکراوە.',
+    'dl.win.t':'ویندۆز','dl.win.d':'ئەپی تەواوی دێسکتۆپ: بینینی فرە و ژووری پێکەوە بینین و ڕێنمایی بەرنامەکان.',
+    'dl.btn':'داگرتنی دامەزرێنەر','dl.win.req':'ویندۆز ١٠/١١ · ٦٤‑بیت',
+    'dl.note':'دامەزرێنەری ویندۆز هێشتا واژۆی کۆدی نییە، بۆیە لەوانەیە SmartScreen ئاگادارت بکاتەوە. <b>More info ← Run anyway</b> هەڵبژێرە.',
+    'foot.releases':'وەشانەکان','foot.issues':'ڕاپۆرتی کێشە',
+    'foot.tmdb':'ئەم بەرهەمە TMDB API بەکاردەهێنێت بەڵام لەلایەن TMDB پەسەند نەکراوە. زانیاری و وێنەی فیلم و زنجیرەکان لە The Movie Database. ناو و لۆگۆی کەناڵەکان موڵکی خاوەنەکانیانە.'
   }
 };
 
-function apply(lang){
-  const t = STRINGS[lang] || STRINGS.en;
-  document.documentElement.lang = lang;
-  document.documentElement.dir = t.dir;
-  document.querySelectorAll('[data-i18n]').forEach(el=>{
-    const v = t[el.dataset.i18n];
-    // Some strings carry inline <b>, so assign as HTML. All values are authored
-    // here, never user input, so there is nothing untrusted to inject.
-    if (v !== undefined) el.innerHTML = v;
+/* ══════════════════════════════════════════════════════════════════
+   Behaviour
+   ══════════════════════════════════════════════════════════════════ */
+
+const CAT_KEYS = ['All','News','General','Music','Kids','Religious'];
+let activeCat = 'All';
+let lang = 'en';
+
+/* ── Channel wall ───────────────────────────────────────────────── */
+
+function renderCats(){
+  const box = document.getElementById('cats');
+  box.innerHTML = '';
+  CAT_KEYS.forEach(function(c){
+    const b = document.createElement('button');
+    b.textContent = t('cat.' + c.toLowerCase()) || c;
+    b.setAttribute('aria-pressed', String(c === activeCat));
+    b.onclick = function(){ activeCat = c; renderCats(); renderWall(); };
+    box.appendChild(b);
   });
-  document.querySelectorAll('.langs button').forEach(b=>{
+}
+
+function renderWall(){
+  const wall = document.getElementById('wall');
+  wall.innerHTML = '';
+  CHANNELS
+    .filter(function(c){ return activeCat === 'All' || c[2] === activeCat; })
+    .forEach(function(c){
+      const src = c[0], name = c[1], hd = c[3];
+      const el = document.createElement('div');
+      el.className = 'ch';
+
+      const logo = document.createElement('div');
+      if (src) {
+        logo.className = 'logo';
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = '';
+        img.loading = 'lazy';
+        /* A broadcaster logo that 404s would leave a white hole in an
+           otherwise solid grid. Swap in the initial instead — the wall keeps
+           its rhythm and the channel is still identifiable. */
+        img.onerror = function(){
+          logo.className = 'logo blank';
+          logo.textContent = name.charAt(0);
+        };
+        logo.appendChild(img);
+      } else {
+        logo.className = 'logo blank';
+        logo.textContent = name.charAt(0);
+      }
+      el.appendChild(logo);
+
+      const b = document.createElement('b');
+      b.textContent = name;
+      el.appendChild(b);
+
+      if (hd) {
+        const tag = document.createElement('span');
+        tag.className = 'hd';
+        tag.textContent = 'HD';
+        el.appendChild(tag);
+      }
+      wall.appendChild(el);
+    });
+}
+
+/* ── Language ───────────────────────────────────────────────────── */
+
+function t(key){
+  const pack = STRINGS[lang] || STRINGS.en;
+  return pack[key] !== undefined ? pack[key] : STRINGS.en[key];
+}
+
+function applyLang(next){
+  lang = STRINGS[next] ? next : 'en';
+  const pack = STRINGS[lang];
+
+  document.documentElement.lang = (lang === 'ku') ? 'ckb' : lang;
+  document.documentElement.dir = pack.dir;
+
+  document.querySelectorAll('[data-i18n]').forEach(function(el){
+    const value = t(el.getAttribute('data-i18n'));
+    if (value === undefined) return;
+    /* Several strings carry <b> for emphasis inside a sentence, so they are
+       written as HTML on purpose. The source is this file, not user input. */
+    el.innerHTML = value;
+  });
+
+  document.querySelectorAll('.langs button').forEach(function(b){
     b.setAttribute('aria-pressed', String(b.dataset.lang === lang));
   });
-  try { localStorage.setItem('ntv-lang', lang); } catch {}
+
+  try { localStorage.setItem('nashat-lang', lang); } catch (e) {}
+
+  renderCats();
+  renderWall();
 }
 
-document.querySelectorAll('.langs button').forEach(b=>{
-  b.addEventListener('click', ()=>apply(b.dataset.lang));
+document.querySelectorAll('.langs button').forEach(function(b){
+  b.onclick = function(){ applyLang(b.dataset.lang); };
 });
 
-// Remembered choice first, then the browser's language, then English.
-let initial = 'en';
-try { initial = localStorage.getItem('ntv-lang') || ''; } catch {}
-if (!STRINGS[initial]) {
-  const nav = (navigator.language || 'en').toLowerCase();
-  initial = nav.startsWith('ar') ? 'ar' : (nav.startsWith('ku') || nav.startsWith('ckb')) ? 'ku' : 'en';
-}
-apply(initial);
+/* ── Mobile menu ────────────────────────────────────────────────── */
 
-document.getElementById('yr').textContent = new Date().getFullYear();
+const menuBtn = document.getElementById('menuBtn');
+const mainNav = document.getElementById('mainNav');
+menuBtn.onclick = function(){
+  const open = mainNav.classList.toggle('open');
+  menuBtn.setAttribute('aria-expanded', String(open));
+};
+mainNav.querySelectorAll('a').forEach(function(a){
+  a.onclick = function(){
+    mainNav.classList.remove('open');
+    menuBtn.setAttribute('aria-expanded', 'false');
+  };
+});
 
-// Show the real latest version and point both buttons at the actual asset.
-// Falls back silently to the /releases/latest links already in the markup.
-fetch('https://api.github.com/repos/NashatShamsadyn7/Nashat-TV-PC/releases/latest')
-  .then(r => r.ok ? r.json() : Promise.reject(r.status))
-  .then(rel => {
-    const tag = rel.tag_name || '';
-    if (tag) {
-      document.getElementById('ver').textContent = tag;
-      document.getElementById('spec-ver').textContent = tag.replace(/^v/,'');
-    }
-    const exe = (rel.assets || []).find(a => a.name.endsWith('.exe'));
-    if (exe) {
-      document.getElementById('dl-top').href = exe.browser_download_url;
-      document.getElementById('dl-main').href = exe.browser_download_url;
-    }
-  })
-  .catch(()=>{});
+/* ── Boot ───────────────────────────────────────────────────────── */
+
+/* Preference first, then the browser's own language. Kurdish and Arabic
+   speakers should not have to find the switch on a site that already knows
+   which language their browser asked for. */
+(function(){
+  let start = null;
+  try { start = localStorage.getItem('nashat-lang'); } catch (e) {}
+  if (!start) {
+    const nav = (navigator.language || 'en').toLowerCase();
+    if (nav.indexOf('ckb') === 0 || nav.indexOf('ku') === 0) start = 'ku';
+    else if (nav.indexOf('ar') === 0) start = 'ar';
+    else start = 'en';
+  }
+  applyLang(start);
+})();
 </script>
 </body>
 </html>
